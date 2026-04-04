@@ -3,170 +3,202 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>نظام إحصاء مدينة النسيم | Oracle Enterprise</title>
+	<title>نظام الإدارة الموحد | مدينة النسيم</title>
 	<script src="https://cdn.tailwindcss.com"></script>
-	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<style>
 		:root {
-			--oracle-red: #C74634; --oracle-dark: #1F2124; --oracle-gray: #4A4A4A;
-			--bg-color: #F4F5F7; --border-color: #D1D5DB;
+			--brand-primary: #DC2626; /* Crimson Red */
+			--brand-dark: #0F172A; /* Dark Navy Slate */
+			--brand-light: #F8FAFC;
 		}
-		body { font-family: 'Cairo', sans-serif; background-color: var(--bg-color); color: #333; }
+		body { font-family: 'Cairo', sans-serif; background-color: var(--brand-light); color: #334155; }
 		.hidden { display: none !important; }
 		
-		.form-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 2px; outline: none; transition: 0.2s; font-size: 14px; }
-		.form-input:focus { border-color: var(--oracle-red); box-shadow: 0 0 0 1px var(--oracle-red); }
-		.form-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; color: var(--oracle-dark); }
-		.required::after { content: " *"; color: var(--oracle-red); }
+		.form-input { width: 100%; padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 8px; outline: none; transition: all 0.3s; font-size: 14px; background: #fff; }
+		.form-input:focus { border-color: var(--brand-primary); box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1); }
+		.form-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #475569; }
+		.required::after { content: " *"; color: var(--brand-primary); }
 		
-		.btn-primary { background-color: var(--oracle-red); color: white; border-radius: 2px; font-weight: 700; padding: 8px 16px; transition: 0.2s; }
-		.btn-primary:hover { background-color: #A33525; }
-		.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-		.btn-secondary { background-color: #EAEAEA; color: var(--oracle-dark); border: 1px solid #CCC; border-radius: 2px; font-weight: 700; padding: 8px 16px; transition: 0.2s; }
-		.btn-secondary:hover { background-color: #D1D5DB; }
+		.btn-primary { background: linear-gradient(to left, #DC2626, #B91C1C); color: white; border-radius: 8px; font-weight: 700; padding: 10px 20px; transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2); }
+		.btn-primary:hover { background: linear-gradient(to left, #B91C1C, #991B1B); transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(220, 38, 38, 0.3); }
+		.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+		
+		.btn-secondary { background-color: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; border-radius: 8px; font-weight: 700; padding: 10px 20px; transition: 0.2s; }
+		.btn-secondary:hover { background-color: #E2E8F0; color: var(--brand-dark); }
 
-		.table-header { background-color: #EAEAEA; border-bottom: 2px solid var(--border-color); color: var(--oracle-dark); }
-		.svg-icon { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+		.glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid #E2E8F0; border-radius: 16px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); }
+		.table-header { background-color: #F8FAFC; border-bottom: 2px solid #E2E8F0; color: #475569; font-weight: 800; }
+		.svg-icon { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 		
-		.sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #D1D5DB; transition: 0.2s; border-right: 3px solid transparent; cursor: pointer; }
-		.sidebar-link:hover, .sidebar-link.active { background-color: #2D3035; color: white; border-right-color: var(--oracle-red); }
+		.sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #94A3B8; transition: all 0.3s; border-radius: 12px; cursor: pointer; margin: 4px 16px; }
+		.sidebar-link:hover { background-color: rgba(255,255,255,0.05); color: #fff; }
+		.sidebar-link.active { background-color: rgba(220, 38, 38, 0.15); color: #EF4444; border: 1px solid rgba(220, 38, 38, 0.2); }
 		
-		.modal-overlay { background: rgba(31, 33, 36, 0.7); backdrop-filter: blur(2px); }
-		.loader { border: 2px solid #f3f3f3; border-top: 2px solid var(--oracle-red); border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; margin: 0 auto; }
+		.modal-overlay { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); }
+		.loader { border: 3px solid #f3f3f3; border-top: 3px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 0 auto; }
 		@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-		/* Print Styles for Certificate */
-		@media print {
-			body * { visibility: hidden; }
-			#print-area, #print-area * { visibility: visible; }
-			#print-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 20px; background: white; }
-			.no-print { display: none !important; }
-		}
 	</style>
 </head>
 <body class="h-screen w-screen overflow-hidden flex">
 
-	<div id="login-screen" class="absolute inset-0 bg-[var(--bg-color)] z-50 flex items-center justify-center">
-		<div class="w-full max-w-md p-8 bg-white border border-gray-200 shadow-lg rounded-sm">
-			<div class="text-center mb-8 border-b pb-4">
-				<h2 class="text-2xl font-bold text-[var(--oracle-dark)] uppercase tracking-wide">NASEEM CITY</h2>
-				<p class="text-xs text-gray-500 font-bold mt-1">STATISTICS DATA SYSTEM</p>
+	<div id="login-screen" class="absolute inset-0 bg-slate-900 z-50 flex items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiBmaWxsPSJub25lIj48Y2lyY2xlIGN4PSIyMDAiIGN5PSIyMDAiIHI9IjIwMCIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAyKSIvPjwvc3ZnPg==')] bg-cover bg-center">
+		<div class="w-full max-w-md p-10 glass-card mx-4 relative overflow-hidden">
+			<div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-600 to-red-400"></div>
+			<div class="text-center mb-8 border-b border-slate-100 pb-6">
+				<div class="w-16 h-16 mx-auto bg-red-50 rounded-2xl flex items-center justify-center mb-4 border border-red-100">
+					<svg class="svg-icon text-red-600 w-8 h-8" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+				</div>
+				<h2 class="text-2xl font-black text-slate-800 tracking-wide">مدينة النسيم</h2>
+				<p class="text-xs text-slate-500 font-bold mt-1 uppercase tracking-widest">Security & Admin Portal</p>
 			</div>
+			
 			<div id="step-1">
-				<div class="mb-4"><label class="form-label">البريد الإلكتروني</label><input type="text" id="login-email" class="form-input" placeholder="admin@naseem.sd"></div>
-				<div class="mb-6"><label class="form-label">كلمة المرور</label><input type="password" id="login-pass" class="form-input" placeholder="••••••••"></div>
-				<button id="btn-step-1" onclick="handleLoginStep1()" class="w-full btn-primary">تسجيل الدخول</button>
+				<div class="mb-5"><label class="form-label">حساب الدخول</label><input type="text" id="login-email" class="form-input bg-slate-50" placeholder="admin@naseem.sd"></div>
+				<div class="mb-8"><label class="form-label">كلمة المرور</label><input type="password" id="login-pass" class="form-input bg-slate-50" placeholder="••••••••"></div>
+				<button id="btn-step-1" onclick="handleLoginStep1()" class="w-full btn-primary shadow-lg">تسجيل الدخول</button>
 			</div>
 			<div id="step-2" class="hidden">
-				<div class="mb-6"><label class="form-label text-[var(--oracle-red)]" id="ui-security-q">جاري جلب السؤال...</label><input type="text" id="security-answer" class="form-input" placeholder="إجابة الأمان..."></div>
-				<button id="btn-step-2" onclick="handleLoginStep2()" class="w-full btn-primary">التحقق وإرسال الرمز</button>
+				<div class="mb-6"><label class="form-label text-red-600" id="ui-security-q">جاري جلب السؤال...</label><input type="text" id="security-answer" class="form-input bg-slate-50" placeholder="الإجابة..."></div>
+				<button id="btn-step-2" onclick="handleLoginStep2()" class="w-full btn-primary">إرسال رمز التحقق</button>
 			</div>
 			<div id="step-3" class="hidden">
-				<div class="bg-blue-50 border border-blue-200 p-3 mb-4 rounded-sm"><p class="text-xs text-blue-800 font-bold">تم إرسال رمز التحقق (OTP) إلى بريدك.</p></div>
-				<div class="mb-2"><label class="form-label flex justify-between"><span>الرمز</span><span id="otp-timer" class="text-red-600 font-bold font-mono">03:00</span></label><input type="text" id="otp-input" class="form-input text-center text-xl tracking-widest font-mono" maxlength="6"></div>
-				<div class="mb-6 flex items-center gap-2 mt-4"><input type="checkbox" id="remember-device" class="w-4 h-4 accent-[#C74634]"><label for="remember-device" class="text-xs font-bold text-gray-600 cursor-pointer">حفظ هذا الجهاز</label></div>
-				<button id="btn-step-3" onclick="handleLoginStep3()" class="w-full btn-primary">تأكيد الدخول</button>
+				<div class="bg-blue-50/50 border border-blue-100 p-4 mb-6 rounded-xl"><p class="text-xs text-blue-800 font-bold leading-relaxed">تم إرسال رمز أمان (OTP) إلى بريدك الإلكتروني.</p></div>
+				<div class="mb-4"><label class="form-label flex justify-between"><span>رمز التحقق</span><span id="otp-timer" class="text-red-500 font-bold font-mono">03:00</span></label><input type="text" id="otp-input" class="form-input text-center text-2xl tracking-[0.5em] font-mono bg-slate-50" maxlength="6"></div>
+				<div class="mb-8 flex items-center gap-2 mt-4"><input type="checkbox" id="remember-device" class="w-4 h-4 accent-red-600"><label for="remember-device" class="text-xs font-bold text-slate-600 cursor-pointer">حفظ بيانات الجهاز للزيارات القادمة</label></div>
+				<button id="btn-step-3" onclick="handleLoginStep3()" class="w-full btn-primary">اعتماد الدخول</button>
 			</div>
 		</div>
 	</div>
 
-	<aside class="w-64 bg-[var(--oracle-dark)] flex flex-col h-full z-10 shadow-xl no-print">
-		<div class="p-6 border-b border-gray-700 bg-[#17191B]">
-			<h1 class="text-lg font-bold text-white tracking-wider">NASEEM SYS</h1>
-			<p class="text-[10px] text-gray-400 uppercase mt-1">Sudan - East Nile</p>
+	<aside class="w-64 bg-slate-900 flex flex-col h-full z-20 shadow-2xl no-print relative">
+		<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
+		<div class="p-6 bg-slate-950 border-b border-slate-800 flex items-center gap-3 relative z-10">
+			<div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white shadow-lg shadow-red-900/50">
+				<svg class="svg-icon w-6 h-6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+			</div>
+			<div>
+				<h1 class="text-white font-black text-lg">النسيم</h1>
+				<p class="text-[9px] text-slate-400 uppercase tracking-widest">East Nile - Sudan</p>
+			</div>
 		</div>
-		<div class="flex flex-col gap-1 mt-4 flex-grow">
+		<div class="flex flex-col gap-1 mt-6 flex-grow relative z-10">
 			<a onclick="switchTab('dashboard')" class="sidebar-link nav-link active" data-target="dashboard">
 				<svg class="svg-icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-				<span class="text-sm font-bold">لوحة القيادة (التحليلات)</span>
+				<span class="text-sm font-bold">لوحة القيادة</span>
 			</a>
 			<a onclick="switchTab('residents')" class="sidebar-link nav-link" data-target="residents">
 				<svg class="svg-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
 				<span class="text-sm font-bold">قاعدة بيانات السكان</span>
 			</a>
 			
-			<div id="admin-menu" class="hidden flex-col gap-1 mt-4 pt-4 border-t border-gray-700">
-				<span class="text-[10px] text-gray-500 px-4 font-bold uppercase mb-2">إدارة النظام</span>
+			<div id="admin-menu" class="hidden flex-col gap-1 mt-6 pt-6 border-t border-slate-800">
+				<span class="text-[10px] text-slate-500 px-6 font-bold uppercase mb-2">النظام والإدارة</span>
 				<a onclick="switchTab('certificates')" class="sidebar-link nav-link" data-target="certificates">
 					<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-					<span class="text-sm font-bold">إصدار الشهادات</span>
+					<span class="text-sm font-bold">الشهادات المعتمدة</span>
 				</a>
 				<a onclick="switchTab('settings')" class="sidebar-link nav-link" data-target="settings">
 					<svg class="svg-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-					<span class="text-sm font-bold">إعدادات المستخدمين</span>
+					<span class="text-sm font-bold">الأمان والمستخدمين</span>
 				</a>
 			</div>
 		</div>
-		<div class="p-4 bg-[#17191B] border-t border-gray-700 flex justify-between items-center cursor-pointer hover:bg-black transition" onclick="logout()">
-			<div><p class="font-bold text-sm text-white" id="user-name">User Name</p><p class="text-[10px] text-gray-400" id="user-role">Role</p></div>
-			<svg class="svg-icon text-red-500"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+		<div class="p-4 border-t border-slate-800 bg-slate-950 flex justify-between items-center cursor-pointer hover:bg-black transition relative z-10" onclick="logout()">
+			<div class="flex items-center gap-3">
+				<div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700"><svg class="svg-icon text-slate-400 w-4 h-4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
+				<div><p class="font-bold text-xs text-white" id="user-name">User Name</p><p class="text-[10px] text-slate-500" id="user-role">Role</p></div>
+			</div>
+			<svg class="svg-icon text-red-500 hover:text-red-400"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
 		</div>
 	</aside>
 
-	<main class="flex-1 flex flex-col h-full bg-[var(--bg-color)] relative overflow-y-auto no-print">
-		<header class="bg-white p-4 shadow-sm flex justify-between items-center px-8 border-b border-gray-200 min-h-[64px]">
-			<h2 class="text-lg font-bold text-gray-800" id="header-title">لوحة القيادة (التحليلات)</h2>
-			<button id="btn-add-citizen" onclick="openCitizenModal()" class="hidden btn-primary text-sm flex items-center gap-2">
-				<svg class="svg-icon"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>إضافة بيانات مواطن
+	<main class="flex-1 flex flex-col h-full relative overflow-y-auto no-print">
+		
+		<header class="bg-white px-8 py-5 shadow-sm border-b border-slate-200 flex justify-between items-center z-10 sticky top-0">
+			<div>
+				<h2 class="text-2xl font-black text-slate-800" id="header-title">نظام الإدارة الموحد</h2>
+				<p class="text-xs text-slate-500 mt-2 flex items-center gap-2 font-bold">
+					<svg class="svg-icon text-red-500 w-4 h-4"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+					إحداثيات مدينة النسيم: <span class="font-mono text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">15.6532° N, 32.5511° E</span>
+				</p>
+			</div>
+			
+			<div class="flex items-center gap-4 bg-slate-50 py-2 px-4 rounded-2xl border border-slate-200 shadow-inner">
+				<div class="relative w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center border border-blue-100">
+					<svg viewBox="0 0 100 100" class="w-8 h-8 opacity-80" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2">
+						<polygon points="30,10 70,10 85,30 90,60 70,90 40,95 20,80 10,50 15,30" />
+						<circle cx="65" cy="45" r="4" fill="#dc2626" class="animate-pulse" />
+					</svg>
+					<span class="absolute top-[18px] right-[13px] flex h-3 w-3">
+						<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+						<span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+					</span>
+				</div>
+				<div class="text-left">
+					<p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">المنطقة الحالية</p>
+					<p class="text-sm font-bold text-slate-800">محلية شرق النيل</p>
+				</div>
+			</div>
+			
+			<button id="btn-add-citizen" onclick="openCitizenModal()" class="hidden btn-primary text-sm flex items-center gap-2 ml-4">
+				<svg class="svg-icon w-4 h-4"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>إضافة سجل
 			</button>
 		</header>
 
-		<div class="p-6 flex-1 flex flex-col gap-6">
+		<div class="p-8 flex-1 flex flex-col gap-8 max-w-7xl mx-auto w-full">
 			
 			<div id="view-dashboard" class="app-view">
-				<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-					<div class="bg-white p-5 border border-gray-200 border-t-4 border-t-[var(--oracle-dark)] rounded-sm shadow-sm">
-						<p class="text-xs text-gray-500 font-bold uppercase">إجمالي السكان المسجلين</p>
-						<h3 class="text-3xl font-bold mt-2" id="stat-total">0</h3>
+				<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+					<div class="glass-card p-6 border-t-4 border-t-slate-800">
+						<div class="flex justify-between items-start"><p class="text-xs text-slate-500 font-bold uppercase">إجمالي السكان</p><svg class="svg-icon text-slate-400"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg></div>
+						<h3 class="text-3xl font-black mt-3 text-slate-800" id="stat-total">0</h3>
 					</div>
-					<div class="bg-white p-5 border border-gray-200 border-t-4 border-t-green-600 rounded-sm shadow-sm">
-						<p class="text-xs text-gray-500 font-bold uppercase">نسبة المنازل (ملك)</p>
-						<h3 class="text-3xl font-bold mt-2 text-green-700" id="stat-own">0%</h3>
+					<div class="glass-card p-6 border-t-4 border-t-emerald-500">
+						<div class="flex justify-between items-start"><p class="text-xs text-slate-500 font-bold uppercase">المنازل (ملك)</p><svg class="svg-icon text-emerald-400"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></div>
+						<h3 class="text-3xl font-black mt-3 text-emerald-600" id="stat-own">0%</h3>
 					</div>
-					<div class="bg-white p-5 border border-gray-200 border-t-4 border-t-blue-600 rounded-sm shadow-sm">
-						<p class="text-xs text-gray-500 font-bold uppercase">متوسط أفراد الأسرة</p>
-						<h3 class="text-3xl font-bold mt-2 text-blue-700" id="stat-family">0</h3>
+					<div class="glass-card p-6 border-t-4 border-t-blue-500">
+						<div class="flex justify-between items-start"><p class="text-xs text-slate-500 font-bold uppercase">متوسط الأسرة</p><svg class="svg-icon text-blue-400"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path></svg></div>
+						<h3 class="text-3xl font-black mt-3 text-blue-600" id="stat-family">0</h3>
 					</div>
-					<div class="bg-white p-5 border border-gray-200 border-t-4 border-t-red-600 rounded-sm shadow-sm">
-						<p class="text-xs text-gray-500 font-bold uppercase">الدخل الضعيف (أحمر)</p>
-						<h3 class="text-3xl font-bold mt-2 text-red-700" id="stat-poor">0%</h3>
+					<div class="glass-card p-6 border-t-4 border-t-red-500">
+						<div class="flex justify-between items-start"><p class="text-xs text-slate-500 font-bold uppercase">ضعف الدخل</p><svg class="svg-icon text-red-400"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg></div>
+						<h3 class="text-3xl font-black mt-3 text-red-600" id="stat-poor">0%</h3>
 					</div>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-					<div class="bg-white p-6 border border-gray-200 rounded-sm shadow-sm">
-						<h4 class="font-bold text-sm mb-4">التوزيع الجغرافي (شمال، وسط، جنوب)</h4>
-						<canvas id="locationChart" height="200"></canvas>
-					</div>
-					<div class="bg-white p-6 border border-gray-200 rounded-sm shadow-sm">
-						<h4 class="font-bold text-sm mb-4">مستويات الدخل</h4>
-						<canvas id="incomeChart" height="200"></canvas>
-					</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+					<div class="glass-card p-6"><h4 class="font-bold text-sm mb-6 text-slate-700">التوزيع الجغرافي (شمال، وسط، جنوب)</h4><canvas id="locationChart" height="200"></canvas></div>
+					<div class="glass-card p-6"><h4 class="font-bold text-sm mb-6 text-slate-700">مستويات الدخل الاقتصادي</h4><canvas id="incomeChart" height="200"></canvas></div>
 				</div>
 			</div>
 
 			<div id="view-residents" class="app-view hidden h-full flex flex-col">
-				<div class="bg-white shadow-sm border border-gray-200 flex-1 flex flex-col overflow-hidden rounded-sm">
-					<div class="p-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-						<input type="text" id="search-resident" onkeyup="filterTable()" placeholder="بحث بالاسم أو الرقم الوطني..." class="form-input w-80 bg-white">
-						<button onclick="loadResidentsData()" class="text-gray-500 hover:text-[var(--oracle-dark)]"><svg class="svg-icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+				<div class="glass-card flex-1 flex flex-col overflow-hidden">
+					<div class="p-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+						<div class="relative w-96">
+							<svg class="svg-icon absolute right-3 top-3 text-slate-400 w-4 h-4"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+							<input type="text" id="search-resident" onkeyup="filterTable()" placeholder="بحث بالاسم أو الرقم الوطني..." class="form-input pl-4 pr-10 bg-white">
+						</div>
+						<button onclick="loadResidentsData()" class="btn-secondary flex items-center gap-2 py-2"><svg class="svg-icon w-4 h-4"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>تحديث</button>
 					</div>
-					<div class="overflow-auto flex-1 relative">
+					<div class="overflow-auto flex-1">
 						<table class="w-full text-sm text-right border-collapse" id="residents-table">
-							<thead class="table-header sticky top-0 bg-[#EAEAEA] z-10">
+							<thead class="table-header sticky top-0 z-10">
 								<tr>
-									<th class="p-3 border-b">الاسم الرباعي</th>
-									<th class="p-3 border-b">الرقم الوطني</th>
-									<th class="p-3 border-b">الموقع</th>
-									<th class="p-3 border-b">عدد الأسرة</th>
-									<th class="p-3 border-b sensitive-col">السكن</th>
-									<th class="p-3 border-b sensitive-col">الحالة</th>
-									<th class="p-3 border-b sensitive-col">الدخل</th>
-									<th class="p-3 border-b text-center admin-col">إجراءات</th>
+									<th class="p-4 border-b">الاسم الرباعي</th>
+									<th class="p-4 border-b">الرقم الوطني</th>
+									<th class="p-4 border-b">الموقع</th>
+									<th class="p-4 border-b">الأسرة</th>
+									<th class="p-4 border-b sensitive-col">السكن</th>
+									<th class="p-4 border-b sensitive-col">الحالة</th>
+									<th class="p-4 border-b sensitive-col">الدخل</th>
+									<th class="p-4 border-b text-center admin-col">إجراء</th>
 								</tr>
 							</thead>
-							<tbody id="data-table-body" class="divide-y divide-gray-200 text-gray-700 font-medium">
-								<tr><td colspan="8" class="p-8 text-center text-gray-500">جاري تحميل البيانات...</td></tr>
+							<tbody id="data-table-body" class="divide-y divide-slate-100 text-slate-600 font-medium bg-white">
+								<tr><td colspan="8" class="p-8 text-center text-slate-400">جاري التحميل...</td></tr>
 							</tbody>
 						</table>
 					</div>
@@ -174,83 +206,94 @@
 			</div>
 
 			<div id="view-certificates" class="app-view hidden">
-				<div class="bg-white p-6 border border-gray-200 rounded-sm shadow-sm max-w-2xl mx-auto">
-					<h3 class="font-bold text-lg border-b pb-3 mb-4">إصدار شهادة سكن معتمدة</h3>
-					<p class="text-sm text-gray-500 mb-4">اختر المواطن من القائمة لإصدار الشهادة وطباعتها بصيغة PDF.</p>
-					<div class="flex gap-2">
-						<select id="cert-citizen-select" class="form-input flex-1">
-							<option value="">جاري تحميل قائمة السكان...</option>
-						</select>
-						<button onclick="generateCertificate()" class="btn-primary flex items-center gap-2 whitespace-nowrap">
-							<svg class="svg-icon"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-							إنشاء وطباعة
-						</button>
+				<div class="glass-card p-8 flex flex-col md:flex-row gap-10 relative overflow-hidden">
+					<div class="absolute -left-32 -top-32 w-96 h-96 bg-red-50 rounded-full border border-red-100 opacity-50 pointer-events-none"></div>
+					
+					<div class="flex-1 relative z-10">
+						<div class="flex items-center gap-3 mb-4">
+							<div class="p-2 bg-amber-100 rounded-lg text-amber-600"><svg class="svg-icon"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
+							<h3 class="text-2xl font-black text-slate-800">إصدار شهادة سكن</h3>
+						</div>
+						<p class="text-sm text-slate-500 mb-8 leading-relaxed">
+							اختر المواطن من القائمة لتوليد شهادة إثبات سكن رسمية ومعتمدة. تحتوي الشهادة على رقم مرجعي مشفر للتحقق من صحتها.
+						</p>
+						<div class="space-y-4">
+							<label class="form-label">اختر المواطن من السجل:</label>
+							<select id="cert-citizen-select" class="form-input text-base py-3" onchange="previewCertificate()"><option value="">-- القائمة --</option></select>
+							<button onclick="generateCertificate()" class="btn-primary w-full flex justify-center items-center gap-2 mt-4 py-3 text-lg">
+								<svg class="svg-icon"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+								اعتماد وطباعة
+							</button>
+						</div>
+					</div>
+
+					<div class="flex-1 relative z-10">
+						<div class="bg-[#FAFAFA] border-2 border-[#E5E7EB] p-8 rounded-xl shadow-lg relative">
+							<div class="flex justify-between items-start border-b-2 border-slate-300 pb-4 mb-6">
+								<div>
+									<h4 class="font-black text-xl text-slate-800 tracking-wide">شهادة سكن</h4>
+									<p class="text-[11px] text-slate-500 font-mono mt-1" id="preview-ref">NSC-XXXX-XXXX</p>
+								</div>
+								<div class="w-14 h-14">
+									<svg viewBox="0 0 120 120" class="w-full h-full fill-amber-600/10 stroke-amber-700">
+										<circle cx="60" cy="60" r="56" stroke-width="2"/><circle cx="60" cy="60" r="50" stroke-width="1" stroke-dasharray="4 4"/>
+										<path d="M 45 25 C 35 45, 50 65, 35 95 L 85 90 C 95 60, 95 40, 85 25 Z" stroke-width="2" stroke-linejoin="round"/>
+										<path d="M 40 25 C 30 45, 45 65, 30 95" fill="none" stroke-width="2"/>
+										<text x="63" y="58" font-family="Cairo" font-size="13" font-weight="800" fill="#000" stroke="none" text-anchor="middle">محلية</text>
+										<text x="63" y="74" font-family="Cairo" font-size="16" font-weight="900" fill="#000" stroke="none" text-anchor="middle">شرق النيل</text>
+									</svg>
+								</div>
+							</div>
+							<div class="space-y-4 text-sm">
+								<div class="flex justify-between border-b border-slate-200 pb-2"><span class="text-slate-500 font-bold">الاسم الرباعي:</span><span class="font-black text-slate-800" id="preview-name">-----</span></div>
+								<div class="flex justify-between border-b border-slate-200 pb-2"><span class="text-slate-500 font-bold">الرقم الوطني:</span><span class="font-mono font-bold text-slate-800" id="preview-nid">-----</span></div>
+								<div class="flex justify-between"><span class="text-slate-500 font-bold">تاريخ الإصدار:</span><span class="font-bold text-slate-800" id="preview-date">-----</span></div>
+							</div>
+							<div class="mt-8 pt-4 border-t-2 border-dashed border-slate-300 text-center"><div class="h-10 bg-[repeating-linear-gradient(90deg,#1e293b_0px,#1e293b_3px,transparent_3px,transparent_6px,#1e293b_6px,#1e293b_8px,transparent_8px,transparent_12px)] w-4/5 mx-auto opacity-60"></div></div>
+						</div>
 					</div>
 				</div>
 			</div>
 
 			<div id="view-settings" class="app-view hidden">
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 					
-					<div class="bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col">
-						<div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-[var(--oracle-dark)]">إدارة حسابات النظام</h3></div>
-						<div class="p-4 overflow-y-auto max-h-64">
-							<ul id="users-list" class="divide-y divide-gray-100">
-								<li class="py-2 text-sm text-center text-gray-500">جاري التحميل...</li>
-							</ul>
+					<div class="glass-card flex flex-col">
+						<div class="p-5 border-b border-slate-200 bg-slate-50/50"><h3 class="font-bold text-slate-800">حسابات النظام</h3></div>
+						<div class="p-2 overflow-y-auto max-h-72"><ul id="users-list" class="divide-y divide-slate-100"></ul></div>
+					</div>
+			
+					<div class="glass-card flex flex-col h-fit">
+						<div class="p-5 border-b border-slate-200 bg-slate-50/50"><h3 class="font-bold text-slate-800">إضافة مستخدم جديد</h3></div>
+						<div class="p-6 flex flex-col gap-5">
+							<div><label class="form-label required">الاسم</label><input type="text" id="u_name" class="form-input bg-slate-50"></div>
+							<div><label class="form-label required">البريد الإلكتروني</label><input type="email" id="u_email" class="form-input bg-slate-50"></div>
+							<div><label class="form-label required">كلمة المرور</label><input type="password" id="u_pass" class="form-input bg-slate-50"></div>
+							<div><label class="form-label required">الصلاحية</label><select id="u_role" class="form-input bg-slate-50"><option value="admin">إدمن</option><option value="manager">مدير</option><option value="citizen">مواطن</option></select></div>
+							<button onclick="saveUser()" id="btn-save-user" class="btn-primary mt-2 shadow-md">إنشاء الحساب</button>
 						</div>
 					</div>
 			
-					<div class="bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col h-fit">
-						<div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-[var(--oracle-dark)]">إضافة مستخدم جديد</h3></div>
-						<div class="p-4 flex flex-col gap-4">
-							<div><label class="form-label required">الاسم</label><input type="text" id="u_name" class="form-input"></div>
-							<div><label class="form-label required">البريد الإلكتروني</label><input type="email" id="u_email" class="form-input"></div>
-							<div><label class="form-label required">كلمة المرور</label><input type="password" id="u_pass" class="form-input"></div>
-							<div>
-								<label class="form-label required">الصلاحية (الدور)</label>
-								<select id="u_role" class="form-input">
-									<option value="admin">إدمن (إدارة كاملة)</option>
-									<option value="manager">مدير (إدارة بيانات وشهادات)</option>
-									<option value="citizen">مواطن (عرض الإحصائيات فقط)</option>
-								</select>
-							</div>
-							<button onclick="saveUser()" id="btn-save-user" class="btn-primary mt-2">إنشاء حساب</button>
+					<div class="col-span-1 md:col-span-2 glass-card">
+						<div class="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+							<h3 class="font-bold text-slate-800 flex items-center gap-2"><svg class="svg-icon"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> الأجهزة والتصاريح الأمنية</h3>
+							<button onclick="loadDevicesList()" class="text-sm font-bold text-red-600 hover:text-red-800 underline">تحديث</button>
 						</div>
-					</div>
-			
-					<div class="col-span-1 md:col-span-2 bg-white border border-gray-200 rounded-sm shadow-sm mt-2">
-						<div class="p-4 border-b bg-gray-50 flex justify-between items-center">
-							<h3 class="font-bold text-[var(--oracle-dark)]">إدارة الأجهزة الموثوقة (التصاريح)</h3>
-							<button onclick="loadDevicesList()" class="text-[var(--oracle-red)] text-xs font-bold underline">تحديث القائمة</button>
-						</div>
-						<div class="overflow-auto max-h-80">
-							<table class="w-full text-xs text-right border-collapse">
-								<thead class="bg-[#EAEAEA] text-[var(--oracle-dark)] sticky top-0">
-									<tr>
-										<th class="p-3 border-b">المستخدم</th>
-										<th class="p-3 border-b">نظام التشغيل والمتصفح</th>
-										<th class="p-3 border-b">الموقع (IP)</th>
-										<th class="p-3 border-b">حجم الشاشة</th>
-										<th class="p-3 border-b text-center">الحالة والإجراء</th>
-									</tr>
-								</thead>
-								<tbody id="devices-table-body" class="divide-y divide-gray-200">
-									<tr><td colspan="5" class="p-4 text-center text-gray-500">جاري التحميل...</td></tr>
-								</tbody>
+						<div class="overflow-auto max-h-80 p-2">
+							<table class="w-full text-sm text-right">
+								<thead class="bg-slate-100 text-slate-500 font-bold sticky top-0"><tr><th class="p-4 rounded-r-lg">المستخدم</th><th class="p-4">النظام/المتصفح</th><th class="p-4">IP</th><th class="p-4 text-center rounded-l-lg">الحالة/إجراء</th></tr></thead>
+								<tbody id="devices-table-body" class="divide-y divide-slate-100"></tbody>
 							</table>
 						</div>
 					</div>
 			
-					<div class="col-span-1 md:col-span-2 bg-white border border-gray-200 rounded-sm shadow-sm mt-2">
-						<div class="p-4 border-b bg-gray-50 flex justify-between items-center">
-							<h3 class="font-bold text-[var(--oracle-dark)]">سجل نشاط الدخول والخروج (Sessions Log)</h3>
-							<button onclick="loadSessionsLog()" class="text-[var(--oracle-red)] text-xs font-bold underline">تحديث السجل</button>
+					<div class="col-span-1 md:col-span-2 glass-card">
+						<div class="p-5 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
+							<h3 class="font-bold text-slate-800 flex items-center gap-2"><svg class="svg-icon"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg> سجل الجلسات المباشر (Logs)</h3>
+							<button onclick="loadSessionsLog()" class="text-sm font-bold text-red-600 hover:text-red-800 underline">تحديث</button>
 						</div>
-						<div class="overflow-auto max-h-64">
-							<ul id="sessions-log-list" class="divide-y divide-gray-100 px-4">
-								<li class="py-2 text-center text-gray-500 text-xs">جاري التحميل...</li>
-							</ul>
+						<div class="overflow-auto max-h-72 p-4">
+							<ul id="sessions-log-list" class="space-y-4 relative border-r-2 border-slate-100 pr-4 mr-2"></ul>
 						</div>
 					</div>
 			
@@ -261,531 +304,342 @@
 	</main>
 
 	<div id="add-modal" class="fixed inset-0 z-50 modal-overlay hidden flex items-center justify-center p-4 no-print">
-		<div class="bg-white w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] rounded-sm border border-gray-300">
-			<div class="p-4 border-b flex justify-between items-center bg-[#F8F9FA]">
-				<h3 class="font-bold text-[var(--oracle-dark)] flex items-center gap-2" id="modal-title">
-					<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> استمارة السجل المدني
-				</h3>
-				<button onclick="closeCitizenModal()" class="text-gray-400 hover:text-red-600 transition"><svg class="svg-icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+		<div class="glass-card w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+			<div class="p-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+				<h3 class="font-black text-slate-800 text-lg flex items-center gap-2" id="modal-title">استمارة السجل المدني</h3>
+				<button onclick="closeCitizenModal()" class="text-slate-400 hover:text-red-600 bg-white rounded-full p-1 shadow-sm transition"><svg class="svg-icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
 			</div>
-			
-			<div class="p-6 overflow-y-auto bg-white flex-1">
-				<form id="citizen-form" class="grid grid-cols-1 md:grid-cols-3 gap-5">
-					<input type="hidden" id="f_id"> <div class="md:col-span-3 pb-2 mb-2 border-b"><h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">البيانات الأساسية</h4></div>
-					<div class="md:col-span-2"><label class="form-label required">الاسم الرباعي</label><input type="text" id="f_name" class="form-input" required></div>
-					<div><label class="form-label required">الرقم الوطني</label><input type="text" id="f_nid" class="form-input" required></div>
-					<div><label class="form-label required">رقم الهاتف</label><input type="tel" id="f_phone" class="form-input" required></div>
-					<div><label class="form-label">تاريخ الميلاد</label><input type="date" id="f_dob" class="form-input"></div>
-					<div><label class="form-label">الموقع الجغرافي</label><select id="f_loc" class="form-input"><option value="شمال">شمال</option><option value="وسط">وسط</option><option value="جنوب">جنوب</option></select></div>
+			<div class="p-8 overflow-y-auto bg-white flex-1">
+				<form id="citizen-form" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+					<input type="hidden" id="f_id"> 
+					<div class="md:col-span-3 pb-2 mb-2 border-b-2 border-slate-100"><h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">البيانات الأساسية</h4></div>
+					<div class="md:col-span-2"><label class="form-label required">الاسم الرباعي</label><input type="text" id="f_name" class="form-input bg-slate-50" required></div>
+					<div><label class="form-label required">الرقم الوطني</label><input type="text" id="f_nid" class="form-input bg-slate-50" required></div>
+					<div><label class="form-label required">رقم الهاتف</label><input type="tel" id="f_phone" class="form-input bg-slate-50" required></div>
+					<div><label class="form-label">تاريخ الميلاد</label><input type="date" id="f_dob" class="form-input bg-slate-50"></div>
+					<div><label class="form-label">الموقع الجغرافي</label><select id="f_loc" class="form-input bg-slate-50"><option value="شمال">شمال</option><option value="وسط">وسط</option><option value="جنوب">جنوب</option></select></div>
 
-					<div class="md:col-span-3 pb-2 mb-2 mt-4 border-b"><h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">البيانات السرية (لا تظهر للمواطنين)</h4></div>
-					<div><label class="form-label">المهنة</label><input type="text" id="f_prof" class="form-input"></div>
-					<div><label class="form-label">السكن</label><select id="f_house" class="form-input"><option value="ملك">ملك</option><option value="ايجار">إيجار</option></select></div>
-					<div><label class="form-label">الحالة الاجتماعية</label><select id="f_marital" class="form-input"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option></select></div>
-					<div><label class="form-label">عدد أفراد الأسرة</label><input type="number" id="f_fam" min="1" value="1" class="form-input"></div>
-					<div><label class="form-label">مستوى الدخل</label><select id="f_income" class="form-input"><option value="اخضر">أخضر (مستقر)</option><option value="اصفر">أصفر (متوسط)</option><option value="احمر">أحمر (ضعيف)</option></select></div>
-					<div class="md:col-span-3"><label class="form-label">ملاحظات خاصة</label><textarea id="f_notes" class="form-input" rows="2"></textarea></div>
+					<div class="md:col-span-3 pb-2 mb-2 mt-4 border-b-2 border-slate-100"><h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">البيانات السرية والإحصائية</h4></div>
+					<div><label class="form-label">المهنة</label><input type="text" id="f_prof" class="form-input bg-slate-50"></div>
+					<div>
+						<label class="form-label">نوع السكن</label>
+						<select id="f_house" class="form-input bg-slate-50">
+							<option value="مالك">مالك</option>
+							<option value="مستأجر">مستأجر</option>
+							<option value="مؤقت">مؤقت (حارس منزل)</option>
+						</select>
+					</div>
+					<div><label class="form-label">الحالة الاجتماعية</label><select id="f_marital" class="form-input bg-slate-50"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option></select></div>
+					<div><label class="form-label">عدد أفراد الأسرة</label><input type="number" id="f_fam" min="1" value="1" class="form-input bg-slate-50"></div>
+					<div><label class="form-label">مستوى الدخل</label><select id="f_income" class="form-input bg-slate-50"><option value="اخضر">أخضر (مستقر)</option><option value="اصفر">أصفر (متوسط)</option><option value="احمر">أحمر (ضعيف)</option></select></div>
+					<div class="md:col-span-3"><label class="form-label">ملاحظات خاصة</label><textarea id="f_notes" class="form-input bg-slate-50" rows="2"></textarea></div>
 				</form>
 			</div>
-			
-			<div class="p-4 border-t bg-[#F8F9FA] flex justify-end gap-3">
-				<button onclick="closeCitizenModal()" class="btn-secondary">إلغاء</button>
-				<button onclick="saveCitizen()" id="btn-save" class="btn-primary">حفظ البيانات</button>
+			<div class="p-5 border-t border-slate-200 bg-slate-50 flex justify-end gap-4">
+				<button onclick="closeCitizenModal()" class="btn-secondary">إلغاء الأمر</button>
+				<button onclick="saveCitizen()" id="btn-save" class="btn-primary shadow-lg">حفظ البيانات</button>
 			</div>
 		</div>
 	</div>
 
 	<script>
-		// ==========================================
-		// 1. CONFIGURATION
-		// ==========================================
 		const SUPABASE_URL = 'https://lzobdqlbsxjlupyewdqq.supabase.co/rest/v1';
 		const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6b2JkcWxic3hqbHVweWV3ZHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTY0MDQsImV4cCI6MjA4OTU3MjQwNH0.fH-bV3QiQUbk_6L-clwwdHlZTnTIYAIJeKysMhUlBIs';
-		const GAS_URL = 'https://script.google.com/macros/s/AKfycbxJ1Ad0cKKhqZNTsRYF_jgI6HAlsOzVQG8k4dJdGzCHaJdaRx9szlUXm4dplUHB7Fdz/exec';
+		const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3M0pH4dXIegs0QcjVkYWs9j6VnoutiUPRSxrV57_o1Fxvl0Ri5icqKbxJQrVw148Q/exec';
 		
-		let currentUser = null; let timerInterval = null; let currentOtpEmail = null; let allResidents = [];
+		let currentUser = null; let timerInterval = null; let currentOtpEmail = null; let allResidents = []; let currentRef = "";
 		
-		// ==========================================
-		// 2. CORE UTILITIES
-		// ==========================================
 		async function sbFetch(endpoint, options = {}) {
-			const res = await fetch(`${SUPABASE_URL}/${endpoint}`, {
-				...options,
-				headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation', ...(options.headers || {}) }
-			});
+			const res = await fetch(`${SUPABASE_URL}/${endpoint}`, { ...options, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation', ...(options.headers || {}) } });
 			if(!res.ok) throw new Error(await res.text());
 			if(res.status === 204) return null;
 			return res.json();
 		}
 		
-		function getDeviceId() { 
-			let id = localStorage.getItem('ns_dev'); 
-			if(!id) { id = crypto.randomUUID(); localStorage.setItem('ns_dev', id); } 
-			return id; 
-		}
+		function getDeviceId() { let id = localStorage.getItem('ns_dev'); if(!id) { id = crypto.randomUUID(); localStorage.setItem('ns_dev', id); } return id; }
 
-		// (FIXED) Device Fingerprint with AbortController to prevent infinite loading
-		async function getDeviceFingerprint() {
-			const ua = navigator.userAgent;
-			let browser = "Unknown", os = "Unknown";
+	// دالة التقاط البصمة المحدثة (أسرع وأكثر استقراراً في جلب الموقع)
+	async function getDeviceFingerprint() {
+		const ua = navigator.userAgent;
+		let browser = "Unknown", os = "Unknown";
+		
+		// تحديد المتصفح
+		if(ua.includes("Chrome")) browser = "Chrome"; 
+		else if(ua.includes("Firefox")) browser = "Firefox"; 
+		else if(ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari"; 
+		else if(ua.includes("Edge")) browser = "Edge";
+		
+		// تحديد نظام التشغيل
+		if(ua.includes("Win")) os = "Windows"; 
+		else if(ua.includes("Mac")) os = "MacOS"; 
+		else if(ua.includes("Android")) os = "Android"; 
+		else if(ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+		
+		const screenSize = `${window.screen.width}x${window.screen.height}`;
+		let ip = "Unknown", country = "Unknown";
+		
+		try {
+			// استخدمنا خدمة ip-api لأنها سريعة جداً ولا تتطلب مصادقة معقدة
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 ثواني كحد أقصى
 			
-			if(ua.includes("Chrome")) browser = "Chrome"; 
-			else if(ua.includes("Firefox")) browser = "Firefox"; 
-			else if(ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari"; 
-			else if(ua.includes("Edge")) browser = "Edge";
+			const res = await fetch('http://ip-api.com/json/', { signal: controller.signal });
+			clearTimeout(timeoutId);
 			
-			if(ua.includes("Win")) os = "Windows"; 
-			else if(ua.includes("Mac")) os = "MacOS"; 
-			else if(ua.includes("Android")) os = "Android"; 
-			else if(ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
-			
-			const screenSize = `${window.screen.width}x${window.screen.height}`;
-			let ip = "Unknown", country = "Unknown";
-			
-			try {
-				const controller = new AbortController();
-				const timeoutId = setTimeout(() => controller.abort(), 3000);
-				const res = await fetch('https://ipinfo.io/json', { signal: controller.signal });
-				clearTimeout(timeoutId);
-				if(res.ok) { const data = await res.json(); ip = data.ip; country = data.country; }
-			} catch(e) { console.warn("تم تخطي جلب الـ IP لبطء الاتصال."); }
-			
-			return { browser, os, screenSize, ip, country };
+			if(res.ok) { 
+				const data = await res.json(); 
+				ip = data.query; // الـ IP
+				country = `${data.country} (${data.city})`; // الدولة والمدينة (مثل: Sudan (Khartoum))
+			}
+		} catch(e) { 
+			console.warn("تعذر جلب الموقع بسبب الحماية، سيتم إرسال البصمة الأساسية."); 
 		}
+		
+		return { browser, os, screenSize, ip, country };
+	}
 
-		// ==========================================
-		// 3. AUTHENTICATION & LOGIN LOGIC
-		// ==========================================
 		async function logSession(action) {
 			if(!currentUser) return;
 			const fp = await getDeviceFingerprint();
-			await sbFetch('naseem_login_sessions', {
-				method: 'POST',
-				body: JSON.stringify({ user_id: currentUser.id, action: action, device_uuid: getDeviceId(), ip_address: fp.ip })
-			}).catch(e=>console.error);
+			await sbFetch('naseem_login_sessions', { method: 'POST', body: JSON.stringify({ user_id: currentUser.id, action: action, device_uuid: getDeviceId(), ip_address: fp.ip }) }).catch(e=>e);
 		}
 
 		async function handleLoginStep1() {
-			const email = document.getElementById('login-email').value.trim(); 
-			const pass = document.getElementById('login-pass').value.trim();
+			const email = document.getElementById('login-email').value.trim(); const pass = document.getElementById('login-pass').value.trim();
 			const btn = document.getElementById('btn-step-1'); btn.innerHTML = '<div class="loader"></div>';
-			
 			try {
 				const users = await sbFetch(`naseem_acc?email=eq.${encodeURIComponent(email)}&password=eq.${encodeURIComponent(pass)}`);
 				if(users.length === 0) throw new Error('بيانات الدخول غير صحيحة');
 				currentUser = users[0]; document.getElementById('ui-security-q').innerText = currentUser.security_question;
-				
 				const trusted = await sbFetch(`naseem_trusted_devices?user_id=eq.${currentUser.id}&device_uuid=eq.${getDeviceId()}`);
 				if(trusted.length > 0) {
-					const device = trusted[0];
-					if(device.status !== 'approved') throw new Error('هذا الجهاز غير مصرح (معلق). يرجى مراجعة الإدارة.');
-					
-					const currentFp = await getDeviceFingerprint();
-					if(device.browser !== currentFp.browser || device.screen_size !== currentFp.screenSize) {
-						alert('تم رصد تغيير في بيئة الجهاز. يرجى إثبات الهوية (OTP).');
-						document.getElementById('step-1').classList.add('hidden'); 
-						document.getElementById('step-2').classList.remove('hidden');
-						return;
+					if(trusted[0].status !== 'approved') throw new Error('هذا الجهاز غير مصرح (معلق).');
+					const fp = await getDeviceFingerprint();
+					if(trusted[0].browser !== fp.browser || trusted[0].screen_size !== fp.screenSize) {
+						alert('تغيرت بيئة الجهاز. يرجى إدخال OTP.');
+						document.getElementById('step-1').classList.add('hidden'); document.getElementById('step-2').classList.remove('hidden'); return;
 					}
-					await logSession('Login (Auto)');
-					return completeLogin(); 
+					await logSession('Login (Auto)'); return completeLogin(); 
 				}
 				document.getElementById('step-1').classList.add('hidden'); document.getElementById('step-2').classList.remove('hidden');
 			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'تسجيل الدخول'; }
 		}
 
 		async function handleLoginStep2() {
-			const ans = document.getElementById('security-answer').value.trim(); if(ans !== currentUser.security_answer) return alert('الإجابة خاطئة!');
+			const ans = document.getElementById('security-answer').value.trim(); if(ans !== currentUser.security_answer) return alert('خطأ في الإجابة!');
 			const btn = document.getElementById('btn-step-2'); btn.innerHTML = '<div class="loader"></div>';
 			try {
 				const otp = Math.floor(100000 + Math.random() * 900000).toString(); const exp = new Date(Date.now() + 3 * 60000).toISOString(); 
-				currentOtpEmail = currentUser.f2a_email || currentUser.email; // Fallback to main email
-				if(!currentOtpEmail) throw new Error("لا يوجد بريد مسجل");
-
+				currentOtpEmail = currentUser.f2a_email || currentUser.email; 
 				await sbFetch('naseem_otp', { method: 'POST', body: JSON.stringify({ email: currentOtpEmail, otp: otp, expires_at: exp }) });
-				
-				fetch(`${GAS_URL}?action=sendOTP&email=${encodeURIComponent(currentOtpEmail)}&otp=${otp}`, { method: 'GET', mode: 'no-cors' }).catch(e=>e); 
-		
+				fetch(`${GAS_URL}?action=sendOTP&email=${encodeURIComponent(currentOtpEmail)}&otp=${otp}`, { method: 'GET', mode: 'no-cors' }).catch(e=>e); 
 				document.getElementById('step-2').classList.add('hidden'); document.getElementById('step-3').classList.remove('hidden'); startOtpTimer();
-			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'التحقق وإرسال الرمز'; }
+			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'إرسال رمز التحقق'; }
 		}
 		
 		function startOtpTimer() {
 			let t = 180; clearInterval(timerInterval);
 			timerInterval = setInterval(() => { t--; document.getElementById('otp-timer').innerText = `0${Math.floor(t/60)}:${(t%60).toString().padStart(2,'0')}`; if(t<=0) { clearInterval(timerInterval); alert("انتهت الصلاحية"); location.reload(); } }, 1000);
 		}
-		
-		// (FIXED) 409 Conflict handled properly using PATCH instead of POST if exists
+
 		async function handleLoginStep3() {
 			const otp = document.getElementById('otp-input').value.trim(); if(!otp) return;
 			const btn = document.getElementById('btn-step-3'); btn.innerHTML = '<div class="loader"></div>';
 			try {
-				const now = new Date().toISOString();
-				const rec = await sbFetch(`naseem_otp?email=eq.${encodeURIComponent(currentOtpEmail)}&otp=eq.${encodeURIComponent(otp)}&expires_at=gte.${now}&order=created_at.desc&limit=1`);
-				if(rec.length === 0) throw new Error('رمز خاطئ أو منتهي');
-				
+				const rec = await sbFetch(`naseem_otp?email=eq.${encodeURIComponent(currentOtpEmail)}&otp=eq.${encodeURIComponent(otp)}&expires_at=gte.${new Date().toISOString()}&order=created_at.desc&limit=1`);
+				if(rec.length === 0) throw new Error('الرمز خاطئ أو منتهي');
 				if(document.getElementById('remember-device').checked) {
-					const fp = await getDeviceFingerprint();
-					const devId = getDeviceId();
+					const fp = await getDeviceFingerprint(); const devId = getDeviceId();
 					const payload = { user_id: currentUser.id, device_uuid: devId, status: 'pending', os: fp.os, browser: fp.browser, screen_size: fp.screenSize, ip_address: fp.ip, country: fp.country };
-					
-					const existing = await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`);
-					if(existing.length > 0) {
-						await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`, { method: 'PATCH', body: JSON.stringify(payload) });
-					} else {
-						await sbFetch('naseem_trusted_devices', { method: 'POST', body: JSON.stringify(payload) });
-					}
-					alert('تم تسجيل البصمة وطلب تصريح للجهاز بنجاح.');
+					const ex = await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`);
+					if(ex.length > 0) await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`, { method: 'PATCH', body: JSON.stringify(payload) });
+					else await sbFetch('naseem_trusted_devices', { method: 'POST', body: JSON.stringify(payload) });
+					alert('تم طلب تصريح للجهاز.');
 				}
-				
-				await logSession('Login (Via OTP)');
-				clearInterval(timerInterval); completeLogin();
-			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'تأكيد الدخول'; }
+				await logSession('Login (OTP)'); clearInterval(timerInterval); completeLogin();
+			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'اعتماد الدخول'; }
 		}
 
-		async function logout() {
-			await logSession('Logout');
-			location.reload();
-		}
+		async function logout() { await logSession('Logout'); location.reload(); }
 
 		function completeLogin() {
 			document.getElementById('login-screen').classList.add('hidden');
 			document.getElementById('user-name').innerText = currentUser.name; document.getElementById('user-role').innerText = currentUser.role.toUpperCase();
-			
 			const isManager = (currentUser.role === 'admin' || currentUser.role === 'manager');
-			if(isManager) {
-				document.getElementById('admin-menu').classList.remove('hidden'); document.getElementById('admin-menu').classList.add('flex');
-				document.getElementById('btn-add-citizen').classList.remove('hidden');
-			} else {
-				document.getElementById('admin-menu').classList.add('hidden');
-				document.getElementById('btn-add-citizen').classList.add('hidden');
-			}
-		
-			switchTab(isManager ? 'dashboard' : 'residents'); 
-			loadResidentsData();
+			if(isManager) { document.getElementById('admin-menu').classList.remove('hidden'); document.getElementById('admin-menu').classList.add('flex'); document.getElementById('btn-add-citizen').classList.remove('hidden'); }
+			switchTab(isManager ? 'dashboard' : 'residents'); loadResidentsData();
 		}
-		
-		// ==========================================
-		// 4. NAVIGATION & DASHBOARD
-		// ==========================================
+
 		function switchTab(tabId) {
-			document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
-			document.getElementById(`view-${tabId}`).classList.remove('hidden');
-			document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-			const activeLink = document.querySelector(`.nav-link[data-target="${tabId}"]`);
-			if(activeLink) activeLink.classList.add('active');
-			
-			const titles = { 'dashboard': 'لوحة القيادة والتحليلات', 'residents': 'قاعدة بيانات السكان', 'certificates': 'إصدار الشهادات المعتمدة', 'settings': 'إعدادات النظام والمستخدمين' };
+			document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden')); document.getElementById(`view-${tabId}`).classList.remove('hidden');
+			document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); document.querySelector(`.nav-link[data-target="${tabId}"]`).classList.add('active');
+			const titles = { 'dashboard': 'لوحة القيادة والتحليلات', 'residents': 'قاعدة بيانات السكان', 'certificates': 'نظام إصدار الشهادات', 'settings': 'الأمان والمستخدمين' };
 			document.getElementById('header-title').innerText = titles[tabId];
-			
 			if(tabId === 'dashboard' && currentUser.role !== 'citizen') updateDashboardCharts();
-			
-			// (FIXED) All 3 loading functions are present below
-			if(tabId === 'settings' && currentUser.role === 'admin') {
-				loadUsersList();
-				loadDevicesList();
-				loadSessionsLog();
-			}
+			if(tabId === 'settings' && currentUser.role === 'admin') { loadUsersList(); loadDevicesList(); loadSessionsLog(); }
+			if(tabId === 'certificates') currentRef = `NSC-${Math.floor(1000+Math.random()*9000)}-${new Date().getFullYear()}`; document.getElementById('preview-ref').innerText = currentRef;
 		}
 
 		let chartLoc = null; let chartInc = null;
 		function updateDashboardCharts() {
 			if(allResidents.length === 0) return;
 			document.getElementById('stat-total').innerText = allResidents.length;
-			const owns = allResidents.filter(r => r.housing_type === 'ملك').length;
-			document.getElementById('stat-own').innerText = Math.round((owns/allResidents.length)*100) + '%';
-			const totalFam = allResidents.reduce((acc, curr) => acc + (curr.family_members_count || 1), 0);
-			document.getElementById('stat-family').innerText = Math.round(totalFam / allResidents.length);
-			const poors = allResidents.filter(r => r.income_level === 'احمر').length;
-			document.getElementById('stat-poor').innerText = Math.round((poors/allResidents.length)*100) + '%';
-
-			let locs = { 'شمال':0, 'وسط':0, 'جنوب':0 };
-			let incs = { 'اخضر':0, 'اصفر':0, 'احمر':0 };
+			const owns = allResidents.filter(r => r.housing_type === 'ملك').length; document.getElementById('stat-own').innerText = Math.round((owns/allResidents.length)*100) + '%';
+			const totalFam = allResidents.reduce((acc, curr) => acc + (curr.family_members_count || 1), 0); document.getElementById('stat-family').innerText = Math.round(totalFam / allResidents.length);
+			const poors = allResidents.filter(r => r.income_level === 'احمر').length; document.getElementById('stat-poor').innerText = Math.round((poors/allResidents.length)*100) + '%';
+			let locs = { 'شمال':0, 'وسط':0, 'جنوب':0 }; let incs = { 'اخضر':0, 'اصفر':0, 'احمر':0 };
 			allResidents.forEach(r => { if(locs[r.location]!==undefined) locs[r.location]++; if(incs[r.income_level]!==undefined) incs[r.income_level]++; });
-
-			const ctxL = document.getElementById('locationChart').getContext('2d');
-			if(chartLoc) chartLoc.destroy();
-			chartLoc = new Chart(ctxL, { type: 'bar', data: { labels: Object.keys(locs), datasets: [{ label: 'عدد السكان', data: Object.values(locs), backgroundColor: '#1F2124' }] }, options: { scales: { y: { beginAtZero: true } } } });
-
-			const ctxI = document.getElementById('incomeChart').getContext('2d');
-			if(chartInc) chartInc.destroy();
-			chartInc = new Chart(ctxI, { type: 'doughnut', data: { labels: ['ممتاز','متوسط','ضعيف'], datasets: [{ data: Object.values(incs), backgroundColor: ['#22c55e', '#eab308', '#ef4444'] }] } });
+			if(chartLoc) chartLoc.destroy(); chartLoc = new Chart(document.getElementById('locationChart').getContext('2d'), { type: 'bar', data: { labels: Object.keys(locs), datasets: [{ label: 'السكان', data: Object.values(locs), backgroundColor: '#0F172A', borderRadius: 4 }] }});
+			if(chartInc) chartInc.destroy(); chartInc = new Chart(document.getElementById('incomeChart').getContext('2d'), { type: 'doughnut', data: { labels: ['مستقر','متوسط','ضعيف'], datasets: [{ data: Object.values(incs), backgroundColor: ['#10B981', '#F59E0B', '#EF4444'], borderWidth: 0 }] }});
 		}
 
-		// ==========================================
-		// 5. RESIDENTS DATA & FORMS
-		// ==========================================
 		async function loadResidentsData() {
 			const tbody = document.getElementById('data-table-body');
 			try {
-				allResidents = await sbFetch('naseem_residents?order=created_at.desc');
-				renderTable(allResidents);
-				if(currentUser.role !== 'citizen') {
-					populateCertificateDropdown();
-					if(!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts();
-				}
-			} catch(e) { tbody.innerHTML = `<tr><td colspan="8" class="text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
+				allResidents = await sbFetch('naseem_residents?order=created_at.desc'); renderTable(allResidents);
+				if(currentUser.role !== 'citizen') { populateCertificateDropdown(); if(!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts(); }
+			} catch(e) { tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
 		}
 		
 		function renderTable(data) {
-			const tbody = document.getElementById('data-table-body');
+			const tbody = document.getElementById('data-table-body'); 
 			const isManager = (currentUser.role === 'admin' || currentUser.role === 'manager');
-			if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-500">لا توجد بيانات.</td></tr>'; return; }
+			
+			if (data.length === 0) { 
+				tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400">لا توجد بيانات.</td></tr>'; 
+				return; 
+			}
+			
 			let html = '';
 			data.forEach(row => {
-				html += `<tr class="hover:bg-gray-50 border-b border-gray-100">
-					<td class="p-3 font-bold">${row.full_name}</td>
-					<td class="p-3 font-mono">${row.national_id}</td>
-					<td class="p-3"><span class="px-2 py-1 bg-gray-200 rounded-sm text-xs">${row.location}</span></td>
-					<td class="p-3">${row.family_members_count}</td>
-					<td class="p-3 sensitive-col ${!isManager ? 'hidden' : ''}"><span class="px-2 py-1 ${row.housing_type==='ملك'?'bg-green-100 text-green-800':'bg-blue-100 text-blue-800'} rounded-sm text-[10px]">${row.housing_type||'-'}</span></td>
-					<td class="p-3 sensitive-col ${!isManager ? 'hidden' : ''}">${row.marital_status||'-'}</td>
-					<td class="p-3 sensitive-col ${!isManager ? 'hidden' : ''}"><span class="w-3 h-3 inline-block rounded-full ${row.income_level==='اخضر'?'bg-green-500':row.income_level==='اصفر'?'bg-yellow-500':'bg-red-500'}"></span></td>
-					<td class="p-3 text-center admin-col ${!isManager ? 'hidden' : ''}">
-						<button onclick="editCitizen('${row.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-bold underline">تعديل</button>
+				// تحديد لون الشارة بناءً على نوع السكن الجديد
+				let houseClass = "";
+				if (row.housing_type === 'مالك') houseClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
+				else if (row.housing_type === 'مستأجر') houseClass = "bg-blue-50 text-blue-700 border-blue-100";
+				else houseClass = "bg-amber-50 text-amber-700 border-amber-100"; // للـ "مؤقت"
+		
+				html += `<tr class="hover:bg-slate-50 transition border-b border-slate-100">
+					<td class="p-4 font-bold text-slate-800">${row.full_name}</td>
+					<td class="p-4 font-mono text-xs text-slate-500">${row.national_id}</td>
+					<td class="p-4"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-slate-600">${row.location}</span></td>
+					<td class="p-4 font-bold">${row.family_members_count}</td>
+					<td class="p-4 sensitive-col ${!isManager ? 'hidden' : ''}">
+						<span class="px-2 py-1 border rounded font-bold text-[11px] ${houseClass}">${row.housing_type || '-'}</span>
+					</td>
+					<td class="p-4 sensitive-col ${!isManager ? 'hidden' : ''}">${row.marital_status || '-'}</td>
+					<td class="p-4 sensitive-col ${!isManager ? 'hidden' : ''}">
+						<span class="w-3 h-3 block mx-auto rounded-full shadow-sm ${row.income_level === 'اخضر' ? 'bg-emerald-500' : row.income_level === 'اصفر' ? 'bg-amber-500' : 'bg-red-500'}"></span>
+					</td>
+					<td class="p-4 text-center admin-col ${!isManager ? 'hidden' : ''}">
+						<button onclick="editCitizen('${row.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-bold bg-blue-50 px-3 py-1 rounded transition">تعديل</button>
 					</td>
 				</tr>`;
 			});
-			tbody.innerHTML = html;
-			document.querySelectorAll('.sensitive-col, .admin-col').forEach(el => { if(isManager) el.classList.remove('hidden'); else el.classList.add('hidden'); });
+			
+			tbody.innerHTML = html; 
+			document.querySelectorAll('.sensitive-col, .admin-col').forEach(el => { 
+				if (isManager) el.classList.remove('hidden'); else el.classList.add('hidden'); 
+			});
 		}
-		
 		function filterTable() { const term = document.getElementById('search-resident').value.toLowerCase(); renderTable(allResidents.filter(r => r.full_name.toLowerCase().includes(term) || r.national_id.includes(term))); }
 
-		function openCitizenModal() { document.getElementById('citizen-form').reset(); document.getElementById('f_id').value = ''; document.getElementById('modal-title').innerHTML = 'إضافة مواطن جديد'; document.getElementById('add-modal').classList.remove('hidden'); }
+		function openCitizenModal() { document.getElementById('citizen-form').reset(); document.getElementById('f_id').value = ''; document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> إضافة مواطن جديد'; document.getElementById('add-modal').classList.remove('hidden'); }
 		function closeCitizenModal() { document.getElementById('add-modal').classList.add('hidden'); }
-		
 		function editCitizen(id) {
-			const citizen = allResidents.find(r => r.id === id);
-			if(!citizen) return;
-			document.getElementById('f_id').value = citizen.id;
-			document.getElementById('f_name').value = citizen.full_name;
-			document.getElementById('f_nid').value = citizen.national_id;
-			document.getElementById('f_phone').value = citizen.phone_number;
-			document.getElementById('f_dob').value = citizen.birth_date || '';
-			document.getElementById('f_loc').value = citizen.location;
-			document.getElementById('f_prof').value = citizen.profession || '';
-			document.getElementById('f_house').value = citizen.housing_type;
-			document.getElementById('f_marital').value = citizen.marital_status;
-			document.getElementById('f_fam').value = citizen.family_members_count;
-			document.getElementById('f_income').value = citizen.income_level;
-			document.getElementById('f_notes').value = citizen.special_issues || '';
-			
-			document.getElementById('modal-title').innerHTML = 'تعديل بيانات مواطن';
-			document.getElementById('add-modal').classList.remove('hidden');
+			const citizen = allResidents.find(r => r.id === id); if(!citizen) return;
+			document.getElementById('f_id').value = citizen.id; document.getElementById('f_name').value = citizen.full_name; document.getElementById('f_nid').value = citizen.national_id; document.getElementById('f_phone').value = citizen.phone_number; document.getElementById('f_dob').value = citizen.birth_date || ''; document.getElementById('f_loc').value = citizen.location; document.getElementById('f_prof').value = citizen.profession || ''; document.getElementById('f_house').value = citizen.housing_type; document.getElementById('f_marital').value = citizen.marital_status; document.getElementById('f_fam').value = citizen.family_members_count; document.getElementById('f_income').value = citizen.income_level; document.getElementById('f_notes').value = citizen.special_issues || '';
+			document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل السجل'; document.getElementById('add-modal').classList.remove('hidden');
 		}
 
 		async function saveCitizen() {
 			if(!document.getElementById('citizen-form').checkValidity()) return document.getElementById('citizen-form').reportValidity();
 			const btn = document.getElementById('btn-save'); btn.innerHTML = 'جاري الحفظ...'; btn.disabled = true;
-
 			const id = document.getElementById('f_id').value;
-			const payload = {
-				full_name: document.getElementById('f_name').value, national_id: document.getElementById('f_nid').value,
-				phone_number: document.getElementById('f_phone').value, birth_date: document.getElementById('f_dob').value || null,
-				location: document.getElementById('f_loc').value, profession: document.getElementById('f_prof').value,
-				housing_type: document.getElementById('f_house').value, marital_status: document.getElementById('f_marital').value,
-				family_members_count: parseInt(document.getElementById('f_fam').value), income_level: document.getElementById('f_income').value,
-				special_issues: document.getElementById('f_notes').value
-			};
-
+			const payload = { full_name: document.getElementById('f_name').value, national_id: document.getElementById('f_nid').value, phone_number: document.getElementById('f_phone').value, birth_date: document.getElementById('f_dob').value || null, location: document.getElementById('f_loc').value, profession: document.getElementById('f_prof').value, housing_type: document.getElementById('f_house').value, marital_status: document.getElementById('f_marital').value, family_members_count: parseInt(document.getElementById('f_fam').value), income_level: document.getElementById('f_income').value, special_issues: document.getElementById('f_notes').value };
 			try {
-				if(id) {
-					await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
-				} else {
-					payload.created_by = currentUser.id;
-					await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) });
-				}
+				if(id) await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) }); else { payload.created_by = currentUser.id; await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) }); }
 				closeCitizenModal(); loadResidentsData();
 			} catch(e) { alert('فشل الحفظ: ' + e.message); } finally { btn.innerHTML = 'حفظ البيانات'; btn.disabled = false; }
 		}
 
-		// ==========================================
-		// 6. CERTIFICATES
-		// ==========================================
-		function populateCertificateDropdown() {
-			const sel = document.getElementById('cert-citizen-select');
-			sel.innerHTML = '<option value="">-- اختر المواطن --</option>';
-			allResidents.forEach(r => sel.innerHTML += `<option value="${r.id}">${r.full_name} (${r.national_id})</option>`);
+		function populateCertificateDropdown() { const sel = document.getElementById('cert-citizen-select'); sel.innerHTML = '<option value="">-- اختر المواطن --</option>'; allResidents.forEach(r => sel.innerHTML += `<option value="${r.id}">${r.full_name} (${r.national_id})</option>`); }
+		function previewCertificate() {
+			const id = document.getElementById('cert-citizen-select').value;
+			if(!id) { document.getElementById('preview-name').innerText = '-----'; document.getElementById('preview-nid').innerText = '-----'; document.getElementById('preview-date').innerText = '-----'; return; }
+			const citizen = allResidents.find(r => r.id === id);
+			document.getElementById('preview-name').innerText = citizen.full_name; document.getElementById('preview-nid').innerText = citizen.national_id; document.getElementById('preview-date').innerText = new Date().toLocaleDateString('ar-EG');
 		}
 
-		// (FIXED) Safari bug resolution using innerHTML on an iframe document
 		function generateCertificate() {
-			const id = document.getElementById('cert-citizen-select').value;
-			if(!id) return alert('الرجاء اختيار مواطن أولاً لإصدار الشهادة');
+			const id = document.getElementById('cert-citizen-select').value; if(!id) return alert('الرجاء اختيار مواطن');
 			const citizen = allResidents.find(r => r.id === id);
-			
-			const cName = citizen.full_name;
-			const cNid = citizen.national_id;
-			const cLoc = `النسيم - ${citizen.location}`;
-			const cDate = new Date().toLocaleDateString('ar-EG');
-		
+			const cName = citizen.full_name; const cNid = citizen.national_id; const cLoc = `النسيم - ${citizen.location}`; const cDate = new Date().toLocaleDateString('ar-EG');
 			const printHTML = `
-				<html dir="rtl" lang="ar">
-				<head>
-					<title>شهادة سكن - ${cName}</title>
-					<style>
-						@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap');
-						body { font-family: 'Cairo', sans-serif; padding: 40px; color: #000; background: #fff; }
-						.header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px double #000; padding-bottom: 20px; margin-bottom: 40px; }
-						.header-text { line-height: 1.8; font-size: 18px; font-weight: 800; text-align: center; }
-						.logo-container { width: 120px; text-align: center; }
-						.title { text-align: center; font-size: 36px; text-decoration: underline; margin-bottom: 50px; font-weight: 800; letter-spacing: 2px; }
-						.content { font-size: 22px; line-height: 2.2; margin-bottom: 50px; text-align: justify; }
-						table { width: 100%; border-collapse: collapse; margin-bottom: 80px; font-size: 20px; }
-						td { border: 2px solid #000; padding: 15px; }
-						.bg-gray { background-color: #f3f4f6; font-weight: 800; width: 30%; }
-						.footer { display: flex; justify-content: space-between; margin-top: 100px; text-align: center; font-weight: 800; font-size: 20px; }
-					</style>
-				</head>
+				<html dir="rtl" lang="ar"><head><title>شهادة سكن - ${cName}</title>
+				<style>@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap'); body { font-family: 'Cairo', sans-serif; padding: 40px; color: #0f172a; background: #fff; } .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px double #cbd5e1; padding-bottom: 20px; margin-bottom: 40px; } .header-text { line-height: 1.8; font-size: 18px; font-weight: 800; text-align: center; } .logo-container { width: 120px; text-align: center; } .title { text-align: center; font-size: 36px; text-decoration: underline; margin-bottom: 20px; font-weight: 800; letter-spacing: 2px; color: #1e293b; } .ref { text-align: center; font-family: monospace; color: #64748b; margin-bottom: 50px; font-size: 14px; } .content { font-size: 22px; line-height: 2.2; margin-bottom: 50px; text-align: justify; } table { width: 100%; border-collapse: collapse; margin-bottom: 80px; font-size: 20px; } td { border: 2px solid #cbd5e1; padding: 15px; } .bg-gray { background-color: #f8fafc; font-weight: 800; width: 30%; color: #334155; } .footer { display: flex; justify-content: space-between; margin-top: 100px; text-align: center; font-weight: 800; font-size: 20px; }</style></head>
 				<body>
 					<div class="header">
-						<div class="logo-container">
-							<svg viewBox="0 0 100 100" width="90" height="90">
-								<circle cx="50" cy="50" r="48" fill="none" stroke="#000" stroke-width="3"/>
-								<circle cx="50" cy="50" r="38" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="4 4"/>
-								<path d="M 25 65 L 50 25 L 75 65 Z" fill="none" stroke="#000" stroke-width="2"/>
-								<text x="50" y="85" font-family="Cairo" font-size="12" font-weight="bold" text-anchor="middle">شرق النيل</text>
-							</svg>
-						</div>
+						<div class="logo-container"><svg viewBox="0 0 120 120" width="100" height="100"><circle cx="60" cy="60" r="56" fill="none" stroke="#000" stroke-width="2"/><circle cx="60" cy="60" r="50" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="4 4"/><path d="M 45 25 C 35 45, 50 65, 35 95 L 85 90 C 95 60, 95 40, 85 25 Z" fill="#f4f5f7" stroke="#000" stroke-width="2" stroke-linejoin="round"/><path d="M 40 25 C 30 45, 45 65, 30 95" fill="none" stroke="#000" stroke-width="2"/><text x="63" y="58" font-family="Cairo" font-size="13" font-weight="800" fill="#000" text-anchor="middle">محلية</text><text x="63" y="74" font-family="Cairo" font-size="16" font-weight="900" fill="#000" text-anchor="middle">شرق النيل</text></svg></div>
 						<div class="header-text">جمهورية السودان<br>ولاية الخرطوم<br>محلية شرق النيل - الحاج يوسف<br>لجنة خدمات مدينة النسيم السكنية</div>
-						<div class="logo-container">
-							<svg viewBox="0 0 120 60" width="100" height="50" style="border: 2px solid #000;">
-								<rect width="120" height="20" fill="#D21034"/>
-								<rect y="20" width="120" height="20" fill="#FFFFFF"/>
-								<rect y="40" width="120" height="20" fill="#000000"/>
-								<polygon points="0,0 40,30 0,60" fill="#007229"/>
-							</svg>
-						</div>
+						<div class="logo-container"><svg viewBox="0 0 120 60" width="100" height="50" style="border: 2px solid #000;"><rect width="120" height="20" fill="#D21034"/><rect y="20" width="120" height="20" fill="#FFFFFF"/><rect y="40" width="120" height="20" fill="#000000"/><polygon points="0,0 40,30 0,60" fill="#007229"/></svg></div>
 					</div>
-					<div class="title">شـهـــادة سـكـــن</div>
+					<div class="title">شـهـــادة سـكـــن</div><div class="ref">Ref: ${currentRef}</div>
 					<div class="content">تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.</div>
-					<table>
-						<tr><td class="bg-gray">الاسم الرباعي:</td><td>${cName}</td></tr>
-						<tr><td class="bg-gray">الرقم الوطني:</td><td>${cNid}</td></tr>
-						<tr><td class="bg-gray">الموقع الجغرافي:</td><td>${cLoc}</td></tr>
-						<tr><td class="bg-gray">تاريخ الإصدار:</td><td>${cDate}</td></tr>
-					</table>
+					<table><tr><td class="bg-gray">الاسم الرباعي:</td><td>${cName}</td></tr><tr><td class="bg-gray">الرقم الوطني:</td><td>${cNid}</td></tr><tr><td class="bg-gray">الموقع الجغرافي:</td><td>${cLoc}</td></tr><tr><td class="bg-gray">تاريخ الإصدار:</td><td>${cDate}</td></tr></table>
 					<div class="footer"><div>توقيع وختم رئيس اللجنة<br><br>.......................................</div><div>توقيع مسئول الإحصاء<br><br>.......................................</div></div>
-				</body>
-				</html>
-			`;
-		
-			const iframe = document.createElement('iframe');
-			iframe.style.position = 'fixed'; iframe.style.right = '-1000px'; iframe.style.bottom = '-1000px'; 
-			iframe.style.width = '0'; iframe.style.height = '0'; iframe.style.border = '0';
-			document.body.appendChild(iframe);
-		
-			const doc = iframe.contentWindow.document;
-			doc.head.innerHTML = printHTML.split('<head>')[1].split('</head>')[0];
-			doc.body.innerHTML = printHTML.split('<body>')[1].split('</body>')[0];
-		
-			setTimeout(() => {
-				iframe.contentWindow.focus(); iframe.contentWindow.print();
-				setTimeout(() => { document.body.removeChild(iframe); }, 2000);
-			}, 500);
+				</body></html>`;
+			const iframe = document.createElement('iframe'); iframe.style.position = 'fixed'; iframe.style.right = '-1000px'; iframe.style.bottom = '-1000px'; iframe.style.width = '0'; iframe.style.height = '0'; document.body.appendChild(iframe);
+			const doc = iframe.contentWindow.document; doc.head.innerHTML = printHTML.split('<head>')[1].split('</head>')[0]; doc.body.innerHTML = printHTML.split('<body>')[1].split('</body>')[0];
+			setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => { document.body.removeChild(iframe); }, 2000); }, 500);
 		}
 
-		// ==========================================
-		// 7. SETTINGS & ADMIN
-		// ==========================================
 		async function loadUsersList() {
 			const ul = document.getElementById('users-list');
-			try {
-				const users = await sbFetch('naseem_acc');
-				ul.innerHTML = '';
-				users.forEach(u => ul.innerHTML += `<li class="py-3 flex justify-between items-center"><div class="flex flex-col"><span class="font-bold">${u.name}</span><span class="text-xs text-gray-500">${u.email}</span></div><span class="text-xs bg-gray-200 px-2 rounded font-bold">${u.role.toUpperCase()}</span></li>`);
-			} catch(e) { ul.innerHTML = 'خطأ في جلب المستخدمين'; }
+			try { const users = await sbFetch('naseem_acc'); ul.innerHTML = ''; users.forEach(u => ul.innerHTML += `<li class="py-3 px-4 flex justify-between items-center"><div class="flex flex-col"><span class="font-bold text-slate-700">${u.name}</span><span class="text-[11px] text-slate-400 font-mono">${u.email}</span></div><span class="text-[10px] uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded font-black">${u.role}</span></li>`); } catch(e) { ul.innerHTML = 'خطأ في الجلب'; }
 		}
-		
 		async function saveUser() {
 			const payload = { name: document.getElementById('u_name').value, email: document.getElementById('u_email').value, password: document.getElementById('u_pass').value, role: document.getElementById('u_role').value, security_question: 'ما هو اسم مدرستك الابتدائية؟', security_answer: 'النسيم', f2a_email: document.getElementById('u_email').value };
 			if(!payload.name || !payload.email) return alert('البيانات ناقصة');
 			const btn = document.getElementById('btn-save-user'); btn.innerHTML = 'جاري...'; btn.disabled = true;
-			try { await sbFetch('naseem_acc', { method: 'POST', body: JSON.stringify(payload) }); alert('تم الحفظ'); loadUsersList(); } catch(e) { alert(e.message); } finally { btn.innerHTML = 'إنشاء حساب'; btn.disabled = false; }
+			try { await sbFetch('naseem_acc', { method: 'POST', body: JSON.stringify(payload) }); alert('تم الحفظ'); loadUsersList(); document.getElementById('u_name').value=''; document.getElementById('u_email').value=''; document.getElementById('u_pass').value=''; } catch(e) { alert(e.message); } finally { btn.innerHTML = 'إنشاء الحساب'; btn.disabled = false; }
 		}
 
-		// (FIXED) Devices loading matches the TABLE in the user's HTML
 		async function loadDevicesList() {
-			const tbody = document.getElementById('devices-table-body');
-			tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">جاري التحميل...</td></tr>';
+			const tbody = document.getElementById('devices-table-body'); tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">جاري التحميل...</td></tr>';
 			try {
-				const [devices, users] = await Promise.all([
-					sbFetch('naseem_trusted_devices?order=created_at.desc'),
-					sbFetch('naseem_acc')
-				]);
-				
-				if(devices.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center">لا توجد أجهزة مسجلة</td></tr>'; return; }
-		
+				const [devices, users] = await Promise.all([sbFetch('naseem_trusted_devices?order=created_at.desc'), sbFetch('naseem_acc')]);
+				if(!devices || devices.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">لا توجد أجهزة مسجلة</td></tr>'; return; }
 				let html = '';
 				devices.forEach(d => {
 					const userName = (users.find(u => u.id === d.user_id) || {}).name || 'مجهول';
-					const statusHtml = d.status === 'approved' 
-						? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded font-bold">مصرح ✔️</span>' 
-						: `<button onclick="updateDeviceStatus('${d.id}', 'approved')" class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-800 transition">تفعيل</button>`;
-		
-					html += `
-						<tr class="hover:bg-gray-50">
-							<td class="p-3 font-bold">${userName}</td>
-							<td class="p-3"><span class="block font-bold">${d.os || '-'}</span><span class="text-gray-500">${d.browser || '-'}</span></td>
-							<td class="p-3 font-mono" dir="ltr"><span class="block">${d.ip_address || '-'}</span><span class="text-gray-500 text-[10px]">${d.country || '-'}</span></td>
-							<td class="p-3 font-mono">${d.screen_size || '-'}</td>
-							<td class="p-3 text-center">
-								<div class="flex gap-2 justify-center items-center">
-									${statusHtml}
-									<button onclick="deleteDevice('${d.id}')" class="text-red-600 hover:text-red-800 underline">حذف</button>
-								</div>
-							</td>
-						</tr>`;
-				});
-				tbody.innerHTML = html;
-			} catch(e) { tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
+					const statusHtml = d.status === 'approved' ? '<span class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-bold text-xs border border-emerald-100 flex items-center justify-center gap-1 w-fit mx-auto"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> مصرح</span>' : `<div class="flex justify-center gap-2"><button onclick="updateDeviceStatus('${d.id}', 'approved')" class="bg-emerald-500 text-white px-3 py-1 rounded shadow-sm hover:bg-emerald-600 text-xs font-bold">تفعيل</button><button onclick="deleteDevice('${d.id}')" class="bg-slate-200 text-slate-600 px-3 py-1 rounded shadow-sm hover:bg-slate-300 text-xs font-bold">رفض</button></div>`;
+					html += `<tr class="hover:bg-slate-50 transition"><td class="p-4 font-bold text-slate-700">${userName}<br><span class="text-[10px] text-slate-400 font-mono font-normal">${d.device_uuid.substring(0,8)}</span></td><td class="p-4"><span class="block font-bold text-slate-800">${d.os || '-'}</span><span class="text-xs text-slate-500">${d.browser || '-'}</span></td><td class="p-4 font-mono text-xs"><span class="bg-slate-100 px-2 py-1 rounded text-slate-600">${d.ip_address || '-'}</span></td><td class="p-4 text-center align-middle">${statusHtml}</td></tr>`;
+				}); tbody.innerHTML = html;
+			} catch(e) { tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
 		}
+		async function updateDeviceStatus(id, status) { try { await sbFetch(`naseem_trusted_devices?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ status: status }) }); loadDevicesList(); } catch(e) {} }
+		async function deleteDevice(id) { if(confirm('تأكيد الحذف؟')) { try { await sbFetch(`naseem_trusted_devices?id=eq.${id}`, { method: 'DELETE' }); loadDevicesList(); } catch(e) {} } }
 
-		async function updateDeviceStatus(id, status) {
-			try {
-				await sbFetch(`naseem_trusted_devices?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ status: status }) });
-				loadDevicesList();
-			} catch(e) { alert('خطأ في التحديث: ' + e.message); }
-		}
-		
-		async function deleteDevice(id) {
-			if(!confirm('هل أنت متأكد من الحذف؟ سيضطر المستخدم لطلب OTP مستقبلاً.')) return;
-			try {
-				await sbFetch(`naseem_trusted_devices?id=eq.${id}`, { method: 'DELETE' });
-				loadDevicesList();
-			} catch(e) { alert('خطأ في الحذف: ' + e.message); }
-		}
-
-		// (FIXED) Included Missing Sessions Log Function
 		async function loadSessionsLog() {
-			const ul = document.getElementById('sessions-log-list');
-			ul.innerHTML = '<li class="py-2 text-center text-gray-500 text-xs">جاري التحميل...</li>';
+			const ul = document.getElementById('sessions-log-list'); ul.innerHTML = '<li class="py-4 text-center text-slate-400 text-sm">جاري جلب السجلات...</li>';
 			try {
-				const [logs, users] = await Promise.all([ 
-					sbFetch('naseem_login_sessions?order=created_at.desc&limit=50'), 
-					sbFetch('naseem_acc') 
-				]);
-				
-				if(!logs || logs.length === 0) { ul.innerHTML = '<li class="py-2 text-center text-xs">لا توجد سجلات</li>'; return; }
-				
+				const [logs, users] = await Promise.all([sbFetch('naseem_login_sessions?order=created_at.desc&limit=30'), sbFetch('naseem_acc')]);
+				if(!logs || logs.length === 0) { ul.innerHTML = '<li class="py-4 text-center text-slate-400 text-sm">لا توجد نشاطات مسجلة.</li>'; return; }
 				let html = '';
 				logs.forEach(log => {
 					const userName = (users.find(u => u.id === log.user_id) || {}).name || 'مجهول';
 					const date = new Date(log.created_at).toLocaleString('ar-EG');
-					const color = log.action.includes('Login') ? 'text-green-600' : 'text-red-600';
-					
+					const isSuccess = log.action.includes('Login');
 					html += `
-					<li class="py-3 flex justify-between items-center text-xs border-b border-gray-50 hover:bg-gray-50">
-						<div class="flex flex-col gap-1">
-							<span class="font-bold text-[var(--oracle-dark)]">${userName}</span>
-							<span class="text-gray-500 font-mono">${log.ip_address || 'IP Unknown'} | ${date}</span>
+					<li class="relative animate-in">
+						<span class="absolute -right-[23px] top-1 w-3 h-3 rounded-full border-2 border-white ring-2 ${isSuccess ? 'bg-emerald-500 ring-emerald-100' : 'bg-red-500 ring-red-100'}"></span>
+						<div class="flex justify-between items-start">
+							<div><p class="text-sm font-bold text-slate-700">${log.action} <span class="text-xs text-slate-400 font-normal">(${userName})</span></p><p class="text-[11px] text-slate-400 font-mono mt-1">${log.ip_address || 'IP Unknown'}</p></div>
+							<span class="text-[10px] text-slate-400 font-mono">${date}</span>
 						</div>
-						<span class="${color} font-bold border px-2 py-1 rounded bg-white">${log.action}</span>
 					</li>`;
-				});
-				ul.innerHTML = html;
-			} catch(e) { ul.innerHTML = `<li class="py-2 text-center text-red-500">خطأ: ${e.message}</li>`; }
+				}); ul.innerHTML = html;
+			} catch(e) { ul.innerHTML = `<li class="py-4 text-center text-red-500 text-sm">خطأ: ${e.message}</li>`; }
 		}
 	</script>
 </body>
