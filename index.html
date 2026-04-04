@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>نظام إحصاء مدينة النسيم | Oracle Enterprise</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<style>
+		:root {
+			--oracle-red: #C74634; --oracle-dark: #1F2124; --oracle-gray: #4A4A4A;
+			--bg-color: #F4F5F7; --border-color: #D1D5DB;
+		}
+		body { font-family: 'Cairo', sans-serif; background-color: var(--bg-color); color: #333; }
+		.hidden { display: none !important; }
+		
+		.form-input { width: 100%; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 2px; outline: none; transition: 0.2s; font-size: 14px; }
+		.form-input:focus { border-color: var(--oracle-red); box-shadow: 0 0 0 1px var(--oracle-red); }
+		.form-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; color: var(--oracle-dark); }
+		.required::after { content: " *"; color: var(--oracle-red); }
+		
+		.btn-primary { background-color: var(--oracle-red); color: white; border-radius: 2px; font-weight: 700; padding: 8px 16px; transition: 0.2s; }
+		.btn-primary:hover { background-color: #A33525; }
+		.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+		.btn-secondary { background-color: #EAEAEA; color: var(--oracle-dark); border: 1px solid #CCC; border-radius: 2px; font-weight: 700; padding: 8px 16px; transition: 0.2s; }
+		.btn-secondary:hover { background-color: #D1D5DB; }
+
+		.table-header { background-color: #EAEAEA; border-bottom: 2px solid var(--border-color); color: var(--oracle-dark); }
+		.svg-icon { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+		
+		.sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: #D1D5DB; transition: 0.2s; border-right: 3px solid transparent; cursor: pointer; }
+		.sidebar-link:hover, .sidebar-link.active { background-color: #2D3035; color: white; border-right-color: var(--oracle-red); }
+		
+		.modal-overlay { background: rgba(31, 33, 36, 0.7); backdrop-filter: blur(2px); }
+		.loader { border: 2px solid #f3f3f3; border-top: 2px solid var(--oracle-red); border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; margin: 0 auto; }
+		@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+		/* Print Styles for Certificate */
+		@media print {
+			body * { visibility: hidden; }
+			#print-area, #print-area * { visibility: visible; }
+			#print-area { position: absolute; left: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 20px; background: white; }
+			.no-print { display: none !important; }
+		}
+	</style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex">
+
+	<div id="login-screen" class="absolute inset-0 bg-[var(--bg-color)] z-50 flex items-center justify-center">
+		<div class="w-full max-w-md p-8 bg-white border border-gray-200 shadow-lg rounded-sm">
+			<div class="text-center mb-8 border-b pb-4">
+				<h2 class="text-2xl font-bold text-[var(--oracle-dark)] uppercase tracking-wide">NASEEM CITY</h2>
+				<p class="text-xs text-gray-500 font-bold mt-1">STATISTICS DATA SYSTEM</p>
+			</div>
+			<div id="step-1">
+				<div class="mb-4"><label class="form-label">البريد الإلكتروني</label><input type="text" id="login-email" class="form-input" placeholder="admin@naseem.sd"></div>
+				<div class="mb-6"><label class="form-label">كلمة المرور</label><input type="password" id="login-pass" class="form-input" placeholder="••••••••"></div>
+				<button id="btn-step-1" onclick="handleLoginStep1()" class="w-full btn-primary">تسجيل الدخول</button>
+			</div>
+			<div id="step-2" class="hidden">
+				<div class="mb-6"><label class="form-label text-[var(--oracle-red)]" id="ui-security-q">جاري جلب السؤال...</label><input type="text" id="security-answer" class="form-input" placeholder="إجابة الأمان..."></div>
+				<button id="btn-step-2" onclick="handleLoginStep2()" class="w-full btn-primary">التحقق وإرسال الرمز</button>
+			</div>
+			<div id="step-3" class="hidden">
+				<div class="bg-blue-50 border border-blue-200 p-3 mb-4 rounded-sm"><p class="text-xs text-blue-800 font-bold">تم إرسال رمز التحقق (OTP) إلى بريدك.</p></div>
+				<div class="mb-2"><label class="form-label flex justify-between"><span>الرمز</span><span id="otp-timer" class="text-red-600 font-bold font-mono">03:00</span></label><input type="text" id="otp-input" class="form-input text-center text-xl tracking-widest font-mono" maxlength="6"></div>
+				<div class="mb-6 flex items-center gap-2 mt-4"><input type="checkbox" id="remember-device" class="w-4 h-4 accent-[#C74634]"><label for="remember-device" class="text-xs font-bold text-gray-600 cursor-pointer">حفظ هذا الجهاز</label></div>
+				<button id="btn-step-3" onclick="handleLoginStep3()" class="w-full btn-primary">تأكيد الدخول</button>
+			</div>
+		</div>
+	</div>
+
+	<aside class="w-64 bg-[var(--oracle-dark)] flex flex-col h-full z-10 shadow-xl no-print">
+		<div class="p-6 border-b border-gray-700 bg-[#17191B]">
+			<h1 class="text-lg font-bold text-white tracking-wider">NASEEM SYS</h1>
+			<p class="text-[10px] text-gray-400 uppercase mt-1">Sudan - East Nile</p>
+		</div>
+		<div class="flex flex-col gap-1 mt-4 flex-grow">
+			<a onclick="switchTab('dashboard')" class="sidebar-link nav-link active" data-target="dashboard">
+				<svg class="svg-icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+				<span class="text-sm font-bold">لوحة القيادة (التحليلات)</span>
+			</a>
+			<a onclick="switchTab('residents')" class="sidebar-link nav-link" data-target="residents">
+				<svg class="svg-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+				<span class="text-sm font-bold">قاعدة بيانات السكان</span>
+			</a>
+			
+			<div id="admin-menu" class="hidden flex-col gap-1 mt-4 pt-4 border-t border-gray-700">
+				<span class="text-[10px] text-gray-500 px-4 font-bold uppercase mb-2">إدارة النظام</span>
+				<a onclick="switchTab('certificates')" class="sidebar-link nav-link" data-target="certificates">
+					<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+					<span class="text-sm font-bold">إصدار الشهادات</span>
+				</a>
+				<a onclick="switchTab('settings')" class="sidebar-link nav-link" data-target="settings">
+					<svg class="svg-icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+					<span class="text-sm font-bold">إعدادات المستخدمين</span>
+				</a>
+			</div>
+		</div>
+		<div class="p-4 bg-[#17191B] border-t border-gray-700 flex justify-between items-center cursor-pointer hover:bg-black transition" onclick="logout()">
+			<div><p class="font-bold text-sm text-white" id="user-name">User Name</p><p class="text-[10px] text-gray-400" id="user-role">Role</p></div>
+			<svg class="svg-icon text-red-500"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+		</div>
+	</aside>
+
+	<main class="flex-1 flex flex-col h-full bg-[var(--bg-color)] relative overflow-y-auto no-print">
+		<header class="bg-white p-4 shadow-sm flex justify-between items-center px-8 border-b border-gray-200 min-h-[64px]">
+			<h2 class="text-lg font-bold text-gray-800" id="header-title">لوحة القيادة (التحليلات)</h2>
+			<button id="btn-add-citizen" onclick="openCitizenModal()" class="hidden btn-primary text-sm flex items-center gap-2">
+				<svg class="svg-icon"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>إضافة بيانات مواطن
+			</button>
+		</header>
+
+		<div class="p-6 flex-1 flex flex-col gap-6">
+			
+			<div id="view-dashboard" class="app-view">
+				<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+					<div class="bg-white p-5 border border-gray-200 border-t-4 border-t-[var(--oracle-dark)] rounded-sm shadow-sm">
+						<p class="text-xs text-gray-500 font-bold uppercase">إجمالي السكان المسجلين</p>
+						<h3 class="text-3xl font-bold mt-2" id="stat-total">0</h3>
+					</div>
+					<div class="bg-white p-5 border border-gray-200 border-t-4 border-t-green-600 rounded-sm shadow-sm">
+						<p class="text-xs text-gray-500 font-bold uppercase">نسبة المنازل (ملك)</p>
+						<h3 class="text-3xl font-bold mt-2 text-green-700" id="stat-own">0%</h3>
+					</div>
+					<div class="bg-white p-5 border border-gray-200 border-t-4 border-t-blue-600 rounded-sm shadow-sm">
+						<p class="text-xs text-gray-500 font-bold uppercase">متوسط أفراد الأسرة</p>
+						<h3 class="text-3xl font-bold mt-2 text-blue-700" id="stat-family">0</h3>
+					</div>
+					<div class="bg-white p-5 border border-gray-200 border-t-4 border-t-red-600 rounded-sm shadow-sm">
+						<p class="text-xs text-gray-500 font-bold uppercase">الدخل الضعيف (أحمر)</p>
+						<h3 class="text-3xl font-bold mt-2 text-red-700" id="stat-poor">0%</h3>
+					</div>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div class="bg-white p-6 border border-gray-200 rounded-sm shadow-sm">
+						<h4 class="font-bold text-sm mb-4">التوزيع الجغرافي (شمال، وسط، جنوب)</h4>
+						<canvas id="locationChart" height="200"></canvas>
+					</div>
+					<div class="bg-white p-6 border border-gray-200 rounded-sm shadow-sm">
+						<h4 class="font-bold text-sm mb-4">مستويات الدخل</h4>
+						<canvas id="incomeChart" height="200"></canvas>
+					</div>
+				</div>
+			</div>
+
+			<div id="view-residents" class="app-view hidden h-full flex flex-col">
+				<div class="bg-white shadow-sm border border-gray-200 flex-1 flex flex-col overflow-hidden rounded-sm">
+					<div class="p-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+						<input type="text" id="search-resident" onkeyup="filterTable()" placeholder="بحث بالاسم أو الرقم الوطني..." class="form-input w-80 bg-white">
+						<button onclick="loadResidentsData()" class="text-gray-500 hover:text-[var(--oracle-dark)]"><svg class="svg-icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+					</div>
+					<div class="overflow-auto flex-1 relative">
+						<table class="w-full text-sm text-right border-collapse" id="residents-table">
+							<thead class="table-header sticky top-0 bg-[#EAEAEA] z-10">
+								<tr>
+									<th class="p-3 border-b">الاسم الرباعي</th>
+									<th class="p-3 border-b">الرقم الوطني</th>
+									<th class="p-3 border-b">الموقع</th>
+									<th class="p-3 border-b">عدد الأسرة</th>
+									<th class="p-3 border-b sensitive-col">السكن</th>
+									<th class="p-3 border-b sensitive-col">الحالة</th>
+									<th class="p-3 border-b sensitive-col">الدخل</th>
+									<th class="p-3 border-b text-center admin-col">إجراءات</th>
+								</tr>
+							</thead>
+							<tbody id="data-table-body" class="divide-y divide-gray-200 text-gray-700 font-medium">
+								<tr><td colspan="8" class="p-8 text-center text-gray-500">جاري تحميل البيانات...</td></tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+
+			<div id="view-certificates" class="app-view hidden">
+				<div class="bg-white p-6 border border-gray-200 rounded-sm shadow-sm max-w-2xl mx-auto">
+					<h3 class="font-bold text-lg border-b pb-3 mb-4">إصدار شهادة سكن معتمدة</h3>
+					<p class="text-sm text-gray-500 mb-4">اختر المواطن من القائمة لإصدار الشهادة وطباعتها بصيغة PDF.</p>
+					<div class="flex gap-2">
+						<select id="cert-citizen-select" class="form-input flex-1">
+							<option value="">جاري تحميل قائمة السكان...</option>
+						</select>
+						<button onclick="generateCertificate()" class="btn-primary flex items-center gap-2 whitespace-nowrap">
+							<svg class="svg-icon"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+							إنشاء وطباعة
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div id="view-settings" class="app-view hidden">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					
+					<div class="bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col">
+						<div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-[var(--oracle-dark)]">إدارة حسابات النظام</h3></div>
+						<div class="p-4 overflow-y-auto max-h-64">
+							<ul id="users-list" class="divide-y divide-gray-100">
+								<li class="py-2 text-sm text-center text-gray-500">جاري التحميل...</li>
+							</ul>
+						</div>
+					</div>
+			
+					<div class="bg-white border border-gray-200 rounded-sm shadow-sm flex flex-col h-fit">
+						<div class="p-4 border-b bg-gray-50"><h3 class="font-bold text-[var(--oracle-dark)]">إضافة مستخدم جديد</h3></div>
+						<div class="p-4 flex flex-col gap-4">
+							<div><label class="form-label required">الاسم</label><input type="text" id="u_name" class="form-input"></div>
+							<div><label class="form-label required">البريد الإلكتروني</label><input type="email" id="u_email" class="form-input"></div>
+							<div><label class="form-label required">كلمة المرور</label><input type="password" id="u_pass" class="form-input"></div>
+							<div>
+								<label class="form-label required">الصلاحية (الدور)</label>
+								<select id="u_role" class="form-input">
+									<option value="admin">إدمن (إدارة كاملة)</option>
+									<option value="manager">مدير (إدارة بيانات وشهادات)</option>
+									<option value="citizen">مواطن (عرض الإحصائيات فقط)</option>
+								</select>
+							</div>
+							<button onclick="saveUser()" id="btn-save-user" class="btn-primary mt-2">إنشاء حساب</button>
+						</div>
+					</div>
+			
+					<div class="col-span-1 md:col-span-2 bg-white border border-gray-200 rounded-sm shadow-sm mt-2">
+						<div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+							<h3 class="font-bold text-[var(--oracle-dark)]">إدارة الأجهزة الموثوقة (التصاريح)</h3>
+							<button onclick="loadDevicesList()" class="text-[var(--oracle-red)] text-xs font-bold underline">تحديث القائمة</button>
+						</div>
+						<div class="overflow-auto max-h-80">
+							<table class="w-full text-xs text-right border-collapse">
+								<thead class="bg-[#EAEAEA] text-[var(--oracle-dark)] sticky top-0">
+									<tr>
+										<th class="p-3 border-b">المستخدم</th>
+										<th class="p-3 border-b">نظام التشغيل والمتصفح</th>
+										<th class="p-3 border-b">الموقع (IP)</th>
+										<th class="p-3 border-b">حجم الشاشة</th>
+										<th class="p-3 border-b text-center">الحالة والإجراء</th>
+									</tr>
+								</thead>
+								<tbody id="devices-table-body" class="divide-y divide-gray-200">
+									<tr><td colspan="5" class="p-4 text-center text-gray-500">جاري التحميل...</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+			
+					<div class="col-span-1 md:col-span-2 bg-white border border-gray-200 rounded-sm shadow-sm mt-2">
+						<div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+							<h3 class="font-bold text-[var(--oracle-dark)]">سجل نشاط الدخول والخروج (Sessions Log)</h3>
+							<button onclick="loadSessionsLog()" class="text-[var(--oracle-red)] text-xs font-bold underline">تحديث السجل</button>
+						</div>
+						<div class="overflow-auto max-h-64">
+							<ul id="sessions-log-list" class="divide-y divide-gray-100 px-4">
+								<li class="py-2 text-center text-gray-500 text-xs">جاري التحميل...</li>
+							</ul>
+						</div>
+					</div>
+			
+				</div>
+			</div>
+
+		</div>
+	</main>
+
+	<div id="print-area" class="hidden no-print bg-white p-10 text-center font-bold text-black border-4 border-double border-gray-800 relative">
+		<div class="flex justify-between items-center border-b-2 border-black pb-6 mb-8">
+			<div class="text-right leading-relaxed text-sm">
+				<p>جمهورية السودان</p>
+				<p>ولاية الخرطوم</p>
+				<p>محلية شرق النيل - الحاج يوسف</p>
+				<p>لجنة خدمات مدينة النسيم السكنية</p>
+			</div>
+			<svg width="120" height="60" viewBox="0 0 1200 600" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="200" fill="#D21034"/>
+    <rect y="200" width="1200" height="200" fill="#FFFFFF"/>
+    <rect y="400" width="1200" height="200" fill="#000000"/>
+    <polygon points="0,0 400,300 0,600" fill="#007229"/>
+</svg>
+		</div>
+		
+		<h1 class="text-3xl underline mb-10 mt-6 tracking-wide">شـهـــادة سـكـــن</h1>
+		
+		<p class="text-right text-lg leading-loose mb-12">
+			تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.
+		</p>
+		
+		<table class="w-full text-right border-collapse mb-16 text-lg">
+			<tr><td class="border border-black p-3 w-1/3 bg-gray-100">الاسم الرباعي:</td><td class="border border-black p-3" id="cert-name"></td></tr>
+			<tr><td class="border border-black p-3 bg-gray-100">الرقم الوطني:</td><td class="border border-black p-3" id="cert-nid"></td></tr>
+			<tr><td class="border border-black p-3 bg-gray-100">الموقع الجغرافي:</td><td class="border border-black p-3" id="cert-loc"></td></tr>
+			<tr><td class="border border-black p-3 bg-gray-100">تاريخ الإصدار:</td><td class="border border-black p-3" id="cert-date"></td></tr>
+		</table>
+		
+		<div class="flex justify-between items-end mt-20 pt-10 px-10">
+			<div class="text-center"><p class="mb-4">توقيع وختم رئيس اللجنة</p><p>.......................................</p></div>
+			<div class="text-center"><p class="mb-4">توقيع مسئول الإحصاء</p><p>.......................................</p></div>
+		</div>
+	</div>
+
+	<div id="add-modal" class="fixed inset-0 z-50 modal-overlay hidden flex items-center justify-center p-4 no-print">
+		<div class="bg-white w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] rounded-sm border border-gray-300">
+			<div class="p-4 border-b flex justify-between items-center bg-[#F8F9FA]">
+				<h3 class="font-bold text-[var(--oracle-dark)] flex items-center gap-2" id="modal-title">
+					<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> استمارة السجل المدني
+				</h3>
+				<button onclick="closeCitizenModal()" class="text-gray-400 hover:text-red-600 transition"><svg class="svg-icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+			</div>
+			
+			<div class="p-6 overflow-y-auto bg-white flex-1">
+				<form id="citizen-form" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+					<input type="hidden" id="f_id"> <div class="md:col-span-3 pb-2 mb-2 border-b"><h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">البيانات الأساسية</h4></div>
+					<div class="md:col-span-2"><label class="form-label required">الاسم الرباعي</label><input type="text" id="f_name" class="form-input" required></div>
+					<div><label class="form-label required">الرقم الوطني</label><input type="text" id="f_nid" class="form-input" required></div>
+					<div><label class="form-label required">رقم الهاتف</label><input type="tel" id="f_phone" class="form-input" required></div>
+					<div><label class="form-label">تاريخ الميلاد</label><input type="date" id="f_dob" class="form-input"></div>
+					<div><label class="form-label">الموقع الجغرافي</label><select id="f_loc" class="form-input"><option value="شمال">شمال</option><option value="وسط">وسط</option><option value="جنوب">جنوب</option></select></div>
+
+					<div class="md:col-span-3 pb-2 mb-2 mt-4 border-b"><h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">البيانات السرية (لا تظهر للمواطنين)</h4></div>
+					<div><label class="form-label">المهنة</label><input type="text" id="f_prof" class="form-input"></div>
+					<div><label class="form-label">السكن</label><select id="f_house" class="form-input"><option value="ملك">ملك</option><option value="ايجار">إيجار</option></select></div>
+					<div><label class="form-label">الحالة الاجتماعية</label><select id="f_marital" class="form-input"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option></select></div>
+					<div><label class="form-label">عدد أفراد الأسرة</label><input type="number" id="f_fam" min="1" value="1" class="form-input"></div>
+					<div><label class="form-label">مستوى الدخل</label><select id="f_income" class="form-input"><option value="اخضر">أخضر (مستقر)</option><option value="اصفر">أصفر (متوسط)</option><option value="احمر">أحمر (ضعيف)</option></select></div>
+					<div class="md:col-span-3"><label class="form-label">ملاحظات خاصة</label><textarea id="f_notes" class="form-input" rows="2"></textarea></div>
+				</form>
+			</div>
+			
+			<div class="p-4 border-t bg-[#F8F9FA] flex justify-end gap-3">
+				<button onclick="closeCitizenModal()" class="btn-secondary">إلغاء</button>
+				<button onclick="saveCitizen()" id="btn-save" class="btn-primary">حفظ البيانات</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const SUPABASE_URL = 'https://lzobdqlbsxjlupyewdqq.supabase.co/rest/v1';
+		const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6b2JkcWxic3hqbHVweWV3ZHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTY0MDQsImV4cCI6MjA4OTU3MjQwNH0.fH-bV3QiQUbk_6L-clwwdHlZTnTIYAIJeKysMhUlBIs';
+		const GAS_URL = 'https://script.google.com/macros/s/AKfycbw7sPDWUsg5rCJxx7IFUFomVWjCQ1imH0H3a-fFY9KvRCrDXWKP3di3N9emMtkbZEgH/exec';
+		
+		let currentUser = null; let timerInterval = null; let currentOtpEmail = null;
+		let allResidents = [];
+		
+		async function sbFetch(endpoint, options = {}) {
+			const res = await fetch(`${SUPABASE_URL}/${endpoint}`, {
+				...options,
+				headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation', ...(options.headers || {}) }
+			});
+			if(!res.ok) throw new Error(await res.text());
+			if(res.status === 204) return null;
+			return res.json();
+		}
+		
+		function getDeviceId() { let id = localStorage.getItem('ns_dev'); if(!id) { id = crypto.randomUUID(); localStorage.setItem('ns_dev', id); } return id; }
+		
+		async function handleLoginStep1() {
+			const email = document.getElementById('login-email').value.trim(); 
+			const pass = document.getElementById('login-pass').value.trim();
+			const btn = document.getElementById('btn-step-1'); btn.innerHTML = '<div class="loader"></div>';
+			
+			try {
+				const users = await sbFetch(`naseem_acc?email=eq.${email}&password=eq.${pass}`);
+				if(users.length === 0) throw new Error('بيانات الدخول غير صحيحة');
+				currentUser = users[0]; document.getElementById('ui-security-q').innerText = currentUser.security_question;
+				
+				// 1. جلب بيانات الأجهزة المسجلة
+				const trusted = await sbFetch(`naseem_trusted_devices?user_id=eq.${currentUser.id}&device_uuid=eq.${getDeviceId()}`);
+				
+				if(trusted.length > 0) {
+					const device = trusted[0];
+					if(device.status !== 'approved') throw new Error('هذا الجهاز غير مصرح (معلق). يرجى مراجعة الإدارة.');
+					
+					// 2. التحقق من تطابق البصمة (المتصفح وحجم الشاشة)
+					const currentFp = await getDeviceFingerprint();
+					if(device.browser !== currentFp.browser || device.screen_size !== currentFp.screenSize) {
+						// إذا تغير المتصفح أو الشاشة، نطلب OTP كإجراء أمني!
+						alert('تم رصد تغيير في بيئة الجهاز. يرجى إثبات الهوية (OTP).');
+						document.getElementById('step-1').classList.add('hidden'); 
+						document.getElementById('step-2').classList.remove('hidden');
+						return;
+					}
+					
+					// إذا كل شيء متطابق، ندخل مباشرة ونسجل جلسة دخول
+					await logSession('Login');
+					return completeLogin(); 
+				}
+		
+				document.getElementById('step-1').classList.add('hidden'); document.getElementById('step-2').classList.remove('hidden');
+			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'تسجيل الدخول'; }
+		}
+		async function handleLoginStep2() {
+			const ans = document.getElementById('security-answer').value.trim(); if(ans !== currentUser.security_answer) return alert('الإجابة خاطئة!');
+			const btn = document.getElementById('btn-step-2'); btn.innerHTML = '<div class="loader"></div>';
+			try {
+				const otp = Math.floor(100000 + Math.random() * 900000).toString(); const exp = new Date(Date.now() + 3 * 60000).toISOString(); currentOtpEmail = currentUser.f2a_email;
+				
+				// حفظ الرمز في الداتا بيس
+				await sbFetch('naseem_otp', { method: 'POST', body: JSON.stringify({ email: currentOtpEmail, otp: otp, expires_at: exp }) });
+				
+				// [التحديث الجديد للإيميل] - إرسال كـ GET Request لتجاوز حظر جوجل
+				const emailUrl = `${GAS_URL}?action=sendOTP&email=${encodeURIComponent(currentOtpEmail)}&otp=${otp}`;
+				fetch(emailUrl, { method: 'GET', mode: 'no-cors' }); 
+				// وضعنا no-cors لتجاهل أي تحذيرات من المتصفح، وسيتم الإرسال في الخلفية بنجاح
+		
+				document.getElementById('step-2').classList.add('hidden'); document.getElementById('step-3').classList.remove('hidden'); startOtpTimer();
+			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'التحقق وإرسال الرمز'; }
+		}
+		
+		function startOtpTimer() {
+			let t = 180; clearInterval(timerInterval);
+			timerInterval = setInterval(() => { t--; document.getElementById('otp-timer').innerText = `0${Math.floor(t/60)}:${(t%60).toString().padStart(2,'0')}`; if(t<=0) { clearInterval(timerInterval); alert("انتهت الصلاحية"); location.reload(); } }, 1000);
+		}
+		
+		async function handleLoginStep3() {
+			const otp = document.getElementById('otp-input').value.trim(); if(!otp) return;
+			const btn = document.getElementById('btn-step-3'); btn.innerHTML = '<div class="loader"></div>';
+			try {
+				const now = new Date().toISOString();
+				const rec = await sbFetch(`naseem_otp?email=eq.${currentOtpEmail}&otp=eq.${otp}&expires_at=gte.${now}&order=created_at.desc&limit=1`);
+				if(rec.length === 0) throw new Error('رمز خاطئ أو منتهي');
+				
+				if(document.getElementById('remember-device').checked) {
+					// التقاط البصمة كاملة وحفظها
+					const fp = await getDeviceFingerprint();
+					await sbFetch('naseem_trusted_devices', { 
+						method: 'POST', 
+						body: JSON.stringify({ 
+							user_id: currentUser.id, device_uuid: getDeviceId(), status: 'pending',
+							os: fp.os, browser: fp.browser, screen_size: fp.screenSize, ip_address: fp.ip, country: fp.country
+						}) 
+					}).catch(e=>e);
+					alert('تم تسجيل البصمة وطلب تصريح للجهاز بنجاح.');
+				}
+				
+				await logSession('Login (Via OTP)');
+				clearInterval(timerInterval); completeLogin();
+			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'تأكيد الدخول'; }
+		}
+		async function logout() {
+			await logSession('Logout');
+			location.reload();
+		}
+		function completeLogin() {
+			document.getElementById('login-screen').classList.add('hidden');
+			document.getElementById('user-name').innerText = currentUser.name; document.getElementById('user-role').innerText = currentUser.role.toUpperCase();
+			
+			const isManager = (currentUser.role === 'admin' || currentUser.role === 'manager');
+			if(isManager) {
+				document.getElementById('admin-menu').classList.remove('hidden'); document.getElementById('admin-menu').classList.add('flex');
+				document.getElementById('btn-add-citizen').classList.remove('hidden');
+			} else {
+				// تأكيد إخفاء خصائص الإدارة عن المواطن
+				document.getElementById('admin-menu').classList.add('hidden');
+				document.getElementById('btn-add-citizen').classList.add('hidden');
+			}
+		
+			switchTab(isManager ? 'dashboard' : 'residents'); // المواطن يذهب لجدول البيانات مباشرة
+			loadResidentsData();
+			if(currentUser.role === 'admin') loadUsersList();
+		}
+		
+		// باقي دوال التنقل (Tabs) والرسوم البيانية تبقى كما هي في الكود السابق...
+		function switchTab(tabId) {
+			document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+			document.getElementById(`view-${tabId}`).classList.remove('hidden');
+			document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+			const activeLink = document.querySelector(`.nav-link[data-target="${tabId}"]`);
+			if(activeLink) activeLink.classList.add('active');
+			
+			const titles = { 'dashboard': 'لوحة القيادة والتحليلات', 'residents': 'قاعدة بيانات السكان', 'certificates': 'إصدار الشهادات المعتمدة', 'settings': 'إعدادات النظام والمستخدمين' };
+			document.getElementById('header-title').innerText = titles[tabId];
+			
+			if(tabId === 'dashboard' && currentUser.role !== 'citizen') updateDashboardCharts();
+			
+			// هذا الجزء هو المسؤول عن تحميل الجداول تلقائياً عند الدخول للإعدادات
+			if(tabId === 'settings' && currentUser.role === 'admin') {
+				loadUsersList();
+				loadDevicesList();
+				loadSessionsLog();
+			}
+		}
+		// [إصلاح دالة جلب البيانات]
+		async function loadResidentsData() {
+			const tbody = document.getElementById('data-table-body');
+			try {
+				allResidents = await sbFetch('naseem_residents?order=created_at.desc');
+				renderTable(allResidents);
+				if(currentUser.role !== 'citizen') {
+					populateCertificateDropdown();
+					if(!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts();
+				}
+			} catch(e) { tbody.innerHTML = `<tr><td colspan="8" class="text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
+		}
+		
+		function renderTable(data) {
+			const tbody = document.getElementById('data-table-body');
+			const isManager = (currentUser.role === 'admin' || currentUser.role === 'manager');
+			if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-500">لا توجد بيانات.</td></tr>'; return; }
+			let html = '';
+			data.forEach(row => {
+				html += `<tr class="hover:bg-gray-50 border-b border-gray-100">
+					<td class="p-3 font-bold">${row.full_name}</td>
+					<td class="p-3 font-mono">${row.national_id}</td>
+					<td class="p-3"><span class="px-2 py-1 bg-gray-200 rounded-sm text-xs">${row.location}</span></td>
+					<td class="p-3">${row.family_members_count}</td>
+					<td class="p-3 sensitive-col ${!isManager ? 'hidden' : ''}"><span class="px-2 py-1 ${row.housing_type==='ملك'?'bg-green-100 text-green-800':'bg-blue-100 text-blue-800'} rounded-sm text-[10px]">${row.housing_type||'-'}</span></td>
+					<td class="p-3 sensitive-col ${!isManager ? 'hidden' : ''}">${row.marital_status||'-'}</td>
+					<td class="p-3 sensitive-col ${!isManager ? 'hidden' : ''}"><span class="w-3 h-3 inline-block rounded-full ${row.income_level==='اخضر'?'bg-green-500':row.income_level==='اصفر'?'bg-yellow-500':'bg-red-500'}"></span></td>
+					<td class="p-3 text-center admin-col ${!isManager ? 'hidden' : ''}">
+						<button onclick="editCitizen('${row.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-bold underline">تعديل</button>
+					</td>
+				</tr>`;
+			});
+			tbody.innerHTML = html;
+			document.querySelectorAll('.sensitive-col, .admin-col').forEach(el => { if(isManager) el.classList.remove('hidden'); else el.classList.add('hidden'); });
+		}
+		
+		function filterTable() { const term = document.getElementById('search-resident').value.toLowerCase(); renderTable(allResidents.filter(r => r.full_name.toLowerCase().includes(term) || r.national_id.includes(term))); }
+		
+		// [إصلاح دالة الطباعة بالكامل]
+		function generateCertificate() {
+			const id = document.getElementById('cert-citizen-select').value;
+			if(!id) return alert('الرجاء اختيار مواطن أولاً لإصدار الشهادة');
+			const citizen = allResidents.find(r => r.id === id);
+			
+			const cName = citizen.full_name;
+			const cNid = citizen.national_id;
+			const cLoc = `النسيم - ${citizen.location}`;
+			const cDate = new Date().toLocaleDateString('ar-EG');
+		
+			// قالب HTML مستقل للشهادة يحتوي على علم السودان وشعار المحلية كـ SVG
+			const printHTML = `
+				<html dir="rtl" lang="ar">
+				<head>
+					<title>شهادة سكن - ${cName}</title>
+					<style>
+						@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap');
+						body { font-family: 'Cairo', sans-serif; padding: 40px; color: #000; background: #fff; }
+						.header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px double #000; padding-bottom: 20px; margin-bottom: 40px; }
+						.header-text { line-height: 1.8; font-size: 18px; font-weight: 800; text-align: center; }
+						.logo-container { width: 120px; text-align: center; }
+						.title { text-align: center; font-size: 36px; text-decoration: underline; margin-bottom: 50px; font-weight: 800; letter-spacing: 2px; }
+						.content { font-size: 22px; line-height: 2.2; margin-bottom: 50px; text-align: justify; }
+						table { width: 100%; border-collapse: collapse; margin-bottom: 80px; font-size: 20px; }
+						td { border: 2px solid #000; padding: 15px; }
+						.bg-gray { background-color: #f3f4f6; font-weight: 800; width: 30%; }
+						.footer { display: flex; justify-content: space-between; margin-top: 100px; text-align: center; font-weight: 800; font-size: 20px; }
+					</style>
+				</head>
+				<body>
+					<div class="header">
+						<div class="logo-container">
+							<svg viewBox="0 0 100 100" width="90" height="90">
+								<circle cx="50" cy="50" r="48" fill="none" stroke="#000" stroke-width="3"/>
+								<circle cx="50" cy="50" r="38" fill="none" stroke="#000" stroke-width="1" stroke-dasharray="4 4"/>
+								<path d="M 25 65 L 50 25 L 75 65 Z" fill="none" stroke="#000" stroke-width="2"/>
+								<text x="50" y="85" font-family="Cairo" font-size="12" font-weight="bold" text-anchor="middle">شرق النيل</text>
+							</svg>
+						</div>
+						
+						<div class="header-text">
+							جمهورية السودان<br>ولاية الخرطوم<br>محلية شرق النيل - الحاج يوسف<br>لجنة خدمات مدينة النسيم السكنية
+						</div>
+		
+						<div class="logo-container">
+							<svg viewBox="0 0 120 60" width="100" height="50" style="border: 2px solid #000;">
+								<rect width="120" height="20" fill="#D21034"/>
+								<rect y="20" width="120" height="20" fill="#FFFFFF"/>
+								<rect y="40" width="120" height="20" fill="#000000"/>
+								<polygon points="0,0 40,30 0,60" fill="#007229"/>
+							</svg>
+						</div>
+					</div>
+					
+					<div class="title">شـهـــادة سـكـــن</div>
+					
+					<div class="content">
+						تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.
+					</div>
+					
+					<table>
+						<tr><td class="bg-gray">الاسم الرباعي:</td><td>${cName}</td></tr>
+						<tr><td class="bg-gray">الرقم الوطني:</td><td>${cNid}</td></tr>
+						<tr><td class="bg-gray">الموقع الجغرافي:</td><td>${cLoc}</td></tr>
+						<tr><td class="bg-gray">تاريخ الإصدار:</td><td>${cDate}</td></tr>
+					</table>
+					
+					<div class="footer">
+						<div>توقيع وختم رئيس اللجنة<br><br>.......................................</div>
+						<div>توقيع مسئول الإحصاء<br><br>.......................................</div>
+					</div>
+				</body>
+				</html>
+			`;
+		
+			const iframe = document.createElement('iframe');
+			iframe.style.position = 'fixed'; iframe.style.right = '0'; iframe.style.bottom = '0';
+			iframe.style.width = '0'; iframe.style.height = '0'; iframe.style.border = '0';
+			document.body.appendChild(iframe);
+		
+			const doc = iframe.contentWindow.document;
+			doc.open(); doc.write(printHTML); doc.close();
+		
+			setTimeout(() => {
+				iframe.contentWindow.focus(); iframe.contentWindow.print();
+				setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+			}, 500);
+		}
+		// أبقِ بقية الدوال (Dashboards, Edit/Save Citizen, Users Settings) كما كانت في الكود السابق.
+		function logout() { location.reload(); }
+
+		// -- Dashboard & Analytics --
+		let chartLoc = null; let chartInc = null;
+		function updateDashboardCharts() {
+			if(allResidents.length === 0) return;
+			
+			// Cards
+			document.getElementById('stat-total').innerText = allResidents.length;
+			const owns = allResidents.filter(r => r.housing_type === 'ملك').length;
+			document.getElementById('stat-own').innerText = Math.round((owns/allResidents.length)*100) + '%';
+			const totalFam = allResidents.reduce((acc, curr) => acc + (curr.family_members_count || 1), 0);
+			document.getElementById('stat-family').innerText = Math.round(totalFam / allResidents.length);
+			const poors = allResidents.filter(r => r.income_level === 'احمر').length;
+			document.getElementById('stat-poor').innerText = Math.round((poors/allResidents.length)*100) + '%';
+
+			// Chart Data
+			let locs = { 'شمال':0, 'وسط':0, 'جنوب':0 };
+			let incs = { 'اخضر':0, 'اصفر':0, 'احمر':0 };
+			allResidents.forEach(r => { if(locs[r.location]!==undefined) locs[r.location]++; if(incs[r.income_level]!==undefined) incs[r.income_level]++; });
+
+			// Location Chart
+			const ctxL = document.getElementById('locationChart').getContext('2d');
+			if(chartLoc) chartLoc.destroy();
+			chartLoc = new Chart(ctxL, { type: 'bar', data: { labels: Object.keys(locs), datasets: [{ label: 'عدد السكان', data: Object.values(locs), backgroundColor: '#1F2124' }] }, options: { scales: { y: { beginAtZero: true } } } });
+
+			// Income Chart
+			const ctxI = document.getElementById('incomeChart').getContext('2d');
+			if(chartInc) chartInc.destroy();
+			chartInc = new Chart(ctxI, { type: 'doughnut', data: { labels: ['ممتاز','متوسط','ضعيف'], datasets: [{ data: Object.values(incs), backgroundColor: ['#22c55e', '#eab308', '#ef4444'] }] } });
+		}
+
+		// -- Add / Edit Modify Logic --
+		function openCitizenModal() { document.getElementById('citizen-form').reset(); document.getElementById('f_id').value = ''; document.getElementById('modal-title').innerHTML = 'إضافة مواطن جديد'; document.getElementById('add-modal').classList.remove('hidden'); }
+		function closeCitizenModal() { document.getElementById('add-modal').classList.add('hidden'); }
+		
+		function editCitizen(id) {
+			const citizen = allResidents.find(r => r.id === id);
+			if(!citizen) return;
+			document.getElementById('f_id').value = citizen.id;
+			document.getElementById('f_name').value = citizen.full_name;
+			document.getElementById('f_nid').value = citizen.national_id;
+			document.getElementById('f_phone').value = citizen.phone_number;
+			document.getElementById('f_dob').value = citizen.birth_date || '';
+			document.getElementById('f_loc').value = citizen.location;
+			document.getElementById('f_prof').value = citizen.profession || '';
+			document.getElementById('f_house').value = citizen.housing_type;
+			document.getElementById('f_marital').value = citizen.marital_status;
+			document.getElementById('f_fam').value = citizen.family_members_count;
+			document.getElementById('f_income').value = citizen.income_level;
+			document.getElementById('f_notes').value = citizen.special_issues || '';
+			
+			document.getElementById('modal-title').innerHTML = 'تعديل بيانات مواطن';
+			document.getElementById('add-modal').classList.remove('hidden');
+		}
+
+		async function saveCitizen() {
+			if(!document.getElementById('citizen-form').checkValidity()) return document.getElementById('citizen-form').reportValidity();
+			const btn = document.getElementById('btn-save'); btn.innerHTML = 'جاري الحفظ...'; btn.disabled = true;
+
+			const id = document.getElementById('f_id').value; // if empty -> Create, if has value -> Update
+			const payload = {
+				full_name: document.getElementById('f_name').value, national_id: document.getElementById('f_nid').value,
+				phone_number: document.getElementById('f_phone').value, birth_date: document.getElementById('f_dob').value || null,
+				location: document.getElementById('f_loc').value, profession: document.getElementById('f_prof').value,
+				housing_type: document.getElementById('f_house').value, marital_status: document.getElementById('f_marital').value,
+				family_members_count: parseInt(document.getElementById('f_fam').value), income_level: document.getElementById('f_income').value,
+				special_issues: document.getElementById('f_notes').value
+			};
+
+			try {
+				if(id) { // UPDATE
+					await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+				} else { // INSERT
+					payload.created_by = currentUser.id;
+					await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) });
+				}
+				closeCitizenModal(); loadResidentsData();
+			} catch(e) { alert('فشل الحفظ: ' + e.message); } finally { btn.innerHTML = 'حفظ البيانات'; btn.disabled = false; }
+		}
+
+		// -- Certificates Tab Logic --
+		function populateCertificateDropdown() {
+			const sel = document.getElementById('cert-citizen-select');
+			sel.innerHTML = '<option value="">-- اختر المواطن --</option>';
+			allResidents.forEach(r => sel.innerHTML += `<option value="${r.id}">${r.full_name} (${r.national_id})</option>`);
+		}
+
+		// [دالة الطباعة المحدثة - احترافية وبدون أخطاء الصفحة البيضاء]
+		function generateCertificate() {
+			const id = document.getElementById('cert-citizen-select').value;
+			if(!id) return alert('الرجاء اختيار مواطن أولاً لإصدار الشهادة');
+			const citizen = allResidents.find(r => r.id === id);
+			
+			// تجهيز البيانات
+			const cName = citizen.full_name;
+			const cNid = citizen.national_id;
+			const cLoc = `النسيم - ${citizen.location}`;
+			const cDate = new Date().toLocaleDateString('ar-EG');
+		
+			// إنشاء قالب HTML مستقل تماماً للشهادة (لضمان دقة الطباعة وتحويل الـ PDF)
+			const printHTML = `
+				<html dir="rtl" lang="ar">
+				<head>
+					<title>شهادة سكن - ${cName}</title>
+					<style>
+						@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&display=swap');
+						body { font-family: 'Cairo', sans-serif; padding: 40px; color: #000; background: #fff; }
+						.header { display: flex; justify-content: space-between; border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 40px; }
+						.header-text { line-height: 1.8; font-size: 16px; font-weight: 800; }
+						.title { text-align: center; font-size: 32px; text-decoration: underline; margin-bottom: 50px; font-weight: 800; }
+						.content { font-size: 20px; line-height: 2.2; margin-bottom: 50px; text-align: justify; }
+						table { width: 100%; border-collapse: collapse; margin-bottom: 80px; font-size: 18px; }
+						td { border: 2px solid #000; padding: 15px; }
+						.bg-gray { background-color: #f3f4f6; font-weight: 800; width: 30%; }
+						.footer { display: flex; justify-content: space-between; margin-top: 100px; text-align: center; font-weight: 800; font-size: 18px; }
+					</style>
+				</head>
+				<body>
+					<div class="header">
+						<div class="header-text">
+							جمهورية السودان<br>ولاية الخرطوم<br>محلية شرق النيل - الحاج يوسف<br>لجنة خدمات مدينة النسيم السكنية
+						</div>
+					</div>
+					<div class="title">شـهـــادة سـكـــن</div>
+					<div class="content">
+						تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.
+					</div>
+					<table>
+						<tr><td class="bg-gray">الاسم الرباعي:</td><td>${cName}</td></tr>
+						<tr><td class="bg-gray">الرقم الوطني:</td><td>${cNid}</td></tr>
+						<tr><td class="bg-gray">الموقع الجغرافي:</td><td>${cLoc}</td></tr>
+						<tr><td class="bg-gray">تاريخ الإصدار:</td><td>${cDate}</td></tr>
+					</table>
+					<div class="footer">
+						<div>توقيع وختم رئيس اللجنة<br><br>.......................................</div>
+						<div>توقيع مسئول الإحصاء<br><br>.......................................</div>
+					</div>
+				</body>
+				</html>
+			`;
+		
+			// إنشاء إطار مخفي (Iframe) لطباعة الشهادة دون المساس بواجهة النظام
+			const iframe = document.createElement('iframe');
+			iframe.style.position = 'fixed';
+			iframe.style.right = '0';
+			iframe.style.bottom = '0';
+			iframe.style.width = '0';
+			iframe.style.height = '0';
+			iframe.style.border = '0';
+			document.body.appendChild(iframe);
+		
+			// كتابة محتوى الشهادة داخل الإطار
+			const doc = iframe.contentWindow.document;
+			doc.open();
+			doc.write(printHTML);
+			doc.close();
+		
+			// الانتظار لحظة لتحميل الخطوط ثم أمر الطباعة
+			setTimeout(() => {
+				iframe.contentWindow.focus();
+				iframe.contentWindow.print();
+				// إزالة الإطار الوهمي بعد الانتهاء من الطباعة لتنظيف الذاكرة
+				setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+			}, 500);
+		}
+
+		// -- Settings Tab Logic (Admin only) --
+		async function loadUsersList() {
+			const ul = document.getElementById('users-list');
+			try {
+				const users = await sbFetch('naseem_acc');
+				ul.innerHTML = '';
+				users.forEach(u => ul.innerHTML += `<li class="py-3 flex justify-between items-center"><div class="flex flex-col"><span class="font-bold">${u.name}</span><span class="text-xs text-gray-500">${u.email}</span></div><span class="text-xs bg-gray-200 px-2 rounded font-bold">${u.role.toUpperCase()}</span></li>`);
+			} catch(e) { ul.innerHTML = 'خطأ في جلب المستخدمين'; }
+		}
+		
+		async function saveUser() {
+			const payload = { name: document.getElementById('u_name').value, email: document.getElementById('u_email').value, password: document.getElementById('u_pass').value, role: document.getElementById('u_role').value, security_question: 'ما هو اسم مدرستك الابتدائية؟', security_answer: 'النسيم', f2a_email: document.getElementById('u_email').value };
+			if(!payload.name || !payload.email) return alert('البيانات ناقصة');
+			const btn = document.getElementById('btn-save-user'); btn.innerHTML = 'جاري...'; btn.disabled = true;
+			try { await sbFetch('naseem_acc', { method: 'POST', body: JSON.stringify(payload) }); alert('تم الحفظ'); loadUsersList(); } catch(e) { alert(e.message); } finally { btn.innerHTML = 'إنشاء حساب'; btn.disabled = false; }
+		}
+
+		function logout() { location.reload(); }
+		// -- قسم إدارة الأجهزة --
+		async function loadDevicesList() {
+			const ul = document.getElementById('devices-list');
+			ul.innerHTML = '<li class="py-2 text-sm text-center">جاري التحميل...</li>';
+			try {
+				// جلب الأجهزة والمستخدمين لربط الأسماء
+				const [devices, users] = await Promise.all([
+					sbFetch('naseem_trusted_devices?order=created_at.desc'),
+					sbFetch('naseem_acc')
+				]);
+				
+				if(devices.length === 0) { ul.innerHTML = '<li class="py-4 text-sm text-center text-gray-500">لا توجد أجهزة مسجلة حالياً.</li>'; return; }
+		
+				let html = '';
+				devices.forEach(d => {
+					const user = users.find(u => u.id === d.user_id);
+					const userName = user ? user.name : 'مستخدم محذوف';
+					
+					const statusBadge = d.status === 'approved' 
+						? '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-sm font-bold">مُصرح</span>' 
+						: '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-sm font-bold">معلق</span>';
+		
+					const actionBtn = d.status === 'pending'
+						? `<button onclick="updateDeviceStatus('${d.id}', 'approved')" class="text-xs bg-[var(--oracle-red)] text-white px-3 py-1 rounded-sm hover:bg-red-800 transition">منح تصريح</button>`
+						: `<button onclick="deleteDevice('${d.id}')" class="text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded-sm hover:bg-gray-300 transition">إلغاء وحذف</button>`;
+		
+					html += `
+						<li class="py-3 flex justify-between items-center hover:bg-gray-50 px-2 transition">
+							<div class="flex flex-col">
+								<span class="font-bold text-sm">${userName}</span>
+								<span class="text-[10px] text-gray-400 font-mono mt-1">Device ID: ${d.device_uuid.substring(0,12)}...</span>
+							</div>
+							<div class="flex items-center gap-3">
+								${statusBadge}
+								${actionBtn}
+							</div>
+						</li>`;
+				});
+				ul.innerHTML = html;
+			} catch(e) { ul.innerHTML = `<li class="text-center text-red-500 py-2">خطأ: ${e.message}</li>`; }
+		}
+		// دالة التقاط بصمة الجهاز والشبكة
+		async function getDeviceFingerprint() {
+			const ua = navigator.userAgent;
+			let browser = "Unknown", os = "Unknown";
+			
+			// استخراج المتصفح
+			if(ua.includes("Chrome")) browser = "Chrome";
+			else if(ua.includes("Firefox")) browser = "Firefox";
+			else if(ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+			else if(ua.includes("Edge")) browser = "Edge";
+		
+			// استخراج نظام التشغيل
+			if(ua.includes("Win")) os = "Windows";
+			else if(ua.includes("Mac")) os = "MacOS";
+			else if(ua.includes("Android")) os = "Android";
+			else if(ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+		
+			const screenSize = `${window.screen.width}x${window.screen.height}`;
+		
+			let ip = "Unknown", country = "Unknown";
+			try {
+				// جلب الـ IP والدولة
+				const res = await fetch('https://ipapi.co/json/');
+				const data = await res.json();
+				ip = data.ip;
+				country = `${data.country_name} (${data.city})`;
+			} catch(e) { console.warn("Failed to fetch IP details"); }
+		
+			return { browser, os, screenSize, ip, country };
+		}
+		
+		// دالة تسجيل الجلسات (دخول / خروج)
+		async function logSession(action) {
+			if(!currentUser) return;
+			const fp = await getDeviceFingerprint();
+			await sbFetch('naseem_login_sessions', {
+				method: 'POST',
+				body: JSON.stringify({
+					user_id: currentUser.id,
+					action: action,
+					device_uuid: getDeviceId(),
+					ip_address: fp.ip
+				})
+			}).catch(e=>console.error);
+		}
+		async function updateDeviceStatus(id, status) {
+			try {
+				await sbFetch(`naseem_trusted_devices?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ status: status }) });
+				loadDevicesList(); // تحديث القائمة
+			} catch(e) { alert('خطأ في التحديث: ' + e.message); }
+		}
+		
+		async function deleteDevice(id) {
+			if(!confirm('هل أنت متأكد من إلغاء تصريح هذا الجهاز؟ سيضطر المستخدم لطلب رمز OTP في المرة القادمة.')) return;
+			try {
+				await sbFetch(`naseem_trusted_devices?id=eq.${id}`, { method: 'DELETE' });
+				loadDevicesList();
+			} catch(e) { alert('خطأ في الحذف: ' + e.message); }
+		}
+	</script>
+</body>
+</html>
