@@ -350,174 +350,225 @@
 	</div>
 
 	<script>
-		// Configuration
+		// ==========================================
+		// 1. CONFIGURATION & AUTH ENGINE
+		// ==========================================
 		const SUPABASE_URL = 'https://lzobdqlbsxjlupyewdqq.supabase.co/rest/v1';
 		const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6b2JkcWxic3hqbHVweWV3ZHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTY0MDQsImV4cCI6MjA4OTU3MjQwNH0.fH-bV3QiQUbk_6L-clwwdHlZTnTIYAIJeKysMhUlBIs';
 		const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3M0pH4dXIegs0QcjVkYWs9j6VnoutiUPRSxrV57_o1Fxvl0Ri5icqKbxJQrVw148Q/exec';
 		
 		let currentUser = null; let timerInterval = null; let currentOtpEmail = null; let allResidents = []; let filteredResidents = []; let currentRef = "";
 		
-		// PWA Initializer
 		(function initPWA() {
 			const manifest = {
-				name: "نظام إحصاء النسيم", short_name: "النسيم", start_url: ".", display: "standalone",
-				background_color: "#F8FAFC", theme_color: "#0F172A",
+				name: "نظام إحصاء النسيم", short_name: "النسيم", start_url: ".", display: "standalone", background_color: "#F8FAFC", theme_color: "#0F172A",
 				icons: [{ src: "https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png", sizes: "192x192", type: "image/png" }]
 			};
-			const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-			document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blob)}">`);
+			const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'}); document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blob)}">`);
 		})();
-
+	
+		// ==========================================
+		// Password Recovery Listener & Injector
+		// ==========================================
+		window.addEventListener('DOMContentLoaded', () => {
+			// إضافة زر نسيت كلمة المرور ديناميكياً
+			const step1Div = document.getElementById('step-1');
+			if(step1Div) {
+				const forgotBtn = document.createElement('button');
+				forgotBtn.innerText = 'هل نسيت كلمة المرور؟ استعادة الآن';
+				forgotBtn.className = 'block w-full text-center text-sm text-blue-600 hover:text-blue-800 hover:underline mt-4 font-bold transition';
+				forgotBtn.onclick = recoverPassword;
+				step1Div.appendChild(forgotBtn);
+			}
+	
+			// التقاط توكن الاستعادة القادم من رابط الإيميل
+			const hash = window.location.hash;
+			if(hash && hash.includes('type=recovery')) {
+				const params = new URLSearchParams(hash.substring(1));
+				const token = params.get('access_token');
+				if(token) {
+					setTimeout(async () => {
+						const newPass = prompt('أهلاً بك! تم التحقق من هويتك بنجاح.\nالرجاء إدخال كلمة المرور الجديدة (يجب أن تتكون من 6 أحرف/أرقام على الأقل):');
+						if(newPass && newPass.length >= 6) {
+							try {
+								const res = await fetch(`${SUPABASE_URL.replace('/rest/v1', '')}/auth/v1/user`, {
+									method: 'PUT',
+									headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+									body: JSON.stringify({ password: newPass })
+								});
+								if(!res.ok) throw new Error('فشل في التحديث');
+								alert('تم تغيير كلمة المرور بنجاح! سيتم إعادة تحديث الصفحة لتتمكن من تسجيل الدخول.');
+								window.location.hash = ''; location.reload();
+							} catch(e) { alert('حدث خطأ أثناء الاتصال بقاعدة البيانات لتغيير الرمز.'); }
+						} else { alert('تم الإلغاء أو أن كلمة المرور قصيرة جداً.'); window.location.hash = ''; }
+					}, 500);
+				}
+			}
+		});
+	
+		async function recoverPassword() {
+			const email = document.getElementById('login-email').value.trim();
+			if(!email) return alert('الرجاء كتابة بريدك الإلكتروني في الحقل المخصص أولاً، ثم الضغط على استعادة.');
+			const btn = document.getElementById('btn-step-1'); const oldText = btn.innerHTML; btn.innerHTML = '<div class="loader"></div>';
+			try {
+				await sbAuth('recover', { email: email });
+				alert('تم إرسال رابط آمن لاستعادة كلمة المرور!\n\nيرجى مراجعة بريدك الإلكتروني (وكذلك صندوق المهملات Spam)، واضغط على الرابط لتغيير كلمة المرور.');
+			} catch(e) { alert('حدث خطأ: ' + e.message); } finally { btn.innerHTML = oldText; }
+		}
+	
 		function toggleSidebar() { document.getElementById('sidebar').classList.toggle('translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden'); }
-
+	
+		async function sbAuth(endpoint, body) {
+			const url = SUPABASE_URL.replace('/rest/v1', `/auth/v1/${endpoint}`);
+			const res = await fetch(url, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+			const data = await res.json(); if (!res.ok) throw new Error(data.error_description || data.msg || 'فشل في العملية'); return data;
+		}
+	
 		async function sbFetch(endpoint, options = {}) {
-			const res = await fetch(`${SUPABASE_URL}/${endpoint}`, { ...options, headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation', ...(options.headers || {}) } });
-			if(!res.ok) throw new Error(await res.text());
-			if(res.status === 204) return null;
-			return res.json();
+			const token = localStorage.getItem('ns_jwt') || SUPABASE_KEY; 
+			const authHeader = localStorage.getItem('ns_jwt') ? `Bearer ${token}` : `Bearer ${SUPABASE_KEY}`;
+			const res = await fetch(`${SUPABASE_URL}/${endpoint}`, { ...options, headers: { 'apikey': SUPABASE_KEY, 'Authorization': authHeader, 'Content-Type': 'application/json', 'Prefer': 'return=representation', ...(options.headers || {}) } });
+			if(!res.ok) throw new Error(await res.text()); if(res.status === 204) return null; return res.json();
 		}
 		
 		function getDeviceId() { let id = localStorage.getItem('ns_dev'); if(!id) { id = crypto.randomUUID(); localStorage.setItem('ns_dev', id); } return id; }
-
-		function captureGPSLocation() {
-			if ("geolocation" in navigator) {
-				navigator.geolocation.getCurrentPosition(
-					pos => localStorage.setItem('ns_gps', `${pos.coords.latitude},${pos.coords.longitude}`),
-					err => console.warn("GPS Denied")
-				);
-			}
-		}
-
+		function captureGPSLocation() { if ("geolocation" in navigator) { navigator.geolocation.getCurrentPosition(pos => localStorage.setItem('ns_gps', `${pos.coords.latitude},${pos.coords.longitude}`), err => console.warn("GPS Denied")); } }
+	
 		async function getDeviceFingerprint() {
-			captureGPSLocation();
-			const ua = navigator.userAgent; let browser = "Unknown", os = "Unknown", deviceModel = "Desktop/Unknown";
-			
-			if(ua.includes("Chrome")) browser = "Chrome"; else if(ua.includes("Firefox")) browser = "Firefox"; else if(ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari"; else if(ua.includes("Edge")) browser = "Edge";
-			if(ua.includes("Win")) os = "Windows"; else if(ua.includes("Mac")) os = "MacOS"; else if(ua.includes("Android")) { os = "Android"; deviceModel = "Android Phone"; } else if(ua.includes("iPhone")) { os = "iOS"; deviceModel = "iPhone"; } else if(ua.includes("iPad")) { os = "iOS"; deviceModel = "iPad"; }
-			
-			if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-				try { const values = await navigator.userAgentData.getHighEntropyValues(["model"]); if (values.model) deviceModel = values.model; } catch(e) {}
-			}
-
-			const screenSize = `${window.screen.width}x${window.screen.height}`;
-			let ip = "Unknown", country = "Unknown", localAddress = "";
-			
-			try {
-				const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 4000);
-				const res = await fetch('https://api.db-ip.com/v2/free/self', { signal: controller.signal });
-				clearTimeout(timeoutId);
-				if(res.ok) { const data = await res.json(); ip = data.ipAddress; country = `${data.countryName} (${data.city})`; }
-			} catch(e) {}
-
-			const gps = localStorage.getItem('ns_gps');
-			if (gps) {
-				const [lat, lon] = gps.split(',');
-				try {
-					const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ar`);
-					if(geoRes.ok) { const geoData = await geoRes.json(); localAddress = geoData.display_name; }
-				} catch(e) {}
-			}
-
-			return { browser, os, deviceModel, screenSize, ip, country: localAddress || country };
+			captureGPSLocation(); const ua = navigator.userAgent; let browser = "Unknown", os = "Unknown", deviceModel = "Desktop/Unknown";
+			if(ua.includes("Chrome")) browser = "Chrome"; else if(ua.includes("Firefox")) browser = "Firefox"; else if(ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+			if(ua.includes("Win")) os = "Windows"; else if(ua.includes("Mac")) os = "MacOS"; else if(ua.includes("Android")) { os = "Android"; deviceModel = "Android Phone"; } else if(ua.includes("iPhone")) { os = "iOS"; deviceModel = "iPhone"; }
+			const screenSize = `${window.screen.width}x${window.screen.height}`; let ip = "Unknown", country = "Unknown", localAddress = "";
+			try { const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 4000); const res = await fetch('https://api.db-ip.com/v2/free/self', { signal: controller.signal }); clearTimeout(timeoutId); if(res.ok) { const data = await res.json(); ip = data.ipAddress; country = `${data.countryName} (${data.city})`; } } catch(e) {}
+			return { browser, os, deviceModel, screenSize, ip, country };
 		}
-
+	
 		async function logSession(action) {
-			if(!currentUser) return;
-			const fp = await getDeviceFingerprint();
+			if(!currentUser) return; const fp = await getDeviceFingerprint();
 			await sbFetch('naseem_login_sessions', { method: 'POST', body: JSON.stringify({ user_id: currentUser.id, action: action, device_uuid: getDeviceId(), ip_address: fp.ip }) }).catch(e=>e);
 		}
-
+	
 		// ==========================================
-		// Login Flow
+		// Login Flow (3-Factor Authentication)
 		// ==========================================
 		async function handleLoginStep1() {
 			const email = document.getElementById('login-email').value.trim(); const pass = document.getElementById('login-pass').value.trim();
 			const btn = document.getElementById('btn-step-1'); btn.innerHTML = '<div class="loader"></div>';
 			try {
-				const users = await sbFetch(`naseem_acc?email=eq.${encodeURIComponent(email)}&password=eq.${encodeURIComponent(pass)}`);
-				if(users.length === 0) throw new Error('بيانات الدخول غير صحيحة');
-				currentUser = users[0]; document.getElementById('ui-security-q').innerText = currentUser.security_question;
+				const authData = await sbAuth('token?grant_type=password', { email, password: pass });
+				localStorage.setItem('ns_jwt', authData.access_token); 
+				
+				const profiles = await sbFetch(`naseem_profiles?id=eq.${authData.user.id}`);
+				if(!profiles || profiles.length === 0) throw new Error('الملف الشخصي غير موجود.');
+				currentUser = { ...authData.user, ...profiles[0] };
+				
 				const trusted = await sbFetch(`naseem_trusted_devices?user_id=eq.${currentUser.id}&device_uuid=eq.${getDeviceId()}`);
-				if(trusted.length > 0) {
-					if(trusted[0].status !== 'approved') throw new Error('الجهاز غير مصرح (معلق).');
-					await logSession('Login (Auto)'); return completeLogin(); 
+				if(trusted && trusted.length > 0 && trusted[0].status === 'approved') {
+					await logSession('Login (Auto - Trusted Device)'); return completeLogin(); 
 				}
+				
+				document.getElementById('step-2').innerHTML = `
+					<h3 class="text-lg font-bold text-slate-800 mb-2">التحقق الأمني (2 من 3)</h3>
+					<p class="text-sm text-slate-500 mb-4 border-b pb-3">أجب على الأسئلة الأمنية لتأكيد هويتك، وبمجرد صحة الإجابات سيتم إرسال رمز الدخول (OTP) إلى بريدك.</p>
+					<div class="space-y-4 mb-5 text-right">
+						<div><label class="block text-xs font-bold text-slate-700 mb-1">1. ${currentUser.q1 || 'سؤال غير محدد'}</label><input type="text" id="ans1" class="w-full border-2 border-slate-200 px-3 py-2 rounded focus:border-blue-500 outline-none text-sm font-bold bg-slate-50"></div>
+						<div><label class="block text-xs font-bold text-slate-700 mb-1">2. ${currentUser.q2 || 'سؤال غير محدد'}</label><input type="text" id="ans2" class="w-full border-2 border-slate-200 px-3 py-2 rounded focus:border-blue-500 outline-none text-sm font-bold bg-slate-50"></div>
+						<div><label class="block text-xs font-bold text-slate-700 mb-1">3. ${currentUser.q3 || 'سؤال غير محدد'}</label><input type="text" id="ans3" class="w-full border-2 border-slate-200 px-3 py-2 rounded focus:border-blue-500 outline-none text-sm font-bold bg-slate-50"></div>
+					</div>
+					<div class="flex flex-col gap-2">
+						<button onclick="checkSecurityAndSendOTP()" id="btn-verify-qa" class="w-full bg-slate-800 text-white rounded py-3 font-bold hover:bg-slate-900 shadow-md transition">التحقق وإرسال رمز الـ OTP</button>
+					</div>
+				`;
 				document.getElementById('step-1').classList.add('hidden'); document.getElementById('step-2').classList.remove('hidden');
-			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'تسجيل الدخول'; }
+			} catch(e) { 
+				localStorage.removeItem('ns_jwt'); alert('البيانات غير صحيحة'); 
+			} finally { btn.innerHTML = 'تسجيل الدخول'; }
 		}
-
-		async function handleLoginStep2() {
-			const ans = document.getElementById('security-answer').value.trim(); if(ans !== currentUser.security_answer) return alert('خطأ في الإجابة!');
-			const btn = document.getElementById('btn-step-2'); btn.innerHTML = '<div class="loader"></div>';
-			try {
-				const otp = Math.floor(100000 + Math.random() * 900000).toString(); const exp = new Date(Date.now() + 3 * 60000).toISOString(); 
-				currentOtpEmail = currentUser.f2a_email || currentUser.email; 
-				await sbFetch('naseem_otp', { method: 'POST', body: JSON.stringify({ email: currentOtpEmail, otp: otp, expires_at: exp }) });
-				fetch(`${GAS_URL}?action=sendOTP&email=${encodeURIComponent(currentOtpEmail)}&otp=${otp}`, { method: 'GET', mode: 'no-cors' }).catch(e=>e); 
-				document.getElementById('step-2').classList.add('hidden'); document.getElementById('step-3').classList.remove('hidden'); startOtpTimer();
-			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'إرسال رمز التحقق'; }
+	
+		async function checkSecurityAndSendOTP() {
+			const a1 = document.getElementById('ans1').value.trim(); const a2 = document.getElementById('ans2').value.trim(); const a3 = document.getElementById('ans3').value.trim();
+			const btn = document.getElementById('btn-verify-qa');
+			
+			if(a1 === currentUser.a1 && a2 === currentUser.a2 && a3 === currentUser.a3) {
+				btn.innerHTML = '<div class="loader"></div>';
+				try {
+					const otp = Math.floor(100000 + Math.random() * 900000).toString(); const exp = new Date(Date.now() + 3 * 60000).toISOString(); 
+					currentOtpEmail = currentUser.email; 
+					await sbFetch('naseem_otp', { method: 'POST', body: JSON.stringify({ email: currentOtpEmail, otp: otp, expires_at: exp }) });
+					fetch(`${GAS_URL}?action=sendOTP&email=${encodeURIComponent(currentOtpEmail)}&otp=${otp}`, { method: 'GET', mode: 'no-cors' }).catch(e=>e); 
+					
+					document.getElementById('step-2').classList.add('hidden'); document.getElementById('step-3').classList.remove('hidden'); startOtpTimer();
+				} catch(e) { alert(e.message); btn.innerHTML = 'التحقق وإرسال رمز الـ OTP'; }
+			} else { alert('الإجابات غير متطابقة. لا يمكن إرسال رمز التحقق (OTP) أو العبور إلا بعد إدخال الإجابات الصحيحة للحماية.'); }
 		}
 		
 		function startOtpTimer() {
 			let t = 180; clearInterval(timerInterval);
-			timerInterval = setInterval(() => { t--; document.getElementById('otp-timer').innerText = `0${Math.floor(t/60)}:${(t%60).toString().padStart(2,'0')}`; if(t<=0) { clearInterval(timerInterval); alert("انتهت الصلاحية"); location.reload(); } }, 1000);
+			timerInterval = setInterval(() => { t--; document.getElementById('otp-timer').innerText = `0${Math.floor(t/60)}:${(t%60).toString().padStart(2,'0')}`; if(t<=0) { clearInterval(timerInterval); alert("انتهت صلاحية الرمز، حاول مجدداً"); location.reload(); } }, 1000);
 		}
-
+	
 		async function handleLoginStep3() {
 			const otp = document.getElementById('otp-input').value.trim(); if(!otp) return;
 			const btn = document.getElementById('btn-step-3'); btn.innerHTML = '<div class="loader"></div>';
 			try {
 				const rec = await sbFetch(`naseem_otp?email=eq.${encodeURIComponent(currentOtpEmail)}&otp=eq.${encodeURIComponent(otp)}&expires_at=gte.${new Date().toISOString()}&order=created_at.desc&limit=1`);
-				if(rec.length === 0) throw new Error('الرمز خاطئ أو منتهي');
-				if(document.getElementById('remember-device').checked) {
-					const fp = await getDeviceFingerprint(); const devId = getDeviceId();
-					const payload = { user_id: currentUser.id, device_uuid: devId, status: 'pending', os: fp.os, browser: fp.browser, screen_size: fp.screenSize, ip_address: fp.ip, country: fp.country, device_model: fp.deviceModel };
-					const ex = await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`);
-					if(ex.length > 0) await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`, { method: 'PATCH', body: JSON.stringify(payload) });
-					else await sbFetch('naseem_trusted_devices', { method: 'POST', body: JSON.stringify(payload) });
-					alert('تم طلب تصريح للموقع والجهاز.');
-				}
-				await logSession('Login (OTP)'); clearInterval(timerInterval); completeLogin();
-			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'اعتماد الدخول'; }
+				if(!rec || rec.length === 0) throw new Error('الرمز خاطئ أو منتهية صلاحيته');
+				await logSession('Login (OTP Success)'); registerDeviceIfChecked(); clearInterval(timerInterval); completeLogin();
+			} catch(e) { alert(e.message); } finally { btn.innerHTML = 'اعتماد الدخول النهائي'; }
 		}
-
-		async function logout() { await logSession('Logout'); location.reload(); }
-
-		function completeLogin() {
-			document.getElementById('login-screen').classList.add('hidden');
-			document.getElementById('user-name').innerText = currentUser.name; document.getElementById('user-role').innerText = currentUser.role.toUpperCase();
-			const isManager = (currentUser.role === 'admin' || currentUser.role === 'manager');
-			if(isManager) { document.getElementById('admin-menu').classList.remove('hidden'); document.getElementById('admin-menu').classList.add('flex'); document.getElementById('btn-add-citizen').classList.remove('hidden'); }
-			switchTab(isManager ? 'dashboard' : 'residents'); loadResidentsData();
-		}
-
-		// ==========================================
-		// View Router
-		// ==========================================
-		function switchTab(tabId) {
-			document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden')); document.getElementById(`view-${tabId}`).classList.remove('hidden');
-			document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); 
-			const links = document.querySelectorAll(`.nav-link[data-target="${tabId}"]`);
-			links.forEach(l => l.classList.add('active'));
-			const titles = { 'dashboard': 'لوحة القيادة', 'residents': 'قاعدة بيانات السكان', 'certificates': 'إصدار الشهادات', 'settings': 'النظام والمستخدمين' };
-			document.getElementById('header-title').innerText = titles[tabId];
-			
-			if(tabId === 'dashboard' && currentUser.role !== 'citizen') updateDashboardCharts();
-			if(tabId === 'settings' && currentUser.role === 'admin') { loadUsersList(); loadDevicesList(); loadSessionsLog(); }
-			if(tabId === 'certificates') {
-				const d = new Date(); const dateStr = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-				currentRef = `ANRC-${d.getFullYear()}-${dateStr}-${Math.floor(100+Math.random()*900)}`;
-				document.getElementById('preview-ref').innerText = currentRef;
+	
+		async function registerDeviceIfChecked() {
+			if(document.getElementById('remember-device') && document.getElementById('remember-device').checked) {
+				const fp = await getDeviceFingerprint(); const devId = getDeviceId();
+				const payload = { user_id: currentUser.id, device_uuid: devId, status: 'pending', os: fp.os, browser: fp.browser, screen_size: fp.screenSize, ip_address: fp.ip, country: fp.country, device_model: fp.deviceModel };
+				const ex = await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`);
+				if(ex && ex.length > 0) await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`, { method: 'PATCH', body: JSON.stringify(payload) });
+				else await sbFetch('naseem_trusted_devices', { method: 'POST', body: JSON.stringify(payload) });
 			}
 		}
-
+	
+		async function logout() { await logSession('Logout'); await sbAuth('logout', {}).catch(e=>e); localStorage.removeItem('ns_jwt'); location.reload(); }
+	
 		// ==========================================
-		// Dashboards
+		// Role Management & Permissions 
 		// ==========================================
+		function completeLogin() {
+			document.getElementById('login-screen').classList.add('hidden');
+			const role = (currentUser.role || '').toLowerCase().trim();
+			document.getElementById('user-name').innerText = currentUser.name; 
+			document.getElementById('user-role').innerText = role.toUpperCase();
+			
+			const isManager = (role === 'admin' || role === 'manager');
+			const exportBtn = document.querySelector('button[onclick="exportToExcel()"]');
+			
+			if(isManager) { 
+				document.getElementById('admin-menu').classList.remove('hidden'); document.getElementById('admin-menu').classList.add('flex'); 
+				document.getElementById('btn-add-citizen').classList.remove('hidden');
+				if(exportBtn) exportBtn.classList.remove('hidden');
+			} else {
+				document.getElementById('admin-menu').classList.add('hidden'); document.getElementById('admin-menu').classList.remove('flex'); 
+				document.getElementById('btn-add-citizen').classList.add('hidden');
+				if(exportBtn) exportBtn.classList.add('hidden');
+			}
+			switchTab(isManager ? 'dashboard' : 'residents'); loadResidentsData();
+		}
+	
+		function switchTab(tabId) {
+			const role = (currentUser.role || '').toLowerCase().trim(); const isManager = (role === 'admin' || role === 'manager');
+			if(!isManager && (tabId === 'certificates' || tabId === 'settings' || tabId === 'dashboard')) return alert('غير مصرح لك بدخول هذه الشاشة.'); // حماية الصلاحيات
+			
+			document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden')); document.getElementById(`view-${tabId}`).classList.remove('hidden');
+			document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); const links = document.querySelectorAll(`.nav-link[data-target="${tabId}"]`); links.forEach(l => l.classList.add('active'));
+			const titles = { 'dashboard': 'لوحة القيادة', 'residents': 'قاعدة بيانات السكان', 'certificates': 'إصدار الشهادات', 'settings': 'النظام والمستخدمين' }; document.getElementById('header-title').innerText = titles[tabId];
+			
+			if(tabId === 'dashboard' && isManager) updateDashboardCharts();
+			if(tabId === 'settings' && role === 'admin') { loadUsersList(); loadDevicesList(); loadSessionsLog(); }
+			if(tabId === 'certificates') { const d = new Date(); const dateStr = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'); currentRef = `ANRC-${d.getFullYear()}-${dateStr}-${Math.floor(100+Math.random()*900)}`; document.getElementById('preview-ref').innerText = currentRef; }
+		}
+	
 		let chartLoc = null; let chartInc = null;
 		function updateDashboardCharts() {
-			if(allResidents.length === 0) return;
-			document.getElementById('stat-total').innerText = allResidents.length;
+			if(allResidents.length === 0) return; document.getElementById('stat-total').innerText = allResidents.length;
 			const owns = allResidents.filter(r => r.housing_type === 'مالك').length; document.getElementById('stat-own').innerText = Math.round((owns/allResidents.length)*100) + '%';
 			const totalFam = allResidents.reduce((acc, curr) => acc + (curr.family_members_count || 1), 0); document.getElementById('stat-family').innerText = Math.round(totalFam / allResidents.length);
 			const poors = allResidents.filter(r => r.income_level === 'احمر').length; document.getElementById('stat-poor').innerText = Math.round((poors/allResidents.length)*100) + '%';
@@ -526,245 +577,80 @@
 			if(chartLoc) chartLoc.destroy(); chartLoc = new Chart(document.getElementById('locationChart').getContext('2d'), { type: 'bar', data: { labels: Object.keys(locs), datasets: [{ label: 'السكان', data: Object.values(locs), backgroundColor: '#0F172A', borderRadius: 4 }] }, options:{ maintainAspectRatio: false }});
 			if(chartInc) chartInc.destroy(); chartInc = new Chart(document.getElementById('incomeChart').getContext('2d'), { type: 'doughnut', data: { labels: ['مستقر','متوسط','ضعيف'], datasets: [{ data: Object.values(incs), backgroundColor: ['#10B981', '#F59E0B', '#EF4444'], borderWidth: 0 }] }, options:{ maintainAspectRatio: false }});
 		}
-
+	
 		// ==========================================
-		// Residents CRUD & Filter
+		// Residents CRUD 
 		// ==========================================
 		async function loadResidentsData() {
 			const tbody = document.getElementById('data-table-body');
 			try {
-				allResidents = await sbFetch('naseem_residents?order=created_at.desc'); 
-				filteredResidents = [...allResidents];
-				renderTable(allResidents);
-				if(currentUser.role !== 'citizen') { populateCertificateDropdown(); if(!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts(); }
-			} catch(e) { tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
+				allResidents = await sbFetch('naseem_residents?order=created_at.desc'); filteredResidents = [...allResidents]; renderTable(allResidents);
+				const role = (currentUser.role || '').toLowerCase().trim(); const isManager = (role === 'admin' || role === 'manager');
+				if(isManager) { populateCertificateDropdown(); if(!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts(); }
+			} catch(e) { tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-red-500">خطأ في الجلب (تأكد من الصلاحيات)</td></tr>`; }
 		}
 		
 		function renderTable(data) {
-			const tbody = document.getElementById('data-table-body'); const isManager = (currentUser.role === 'admin' || currentUser.role === 'manager');
-			if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400">لا توجد بيانات مطابقة للبحث.</td></tr>'; return; }
+			const tbody = document.getElementById('data-table-body'); 
+			const role = (currentUser.role || '').toLowerCase().trim(); const isManager = (role === 'admin' || role === 'manager');
+			if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400">لا توجد بيانات.</td></tr>'; return; }
 			let html = '';
 			data.forEach(row => {
 				let houseClass = "bg-amber-50 text-amber-700 border-amber-100";
-				if (row.housing_type === 'مالك') houseClass = "bg-emerald-50 text-emerald-700 border-emerald-100";
-				else if (row.housing_type === 'مستأجر') houseClass = "bg-blue-50 text-blue-700 border-blue-100";
-				
-				html += `<tr class="hover:bg-slate-50 transition border-b border-slate-100">
-					<td class="p-4 font-bold text-slate-800 whitespace-nowrap">${row.full_name}</td>
-					<td class="p-4 font-mono text-xs text-slate-500 whitespace-nowrap">${row.national_id}</td>
-					<td class="p-4 whitespace-nowrap text-slate-600 font-bold text-xs">${row.profession || '-'}</td>
-					<td class="p-4 whitespace-nowrap"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-slate-600">${row.location} - ق ${row.house_number || '-'}</span></td>
-					<td class="p-4 font-bold font-mono whitespace-nowrap">${row.family_members_count}</td>
-					<td class="p-4 sensitive-col whitespace-nowrap ${!isManager ? 'hidden' : ''}"><span class="px-2 py-1 border rounded font-bold text-[11px] ${houseClass}">${row.housing_type||'-'}</span></td>
-					<td class="p-4 sensitive-col whitespace-nowrap ${!isManager ? 'hidden' : ''}">${row.marital_status||'-'}</td>
-					<td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}"><span class="w-3 h-3 inline-block rounded-full shadow-sm ${row.income_level==='اخضر'?'bg-emerald-500':row.income_level==='اصفر'?'bg-amber-500':'bg-red-500'}"></span></td>
-					<td class="p-4 text-center admin-col whitespace-nowrap ${!isManager ? 'hidden' : ''}"><button onclick="editCitizen('${row.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-bold bg-blue-50 px-3 py-1 rounded">تعديل</button></td>
-				</tr>`;
+				if (row.housing_type === 'مالك') houseClass = "bg-emerald-50 text-emerald-700 border-emerald-100"; else if (row.housing_type === 'مستأجر') houseClass = "bg-blue-50 text-blue-700 border-blue-100";
+				html += `<tr class="hover:bg-slate-50 transition border-b border-slate-100"><td class="p-4 font-bold text-slate-800 whitespace-nowrap">${row.full_name}</td><td class="p-4 font-mono text-xs text-slate-500 whitespace-nowrap">${row.national_id}</td><td class="p-4 whitespace-nowrap text-slate-600 font-bold text-xs">${row.profession || '-'}</td><td class="p-4 whitespace-nowrap"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-slate-600">${row.location} - ق ${row.house_number || '-'}</span></td><td class="p-4 font-bold font-mono whitespace-nowrap">${row.family_members_count}</td><td class="p-4 sensitive-col whitespace-nowrap ${!isManager ? 'hidden' : ''}"><span class="px-2 py-1 border rounded font-bold text-[11px] ${houseClass}">${row.housing_type||'-'}</span></td><td class="p-4 sensitive-col whitespace-nowrap ${!isManager ? 'hidden' : ''}">${row.marital_status||'-'}</td><td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}"><span class="w-3 h-3 inline-block rounded-full shadow-sm ${row.income_level==='اخضر'?'bg-emerald-500':row.income_level==='اصفر'?'bg-amber-500':'bg-red-500'}"></span></td><td class="p-4 text-center admin-col whitespace-nowrap ${!isManager ? 'hidden' : ''}"><button onclick="editCitizen('${row.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-bold bg-blue-50 px-3 py-1 rounded">تعديل</button></td></tr>`;
 			});
 			tbody.innerHTML = html; document.querySelectorAll('.sensitive-col, .admin-col').forEach(el => { if(isManager) el.classList.remove('hidden'); else el.classList.add('hidden'); });
 		}
 		
-		// Smart Filter including house_number and profession
-		function filterTable() { 
-			const term = document.getElementById('search-resident').value.toLowerCase(); 
-			filteredResidents = allResidents.filter(r => 
-				(r.full_name && r.full_name.toLowerCase().includes(term)) || 
-				(r.national_id && r.national_id.includes(term)) ||
-				(r.profession && r.profession.toLowerCase().includes(term)) ||
-				(r.house_number && r.house_number.toLowerCase().includes(term))
-			);
-			renderTable(filteredResidents); 
-		}
-
-		// Export to Excel (CSV format that opens in Excel)
+		function filterTable() { const term = document.getElementById('search-resident').value.toLowerCase(); filteredResidents = allResidents.filter(r => (r.full_name && r.full_name.toLowerCase().includes(term)) || (r.national_id && r.national_id.includes(term)) || (r.profession && r.profession.toLowerCase().includes(term)) || (r.house_number && r.house_number.toLowerCase().includes(term)) ); renderTable(filteredResidents); }
+	
 		function exportToExcel() {
 			if(filteredResidents.length === 0) return alert('لا توجد بيانات للتصدير.');
-			let csvContent = '\uFEFF'; // BOM for Arabic support in Excel
-			csvContent += "الاسم الرباعي,الرقم الوطني,المهنة,الموقع,رقم المنزل,عدد الأفراد,نوع السكن,الحالة الاجتماعية,مستوى الدخل\n";
-			
-			filteredResidents.forEach(r => {
-				let row = `"${r.full_name}","${r.national_id}","${r.profession || ''}","${r.location}","${r.house_number || ''}","${r.family_members_count}","${r.housing_type}","${r.marital_status}","${r.income_level}"`;
-				csvContent += row + "\n";
-			});
-			
-			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-			const link = document.createElement("a");
-			const url = URL.createObjectURL(blob);
-			link.setAttribute("href", url);
-			link.setAttribute("download", `سجل_النسيم_${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}.csv`);
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
+			let csvContent = '\uFEFF'; csvContent += "الاسم الرباعي,الرقم الوطني,المهنة,الموقع,رقم المنزل,عدد الأفراد,نوع السكن,الحالة الاجتماعية,مستوى الدخل\n";
+			filteredResidents.forEach(r => { let row = `"${r.full_name}","${r.national_id}","${r.profession || ''}","${r.location}","${r.house_number || ''}","${r.family_members_count}","${r.housing_type}","${r.marital_status}","${r.income_level}"`; csvContent += row + "\n"; });
+			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", `سجل_النسيم_${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 		}
-
+	
 		function openCitizenModal() { document.getElementById('citizen-form').reset(); document.getElementById('f_id').value = ''; document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> إضافة سجل جديد'; document.getElementById('add-modal').classList.remove('hidden'); }
 		function closeCitizenModal() { document.getElementById('add-modal').classList.add('hidden'); }
-		
-		function editCitizen(id) {
-			const citizen = allResidents.find(r => r.id === id); if(!citizen) return;
-			document.getElementById('f_id').value = citizen.id; 
-			document.getElementById('f_name').value = citizen.full_name; 
-			document.getElementById('f_nid').value = citizen.national_id; 
-			document.getElementById('f_phone').value = citizen.phone_number; 
-			document.getElementById('f_dob').value = citizen.birth_date || ''; 
-			document.getElementById('f_loc').value = citizen.location; 
-			document.getElementById('f_house_num').value = citizen.house_number || ''; 
-			document.getElementById('f_prof').value = citizen.profession || ''; 
-			document.getElementById('f_house').value = citizen.housing_type; 
-			document.getElementById('f_marital').value = citizen.marital_status; 
-			document.getElementById('f_fam').value = citizen.family_members_count; 
-			document.getElementById('f_income').value = citizen.income_level; 
-			document.getElementById('f_notes').value = citizen.special_issues || '';
-			document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل السجل'; document.getElementById('add-modal').classList.remove('hidden');
-		}
-
+		function editCitizen(id) { const citizen = allResidents.find(r => r.id === id); if(!citizen) return; document.getElementById('f_id').value = citizen.id; document.getElementById('f_name').value = citizen.full_name; document.getElementById('f_nid').value = citizen.national_id; document.getElementById('f_phone').value = citizen.phone_number; document.getElementById('f_dob').value = citizen.birth_date || ''; document.getElementById('f_loc').value = citizen.location; document.getElementById('f_house_num').value = citizen.house_number || ''; document.getElementById('f_prof').value = citizen.profession || ''; document.getElementById('f_house').value = citizen.housing_type; document.getElementById('f_marital').value = citizen.marital_status; document.getElementById('f_fam').value = citizen.family_members_count; document.getElementById('f_income').value = citizen.income_level; document.getElementById('f_notes').value = citizen.special_issues || ''; document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل السجل'; document.getElementById('add-modal').classList.remove('hidden'); }
+	
 		async function saveCitizen() {
 			if(!document.getElementById('citizen-form').checkValidity()) return document.getElementById('citizen-form').reportValidity();
-			const btn = document.getElementById('btn-save'); btn.innerHTML = 'جاري الحفظ...'; btn.disabled = true;
-			const id = document.getElementById('f_id').value;
-			const payload = { 
-				full_name: document.getElementById('f_name').value, 
-				national_id: document.getElementById('f_nid').value, 
-				phone_number: document.getElementById('f_phone').value, 
-				birth_date: document.getElementById('f_dob').value || null, 
-				location: document.getElementById('f_loc').value, 
-				house_number: document.getElementById('f_house_num').value, 
-				profession: document.getElementById('f_prof').value, 
-				housing_type: document.getElementById('f_house').value, 
-				marital_status: document.getElementById('f_marital').value, 
-				family_members_count: parseInt(document.getElementById('f_fam').value), 
-				income_level: document.getElementById('f_income').value, 
-				special_issues: document.getElementById('f_notes').value 
-			};
-			try {
-				if(id) await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) }); else { payload.created_by = currentUser.id; await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) }); }
-				closeCitizenModal(); loadResidentsData();
-			} catch(e) { alert('فشل الحفظ: ' + e.message); } finally { btn.innerHTML = 'حفظ البيانات'; btn.disabled = false; }
+			const btn = document.getElementById('btn-save'); btn.innerHTML = 'جاري الحفظ...'; btn.disabled = true; const id = document.getElementById('f_id').value;
+			const payload = { full_name: document.getElementById('f_name').value, national_id: document.getElementById('f_nid').value, phone_number: document.getElementById('f_phone').value, birth_date: document.getElementById('f_dob').value || null, location: document.getElementById('f_loc').value, house_number: document.getElementById('f_house_num').value, profession: document.getElementById('f_prof').value, housing_type: document.getElementById('f_house').value, marital_status: document.getElementById('f_marital').value, family_members_count: parseInt(document.getElementById('f_fam').value), income_level: document.getElementById('f_income').value, special_issues: document.getElementById('f_notes').value };
+			try { if(id) await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) }); else { payload.created_by = currentUser.id; await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) }); } closeCitizenModal(); loadResidentsData(); } catch(e) { alert('فشل الحفظ: ' + e.message); } finally { btn.innerHTML = 'حفظ البيانات'; btn.disabled = false; }
 		}
-
+	
 		// ==========================================
-		// 7. Certificate Generation (Print & DB)
+		// Certificate Generation & Admin Settings
 		// ==========================================
 		function populateCertificateDropdown() { const sel = document.getElementById('cert-citizen-select'); sel.innerHTML = '<option value="">-- القائمة --</option>'; allResidents.forEach(r => sel.innerHTML += `<option value="${r.id}">${r.full_name} (${r.national_id})</option>`); }
-		function previewCertificate() {
-			const id = document.getElementById('cert-citizen-select').value;
-			if(!id) { document.getElementById('preview-name').innerText = '-----'; document.getElementById('preview-nid').innerText = '-----'; document.getElementById('preview-date').innerText = '-----'; return; }
-			const citizen = allResidents.find(r => r.id === id);
-			document.getElementById('preview-name').innerText = citizen.full_name; document.getElementById('preview-nid').innerText = citizen.national_id; document.getElementById('preview-date').innerText = new Date().toLocaleDateString('en-GB');
-		}
-
+		function previewCertificate() { const id = document.getElementById('cert-citizen-select').value; if(!id) { document.getElementById('preview-name').innerText = '-----'; document.getElementById('preview-nid').innerText = '-----'; document.getElementById('preview-date').innerText = '-----'; return; } const citizen = allResidents.find(r => r.id === id); document.getElementById('preview-name').innerText = citizen.full_name; document.getElementById('preview-nid').innerText = citizen.national_id; document.getElementById('preview-date').innerText = new Date().toLocaleDateString('en-GB'); }
+	
 		async function generateCertificate() {
-			const id = document.getElementById('cert-citizen-select').value; 
-			if(!id) return alert('الرجاء اختيار مواطن أولاً');
-			const citizen = allResidents.find(r => r.id === id);
-			
-			try {
-				await sbFetch('naseem_certificates', { method: 'POST', body: JSON.stringify({ resident_id: citizen.id, ref_number: currentRef, created_by: currentUser.id }) });
-			} catch (e) { console.warn("لم يتم حفظ الـ Ref، قد يكون مكرراً.", e); }
-
+			const id = document.getElementById('cert-citizen-select').value; if(!id) return alert('الرجاء اختيار مواطن أولاً'); const citizen = allResidents.find(r => r.id === id);
+			const d = new Date(); const dateStr = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0'); const certRef = `ANRC-${d.getFullYear()}-${dateStr}-${Math.floor(100+Math.random()*900)}`;
+			try { await sbFetch('naseem_certificates', { method: 'POST', body: JSON.stringify({ resident_id: citizen.id, ref_number: certRef, created_by: currentUser.id }) }); } catch (e) {}
 			const cName = citizen.full_name; const cNid = citizen.national_id; const cLoc = `النسيم - ${citizen.location} - ق ${citizen.house_number || '-'}`; 
-			
-			const d = new Date();
-			const arMonths = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-			const enMonths = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-			const arDate = `${d.getDate()} ${arMonths[d.getMonth()]} ${d.getFullYear()}`;
-			const enDate = `${d.getDate()} ${enMonths[d.getMonth()]} ${d.getFullYear()}`;
-			const formattedDate = `${enDate}  /  ${arDate}`;
-
+			const arMonths = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]; const enMonths = ["January","February","March","April","May","June","July","August","September","October","November","December"]; const arDate = `${d.getDate()} ${arMonths[d.getMonth()]} ${d.getFullYear()}`; const enDate = `${d.getDate()} ${enMonths[d.getMonth()]} ${d.getFullYear()}`; const formattedDate = `${enDate}  /  ${arDate}`;
 			const barcodeUrl = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${cNid}&scale=3&includetext=false`;
-
-			const printHTML = `
-				<html dir="rtl" lang="ar"><head><title>شهادة سكن - ${cName}</title>
-				<style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;800&display=swap'); @page { size: A4 portrait; margin: 0; } body { font-family: 'Cairo', sans-serif; margin: 0; padding: 0; background: #fbfbf9; color: #1a202c; box-sizing: border-box; } .cert-container { width: 210mm; height: 297mm; padding: 20mm; box-sizing: border-box; position: relative; background: #fff; } .border-outer { position: absolute; top: 12mm; left: 12mm; right: 12mm; bottom: 12mm; border: 4px solid #b08d55; border-radius: 4px; } .border-inner { position: absolute; top: 14mm; left: 14mm; right: 14mm; bottom: 14mm; border: 1.5px solid #1c3c66; border-radius: 2px; } .content-wrapper { position: relative; z-index: 10; display: flex; flex-direction: column; height: 100%; } .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #b08d55; padding-bottom: 15px; margin-bottom: 30px; } .header-right { display: flex; align-items: center; gap: 15px; } .header-text { line-height: 1.6; font-size: 16px; font-weight: 800; text-align: right; } .logo-container img { width: 120px; height: 120px; object-fit: contain; } .title-section { text-align: center; margin-bottom: 30px; } .title-ar { font-family: 'Amiri', serif; font-size: 48px; font-weight: 700; margin: 0; color: #0f172a; } .title-en { font-size: 18px; letter-spacing: 2px; color: #475569; margin-top: -10px; font-family: sans-serif; } .statement { font-size: 20px; line-height: 2.2; text-align: justify; margin-bottom: 40px; font-weight: 600; color: #1e293b; } table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border: 2px solid #1c3c66; border-radius: 8px; overflow: hidden; } tr:not(:last-child) { border-bottom: 1px solid #1c3c66; } td { padding: 16px; font-size: 18px; border-left: 1px solid #1c3c66; } td:last-child { border-left: none; } .bg-gray { background-color: #f1f5f9; font-weight: 800; width: 25%; color: #0f172a; white-space: nowrap; } .val-cell { font-weight: 700; color: #1e293b; } .flex-row { display: flex; justify-content: space-between; align-items: center; } .en-text { font-family: sans-serif; font-size: 15px; color: #0f172a; font-weight: bold; } .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; } .signature-box { text-align: center; font-weight: 800; font-size: 18px; width: 200px; } .signature-line { border-top: 2px dotted #475569; margin-top: 50px; width: 100%; } .barcode-section { text-align: center; display: flex; flex-direction: column; align-items: center; } .barcode-text { font-family: sans-serif; font-size: 12px; margin-bottom: 8px; color: #475569; font-weight: bold;} .barcode-img { height: 50px; max-width: 220px; } .barcode-val { font-family: sans-serif; font-size: 15px; font-weight: bold; letter-spacing: 2px; margin-top: 5px; }</style>
-				</head>
-				<body>
-					<div class="cert-container"><div class="border-outer"></div><div class="border-inner"></div>
-						<div class="content-wrapper">
-							<div class="header">
-								<div class="header-right">
-									<div class="flag-container"><svg viewBox="0 0 120 60" width="80" height="40" style="border: 1px solid #cbd5e1;"><rect width="120" height="20" fill="#D21034"/><rect y="20" width="120" height="20" fill="#FFFFFF"/><rect y="40" width="120" height="20" fill="#000000"/><polygon points="0,0 40,30 0,60" fill="#007229"/></svg></div>
-									<div class="header-text">جمهورية السودان<br>ولاية الخرطوم<br>محلية شرق النيل - الحاج يوسف<br>لجنة خدمات مدينة النسيم السكنية</div>
-								</div>
-								<div class="logo-container"><img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" alt="Logo"></div>
-							</div>
-							<div class="title-section"><h1 class="title-ar">شهادة سكن</h1><div class="title-en">RESIDENCE CERTIFICATE</div></div>
-							<div class="statement">تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.</div>
-							<table>
-								<tr><td class="bg-gray">الاسم الرباعي:</td><td class="val-cell">${cName}</td></tr>
-								<tr><td class="bg-gray">الرقم الوطني:</td><td class="val-cell en-text" style="letter-spacing: 2px;">${cNid}</td></tr>
-								<tr><td class="bg-gray">الموقع الجغرافي:</td><td class="val-cell flex-row"><span>${cLoc}</span><span class="en-text" dir="ltr">(Ref No): ${currentRef}</span></td></tr>
-								<tr><td class="bg-gray">تاريخ الإصدار:</td><td class="val-cell flex-row"><span dir="rtl">${formattedDate}</span><span class="en-text">:(Date of Issue)</span></td></tr>
-							</table>
-							<div class="footer">
-								<div class="signature-box">توقيع مسئول الإحصاء<div class="signature-line"></div></div>
-								<div class="barcode-section"><div class="barcode-text">Code 128 barcode linked to National ID</div><img src="${barcodeUrl}" class="barcode-img" alt="Barcode"><div class="barcode-val">${cNid}</div></div>
-								<div class="signature-box">توقيع رئيس اللجنة<div class="signature-line"></div></div>
-							</div>
-						</div>
-					</div>
-				</body></html>`;
-			
-			const iframe = document.createElement('iframe'); iframe.style.position = 'fixed'; iframe.style.right = '-1000px'; iframe.style.bottom = '-1000px'; iframe.style.width = '0'; iframe.style.height = '0'; document.body.appendChild(iframe);
-			const doc = iframe.contentWindow.document; doc.open(); doc.write(printHTML); doc.close();
-			setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => { document.body.removeChild(iframe); }, 2000); }, 1500); 
+			const printHTML = `<html dir="rtl" lang="ar"><head><title>شهادة سكن - ${cName}</title><style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;800&display=swap'); @page { size: A4 portrait; margin: 0; } body { font-family: 'Cairo', sans-serif; margin: 0; padding: 0; background: #fbfbf9; color: #1a202c; box-sizing: border-box; } .cert-container { width: 210mm; height: 297mm; padding: 20mm; box-sizing: border-box; position: relative; background: #fff; } .border-outer { position: absolute; top: 12mm; left: 12mm; right: 12mm; bottom: 12mm; border: 4px solid #b08d55; border-radius: 4px; } .border-inner { position: absolute; top: 14mm; left: 14mm; right: 14mm; bottom: 14mm; border: 1.5px solid #1c3c66; border-radius: 2px; } .content-wrapper { position: relative; z-index: 10; display: flex; flex-direction: column; height: 100%; } .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #b08d55; padding-bottom: 15px; margin-bottom: 30px; } .header-right { display: flex; align-items: center; gap: 15px; } .header-text { line-height: 1.6; font-size: 16px; font-weight: 800; text-align: right; } .logo-container img { width: 120px; height: 120px; object-fit: contain; } .title-section { text-align: center; margin-bottom: 30px; } .title-ar { font-family: 'Amiri', serif; font-size: 48px; font-weight: 700; margin: 0; color: #0f172a; } .title-en { font-size: 18px; letter-spacing: 2px; color: #475569; margin-top: -10px; font-family: sans-serif; } .statement { font-size: 20px; line-height: 2.2; text-align: justify; margin-bottom: 40px; font-weight: 600; color: #1e293b; } table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border: 2px solid #1c3c66; border-radius: 8px; overflow: hidden; } tr:not(:last-child) { border-bottom: 1px solid #1c3c66; } td { padding: 16px; font-size: 18px; border-left: 1px solid #1c3c66; } td:last-child { border-left: none; } .bg-gray { background-color: #f1f5f9; font-weight: 800; width: 25%; color: #0f172a; white-space: nowrap; } .val-cell { font-weight: 700; color: #1e293b; } .flex-row { display: flex; justify-content: space-between; align-items: center; } .en-text { font-family: sans-serif; font-size: 15px; color: #0f172a; font-weight: bold; } .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; } .signature-box { text-align: center; font-weight: 800; font-size: 18px; width: 200px; } .signature-line { border-top: 2px dotted #475569; margin-top: 50px; width: 100%; } .barcode-section { text-align: center; display: flex; flex-direction: column; align-items: center; } .barcode-text { font-family: sans-serif; font-size: 12px; margin-bottom: 8px; color: #475569; font-weight: bold;} .barcode-img { height: 50px; max-width: 220px; } .barcode-val { font-family: sans-serif; font-size: 15px; font-weight: bold; letter-spacing: 2px; margin-top: 5px; }</style></head><body><div class="cert-container"><div class="border-outer"></div><div class="border-inner"></div><div class="content-wrapper"><div class="header"><div class="header-right"><div class="flag-container"><svg viewBox="0 0 120 60" width="80" height="40" style="border: 1px solid #cbd5e1;"><rect width="120" height="20" fill="#D21034"/><rect y="20" width="120" height="20" fill="#FFFFFF"/><rect y="40" width="120" height="20" fill="#000000"/><polygon points="0,0 40,30 0,60" fill="#007229"/></svg></div><div class="header-text">جمهورية السودان<br>ولاية الخرطوم<br>محلية شرق النيل - الحاج يوسف<br>لجنة خدمات مدينة النسيم السكنية</div></div><div class="logo-container"><img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" alt="Logo"></div></div><div class="title-section"><h1 class="title-ar">شهادة سكن</h1><div class="title-en">RESIDENCE CERTIFICATE</div></div><div class="statement">تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.</div><table><tr><td class="bg-gray">الاسم الرباعي:</td><td class="val-cell">${cName}</td></tr><tr><td class="bg-gray">الرقم الوطني:</td><td class="val-cell en-text" style="letter-spacing: 2px;">${cNid}</td></tr><tr><td class="bg-gray">الموقع الجغرافي:</td><td class="val-cell flex-row"><span>${cLoc}</span><span class="en-text" dir="ltr">(Ref No): ${certRef}</span></td></tr><tr><td class="bg-gray">تاريخ الإصدار:</td><td class="val-cell flex-row"><span dir="rtl">${formattedDate}</span><span class="en-text">:(Date of Issue)</span></td></tr></table><div class="footer"><div class="signature-box">توقيع مسئول الإحصاء<div class="signature-line"></div></div><div class="barcode-section"><div class="barcode-text">Code 128 barcode linked to National ID</div><img src="${barcodeUrl}" class="barcode-img" alt="Barcode"><div class="barcode-val">${cNid}</div></div><div class="signature-box">توقيع رئيس اللجنة<div class="signature-line"></div></div></div></div></div></body></html>`;
+			const iframe = document.createElement('iframe'); iframe.style.position = 'fixed'; iframe.style.right = '-1000px'; iframe.style.bottom = '-1000px'; iframe.style.width = '0'; iframe.style.height = '0'; document.body.appendChild(iframe); const doc = iframe.contentWindow.document; doc.open(); doc.write(printHTML); doc.close(); setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => { document.body.removeChild(iframe); }, 2000); }, 1500); 
 		}
-
-		// ==========================================
-		// 8. Admin Settings (Users, Devices, Logs)
-		// ==========================================
-		async function loadUsersList() {
-			const ul = document.getElementById('users-list');
-			try { const users = await sbFetch('naseem_acc'); ul.innerHTML = ''; users.forEach(u => ul.innerHTML += `<li class="py-3 px-4 flex justify-between items-center"><div class="flex flex-col"><span class="font-bold text-slate-700">${u.name}</span><span class="text-[11px] text-slate-400 font-mono">${u.email}</span></div><span class="text-[10px] uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded font-black">${u.role}</span></li>`); } catch(e) { ul.innerHTML = 'خطأ في الجلب'; }
-		}
+	
+		async function loadUsersList() { const ul = document.getElementById('users-list'); try { const profiles = await sbFetch('naseem_profiles'); ul.innerHTML = ''; profiles.forEach(p => ul.innerHTML += `<li class="py-3 px-4 flex justify-between items-center"><div class="flex flex-col"><span class="font-bold text-slate-700">${p.name}</span><span class="text-[10px] text-slate-400 font-mono">${p.id.substring(0,8)}...</span></div><span class="text-[10px] uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded font-black">${p.role}</span></li>`); } catch(e) { ul.innerHTML = 'خطأ في الجلب'; } }
 		async function saveUser() {
-			const payload = { name: document.getElementById('u_name').value, email: document.getElementById('u_email').value, password: document.getElementById('u_pass').value, role: document.getElementById('u_role').value, security_question: 'ما هو اسم مدرستك الابتدائية؟', security_answer: 'النسيم', f2a_email: document.getElementById('u_email').value };
-			if(!payload.name || !payload.email) return alert('البيانات ناقصة');
-			const btn = document.getElementById('btn-save-user'); btn.innerHTML = 'جاري...'; btn.disabled = true;
-			try { await sbFetch('naseem_acc', { method: 'POST', body: JSON.stringify(payload) }); alert('تم الحفظ'); loadUsersList(); document.getElementById('u_name').value=''; document.getElementById('u_email').value=''; document.getElementById('u_pass').value=''; } catch(e) { alert(e.message); } finally { btn.innerHTML = 'إنشاء الحساب'; btn.disabled = false; }
+			const name = document.getElementById('u_name').value; const email = document.getElementById('u_email').value; const pass = document.getElementById('u_pass').value; const role = document.getElementById('u_role').value;
+			if(!name || !email || !pass) return alert('البيانات ناقصة'); const btn = document.getElementById('btn-save-user'); btn.innerHTML = 'جاري...'; btn.disabled = true;
+			try { const authData = await sbAuth('signup', { email: email, password: pass }); await sbFetch('naseem_profiles', { method: 'POST', body: JSON.stringify({ id: authData.user.id, name: name, role: role }) }); alert('تم إنشاء الحساب بنجاح'); loadUsersList(); document.getElementById('u_name').value=''; document.getElementById('u_email').value=''; document.getElementById('u_pass').value=''; } catch(e) { alert(e.message); } finally { btn.innerHTML = 'إنشاء الحساب'; btn.disabled = false; }
 		}
-
-		async function loadDevicesList() {
-			const tbody = document.getElementById('devices-table-body'); tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">جاري التحميل...</td></tr>';
-			try {
-				const [devices, users] = await Promise.all([sbFetch('naseem_trusted_devices?order=created_at.desc'), sbFetch('naseem_acc')]);
-				if(!devices || devices.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">لا توجد أجهزة مسجلة</td></tr>'; return; }
-				let html = '';
-				devices.forEach(d => {
-					const userName = (users.find(u => u.id === d.user_id) || {}).name || 'مجهول';
-					const statusHtml = d.status === 'approved' ? '<span class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-bold text-xs border border-emerald-100 block w-fit mx-auto">مصرح ✔️</span>' : `<div class="flex justify-center gap-2"><button onclick="updateDeviceStatus('${d.id}', 'approved')" class="bg-emerald-500 text-white px-3 py-1 rounded shadow-sm hover:bg-emerald-600 text-xs font-bold">تفعيل</button><button onclick="deleteDevice('${d.id}')" class="bg-slate-200 text-slate-600 px-3 py-1 rounded shadow-sm hover:bg-slate-300 text-xs font-bold">رفض</button></div>`;
-					html += `<tr class="hover:bg-slate-50 transition border-b border-slate-100"><td class="p-3 font-bold text-slate-700 whitespace-nowrap">${userName}<br><span class="text-[10px] text-slate-400 font-mono font-normal">${d.device_uuid.substring(0,8)}</span></td><td class="p-3 whitespace-nowrap"><span class="block font-bold text-slate-800">${d.device_model || '-'} / ${d.os || '-'}</span><span class="text-[11px] text-slate-500">${d.browser || '-'}</span></td><td class="p-3 text-left whitespace-nowrap"><span class="font-bold text-[11px] text-slate-600 block" dir="ltr">${d.country || '-'}</span><span class="font-mono text-[10px] text-slate-400">${d.ip_address || '-'}</span></td><td class="p-3 text-center align-middle">${statusHtml}</td></tr>`;
-				}); tbody.innerHTML = html;
-			} catch(e) { tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
-		}
+		async function loadDevicesList() { const tbody = document.getElementById('devices-table-body'); tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">جاري التحميل...</td></tr>'; try { const [devices, profiles] = await Promise.all([sbFetch('naseem_trusted_devices?order=created_at.desc'), sbFetch('naseem_profiles')]); if(!devices || devices.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400">لا توجد أجهزة مسجلة</td></tr>'; return; } let html = ''; devices.forEach(d => { const userName = (profiles.find(u => u.id === d.user_id) || {}).name || 'مجهول'; const statusHtml = d.status === 'approved' ? '<span class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-bold text-xs border border-emerald-100 block w-fit mx-auto">مصرح ✔️</span>' : `<div class="flex justify-center gap-2"><button onclick="updateDeviceStatus('${d.id}', 'approved')" class="bg-emerald-500 text-white px-3 py-1 rounded shadow-sm hover:bg-emerald-600 text-xs font-bold">تفعيل</button><button onclick="deleteDevice('${d.id}')" class="bg-slate-200 text-slate-600 px-3 py-1 rounded shadow-sm hover:bg-slate-300 text-xs font-bold">رفض</button></div>`; html += `<tr class="hover:bg-slate-50 transition border-b border-slate-100"><td class="p-3 font-bold text-slate-700 whitespace-nowrap">${userName}<br><span class="text-[10px] text-slate-400 font-mono font-normal">${d.device_uuid.substring(0,8)}</span></td><td class="p-3 whitespace-nowrap"><span class="block font-bold text-slate-800">${d.device_model || '-'} / ${d.os || '-'}</span><span class="text-[11px] text-slate-500">${d.browser || '-'}</span></td><td class="p-3 text-left whitespace-nowrap"><span class="font-bold text-[11px] text-slate-600 block" dir="ltr">${d.country || '-'}</span><span class="font-mono text-[10px] text-slate-400">${d.ip_address || '-'}</span></td><td class="p-3 text-center align-middle">${statusHtml}</td></tr>`; }); tbody.innerHTML = html; } catch(e) { tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">خطأ: ${e.message}</td></tr>`; } }
 		async function updateDeviceStatus(id, status) { try { await sbFetch(`naseem_trusted_devices?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ status: status }) }); loadDevicesList(); } catch(e) {} }
 		async function deleteDevice(id) { if(confirm('تأكيد الحذف؟')) { try { await sbFetch(`naseem_trusted_devices?id=eq.${id}`, { method: 'DELETE' }); loadDevicesList(); } catch(e) {} } }
-
 		async function deleteSessionLog(id) { if(confirm('حذف هذا السجل؟')) { try { await sbFetch(`naseem_login_sessions?id=eq.${id}`, { method: 'DELETE' }); loadSessionsLog(); } catch(e) {} } }
-
-		async function loadSessionsLog() {
-			const ul = document.getElementById('sessions-log-list'); ul.innerHTML = '<li class="py-4 text-center text-slate-400 text-sm">جاري جلب السجلات...</li>';
-			try {
-				const [logs, users] = await Promise.all([sbFetch('naseem_login_sessions?order=created_at.desc&limit=30'), sbFetch('naseem_acc')]);
-				if(!logs || logs.length === 0) { ul.innerHTML = '<li class="py-4 text-center text-slate-400 text-sm">لا توجد نشاطات مسجلة.</li>'; return; }
-				let html = '';
-				logs.forEach(log => {
-					const userName = (users.find(u => u.id === log.user_id) || {}).name || 'مجهول';
-					const date = new Date(log.created_at).toLocaleString('en-GB'); 
-					const isSuccess = log.action.includes('Login');
-					html += `
-					<li class="relative animate-in border-b border-slate-50 pb-2">
-						<span class="absolute -right-[23px] top-1 w-3 h-3 rounded-full border-2 border-white ring-2 ${isSuccess ? 'bg-emerald-500 ring-emerald-100' : 'bg-red-500 ring-red-100'}"></span>
-						<div class="flex justify-between items-start">
-							<div>
-								<p class="text-sm font-bold text-slate-700">${log.action} <span class="text-xs text-slate-400 font-normal">(${userName})</span></p>
-								<p class="text-[11px] text-slate-400 font-mono mt-1">${log.ip_address || 'IP Unknown'} | ${date}</p>
-							</div>
-							<button onclick="deleteSessionLog('${log.id}')" class="text-[10px] bg-red-50 hover:bg-red-500 hover:text-white text-red-500 px-2 py-1 rounded transition">حذف</button>
-						</div>
-					</li>`;
-				}); ul.innerHTML = html;
-			} catch(e) { ul.innerHTML = `<li class="py-4 text-center text-red-500 text-sm">خطأ: ${e.message}</li>`; }
-		}
+		async function loadSessionsLog() { const ul = document.getElementById('sessions-log-list'); ul.innerHTML = '<li class="py-4 text-center text-slate-400 text-sm">جاري جلب السجلات...</li>'; try { const [logs, profiles] = await Promise.all([sbFetch('naseem_login_sessions?order=created_at.desc&limit=30'), sbFetch('naseem_profiles')]); if(!logs || logs.length === 0) { ul.innerHTML = '<li class="py-4 text-center text-slate-400 text-sm">لا توجد نشاطات مسجلة.</li>'; return; } let html = ''; logs.forEach(log => { const userName = (profiles.find(u => u.id === log.user_id) || {}).name || 'مجهول'; const date = new Date(log.created_at).toLocaleString('en-GB'); const isSuccess = log.action.includes('Login'); html += `<li class="relative animate-in border-b border-slate-50 pb-2"><span class="absolute -right-[23px] top-1 w-3 h-3 rounded-full border-2 border-white ring-2 ${isSuccess ? 'bg-emerald-500 ring-emerald-100' : 'bg-red-500 ring-red-100'}"></span><div class="flex justify-between items-start"><div><p class="text-sm font-bold text-slate-700">${log.action} <span class="text-xs text-slate-400 font-normal">(${userName})</span></p><p class="text-[11px] text-slate-400 font-mono mt-1">${log.ip_address || 'IP Unknown'} | ${date}</p></div><button onclick="deleteSessionLog('${log.id}')" class="text-[10px] bg-red-50 hover:bg-red-500 hover:text-white text-red-500 px-2 py-1 rounded transition">حذف</button></div></li>`; }); ul.innerHTML = html; } catch(e) { ul.innerHTML = `<li class="py-4 text-center text-red-500 text-sm">خطأ: ${e.message}</li>`; } }
 	</script>
 </body>
 </html>
