@@ -30,6 +30,9 @@
 		
 		.btn-secondary { background-color: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; border-radius: 8px; font-weight: 700; padding: 10px 20px; transition: 0.2s; }
 		.btn-secondary:hover { background-color: #E2E8F0; color: var(--brand-dark); }
+		
+		.btn-success { background: linear-gradient(to left, #10B981, #059669); color: white; border-radius: 8px; font-weight: 700; padding: 10px 20px; transition: all 0.3s; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); }
+		.btn-success:hover { background: linear-gradient(to left, #059669, #047857); transform: translateY(-1px); box-shadow: 0 6px 8px -1px rgba(16, 185, 129, 0.3); }
 
 		.glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid #E2E8F0; border-radius: 16px; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); }
 		.table-header { background-color: #F8FAFC; border-bottom: 2px solid #E2E8F0; color: #475569; font-weight: 800; }
@@ -185,20 +188,27 @@
 			<div id="view-residents" class="app-view hidden h-full flex flex-col">
 				<div class="glass-card flex-1 flex flex-col overflow-hidden">
 					<div class="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row gap-3 justify-between items-center">
-						<div class="relative w-full sm:w-96">
+						<div class="relative w-full sm:w-[450px]">
 							<svg class="svg-icon absolute right-3 top-3 text-slate-400 w-4 h-4"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-							<input type="text" id="search-resident" onkeyup="filterTable()" placeholder="بحث بالاسم أو الرقم..." class="form-input pl-4 pr-10 bg-white" style="font-family: sans-serif;">
+							<input type="text" id="search-resident" onkeyup="filterTable()" placeholder="بحث بالاسم، الرقم الوطني، المهنة، أو رقم القطعة..." class="form-input pl-4 pr-10 bg-white shadow-sm" style="font-family: sans-serif;">
 						</div>
-						<button onclick="loadResidentsData()" class="btn-secondary w-full sm:w-auto flex justify-center items-center gap-2 py-2"><svg class="svg-icon w-4 h-4"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>تحديث</button>
+						<div class="flex gap-2 w-full sm:w-auto">
+							<button onclick="exportToExcel()" class="btn-success w-full sm:w-auto flex justify-center items-center gap-2 py-2">
+								<svg class="svg-icon w-4 h-4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="13"></line><line x1="8" y1="17" x2="16" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+								<span>تصدير Excel</span>
+							</button>
+							<button onclick="loadResidentsData()" class="btn-secondary w-full sm:w-auto flex justify-center items-center gap-2 py-2">
+								<svg class="svg-icon w-4 h-4"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+							</button>
+						</div>
 					</div>
 					<div class="overflow-x-auto flex-1 w-full">
-						<table class="w-full text-sm text-right border-collapse min-w-[800px]" id="residents-table" dir="rtl">
+						<table class="w-full text-sm text-right border-collapse min-w-[1000px]" id="residents-table" dir="rtl">
 							<thead class="table-header sticky top-0 z-10 text-right">
 								<tr>
 									<th class="p-4 border-b whitespace-nowrap">الاسم الرباعي</th>
 									<th class="p-4 border-b whitespace-nowrap">الرقم الوطني</th>
-									<th class="p-4 border-b whitespace-nowrap">الموقع</th>
-									<th class="p-4 border-b whitespace-nowrap">الأسرة</th>
+									<th class="p-4 border-b whitespace-nowrap">المهنة</th> <th class="p-4 border-b whitespace-nowrap">الموقع والقطعة</th> <th class="p-4 border-b whitespace-nowrap">الأسرة</th>
 									<th class="p-4 border-b sensitive-col whitespace-nowrap">السكن</th>
 									<th class="p-4 border-b sensitive-col whitespace-nowrap">الحالة</th>
 									<th class="p-4 border-b sensitive-col whitespace-nowrap text-center">الدخل</th>
@@ -206,7 +216,7 @@
 								</tr>
 							</thead>
 							<tbody id="data-table-body" class="divide-y divide-slate-100 text-slate-600 font-medium bg-white">
-								<tr><td colspan="8" class="p-8 text-center text-slate-400">جاري التحميل...</td></tr>
+								<tr><td colspan="9" class="p-8 text-center text-slate-400">جاري التحميل...</td></tr>
 							</tbody>
 						</table>
 					</div>
@@ -221,14 +231,14 @@
 							<h3 class="text-xl md:text-2xl font-black text-slate-800">إصدار شهادة سكن</h3>
 						</div>
 						<p class="text-sm text-slate-500 mb-8 leading-relaxed">
-							اختر المواطن لتوليد شهادة إثبات سكن معتمدة. سيتم حفظ الرقم المرجعي في قاعدة البيانات للتوثيق مع كود الاستجابة السريعة (QR Code).
+							اختر المواطن لتوليد شهادة إثبات سكن معتمدة. سيتم حفظ الرقم المرجعي في قاعدة البيانات للتوثيق مع كود الاستجابة السريعة (QR Code) أو الباركود.
 						</p>
 						<div class="space-y-4">
 							<label class="form-label">اختر المواطن من السجل:</label>
 							<select id="cert-citizen-select" class="form-input text-base py-3" onchange="previewCertificate()"><option value="">-- القائمة --</option></select>
-							<button onclick="generateCertificate()" class="btn-primary w-full flex justify-center items-center gap-2 mt-4 py-3 text-lg">
+							<button onclick="generateCertificate()" class="btn-primary w-full flex justify-center items-center gap-2 mt-4 py-3 text-lg shadow-lg">
 								<svg class="svg-icon"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-								اعتماد وحفظ للطباعة
+								اعتماد وطباعة الوثيقة
 							</button>
 						</div>
 					</div>
@@ -238,7 +248,7 @@
 							<div class="flex justify-between items-start border-b-2 border-slate-300 pb-4 mb-6">
 								<div>
 									<h4 class="font-black text-xl text-slate-800 tracking-wide">شهادة سكن</h4>
-									<p class="text-[11px] text-slate-500 font-mono mt-1" id="preview-ref">NSC-XXXX-XXXX</p>
+									<p class="text-[11px] text-slate-500 font-mono mt-1" id="preview-ref">ANRC-YYYY-MMDD-XXX</p>
 								</div>
 								<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" alt="Logo" class="w-12 h-12 object-contain opacity-80">
 							</div>
@@ -308,39 +318,46 @@
 				<button onclick="closeCitizenModal()" class="text-slate-400 hover:text-red-600 bg-white rounded-full p-1 shadow-sm transition"><svg class="svg-icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
 			</div>
 			<div class="p-4 md:p-8 overflow-y-auto bg-white flex-1">
-				<form id="citizen-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+				<form id="citizen-form" onsubmit="event.preventDefault();" class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
 					<input type="hidden" id="f_id"> 
-					<div class="md:col-span-3 pb-2 mb-2 border-b-2 border-slate-100"><h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">البيانات الأساسية</h4></div>
+					<div class="md:col-span-3 pb-2 mb-2 border-b-2 border-slate-100"><h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">البيانات الأساسية والموقع</h4></div>
+					
 					<div class="md:col-span-2"><label class="form-label required">الاسم الرباعي</label><input type="text" id="f_name" class="form-input bg-slate-50" required></div>
 					<div><label class="form-label required">الرقم الوطني</label><input type="number" id="f_nid" class="form-input bg-slate-50 font-mono" required></div>
+					
 					<div><label class="form-label required">رقم الهاتف</label><input type="number" id="f_phone" class="form-input bg-slate-50 font-mono" required></div>
-					<div><label class="form-label">تاريخ الميلاد</label><input type="date" id="f_dob" class="form-input bg-slate-50 font-mono"></div>
 					<div><label class="form-label">الموقع الجغرافي</label><select id="f_loc" class="form-input bg-slate-50"><option value="شمال">شمال</option><option value="وسط">وسط</option><option value="جنوب">جنوب</option></select></div>
+					<div><label class="form-label">رقم المنزل / القطعة</label><input type="text" id="f_house_num" class="form-input bg-slate-50 font-mono" placeholder="مثال: 145/أ"></div>
 
 					<div class="md:col-span-3 pb-2 mb-2 mt-4 border-b-2 border-slate-100"><h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">البيانات السرية والإحصائية</h4></div>
+					
 					<div><label class="form-label">المهنة</label><input type="text" id="f_prof" class="form-input bg-slate-50"></div>
-					<div><label class="form-label">السكن</label><select id="f_house" class="form-input bg-slate-50"><option value="مالك">مالك</option><option value="مستأجر">مستأجر</option><option value="مؤقت">مؤقت (حارس منزل)</option></select></div>
+					<div><label class="form-label">تاريخ الميلاد</label><input type="date" id="f_dob" class="form-input bg-slate-50 font-mono"></div>
 					<div><label class="form-label">الحالة الاجتماعية</label><select id="f_marital" class="form-input bg-slate-50"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option></select></div>
+					
+					<div><label class="form-label">السكن</label><select id="f_house" class="form-input bg-slate-50"><option value="مالك">مالك</option><option value="مستأجر">مستأجر</option><option value="مؤقت">مؤقت (حارس منزل)</option></select></div>
 					<div><label class="form-label">عدد أفراد الأسرة</label><input type="number" id="f_fam" min="1" value="1" class="form-input bg-slate-50 font-mono"></div>
 					<div><label class="form-label">مستوى الدخل</label><select id="f_income" class="form-input bg-slate-50"><option value="اخضر">أخضر (مستقر)</option><option value="اصفر">أصفر (متوسط)</option><option value="احمر">أحمر (ضعيف)</option></select></div>
+					
 					<div class="md:col-span-3"><label class="form-label">ملاحظات خاصة</label><textarea id="f_notes" class="form-input bg-slate-50" rows="2"></textarea></div>
 				</form>
 			</div>
 			<div class="p-4 md:p-5 border-t border-slate-200 bg-slate-50 flex justify-end gap-3 flex-wrap">
 				<button onclick="closeCitizenModal()" class="btn-secondary flex-1 md:flex-none">إلغاء</button>
-				<button onclick="saveCitizen()" id="btn-save" class="btn-primary shadow-lg flex-1 md:flex-none">حفظ البيانات</button>
+				<button type="button" onclick="saveCitizen()" id="btn-save" class="btn-primary shadow-lg flex-1 md:flex-none">حفظ البيانات</button>
 			</div>
 		</div>
 	</div>
 
 	<script>
+		// Configuration
 		const SUPABASE_URL = 'https://lzobdqlbsxjlupyewdqq.supabase.co/rest/v1';
 		const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6b2JkcWxic3hqbHVweWV3ZHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTY0MDQsImV4cCI6MjA4OTU3MjQwNH0.fH-bV3QiQUbk_6L-clwwdHlZTnTIYAIJeKysMhUlBIs';
 		const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3M0pH4dXIegs0QcjVkYWs9j6VnoutiUPRSxrV57_o1Fxvl0Ri5icqKbxJQrVw148Q/exec';
 		
-		let currentUser = null; let timerInterval = null; let currentOtpEmail = null; let allResidents = []; let currentRef = "";
+		let currentUser = null; let timerInterval = null; let currentOtpEmail = null; let allResidents = []; let filteredResidents = []; let currentRef = "";
 		
-		// PWA Engine Installer
+		// PWA Initializer
 		(function initPWA() {
 			const manifest = {
 				name: "نظام إحصاء النسيم", short_name: "النسيم", start_url: ".", display: "standalone",
@@ -375,16 +392,11 @@
 			captureGPSLocation();
 			const ua = navigator.userAgent; let browser = "Unknown", os = "Unknown", deviceModel = "Desktop/Unknown";
 			
-			// Basic extraction
 			if(ua.includes("Chrome")) browser = "Chrome"; else if(ua.includes("Firefox")) browser = "Firefox"; else if(ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari"; else if(ua.includes("Edge")) browser = "Edge";
 			if(ua.includes("Win")) os = "Windows"; else if(ua.includes("Mac")) os = "MacOS"; else if(ua.includes("Android")) { os = "Android"; deviceModel = "Android Phone"; } else if(ua.includes("iPhone")) { os = "iOS"; deviceModel = "iPhone"; } else if(ua.includes("iPad")) { os = "iOS"; deviceModel = "iPad"; }
 			
-			// Advanced Model Detection for Modern Browsers (Android/Windows)
 			if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
-				try {
-					const values = await navigator.userAgentData.getHighEntropyValues(["model"]);
-					if (values.model) deviceModel = values.model;
-				} catch(e) {}
+				try { const values = await navigator.userAgentData.getHighEntropyValues(["model"]); if (values.model) deviceModel = values.model; } catch(e) {}
 			}
 
 			const screenSize = `${window.screen.width}x${window.screen.height}`;
@@ -392,17 +404,16 @@
 			
 			try {
 				const controller = new AbortController(); const timeoutId = setTimeout(() => controller.abort(), 4000);
-				const res = await fetch('http://ip-api.com/json/', { signal: controller.signal });
+				const res = await fetch('https://api.db-ip.com/v2/free/self', { signal: controller.signal });
 				clearTimeout(timeoutId);
-				if(res.ok) { const data = await res.json(); ip = data.query; country = `${data.country} (${data.city})`; }
+				if(res.ok) { const data = await res.json(); ip = data.ipAddress; country = `${data.countryName} (${data.city})`; }
 			} catch(e) {}
 
-			// Reverse Geocoding to get readable Location Name from GPS
 			const gps = localStorage.getItem('ns_gps');
 			if (gps) {
 				const [lat, lon] = gps.split(',');
 				try {
-					const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+					const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=ar`);
 					if(geoRes.ok) { const geoData = await geoRes.json(); localAddress = geoData.display_name; }
 				} catch(e) {}
 			}
@@ -416,6 +427,9 @@
 			await sbFetch('naseem_login_sessions', { method: 'POST', body: JSON.stringify({ user_id: currentUser.id, action: action, device_uuid: getDeviceId(), ip_address: fp.ip }) }).catch(e=>e);
 		}
 
+		// ==========================================
+		// Login Flow
+		// ==========================================
 		async function handleLoginStep1() {
 			const email = document.getElementById('login-email').value.trim(); const pass = document.getElementById('login-pass').value.trim();
 			const btn = document.getElementById('btn-step-1'); btn.innerHTML = '<div class="loader"></div>';
@@ -477,21 +491,29 @@
 			switchTab(isManager ? 'dashboard' : 'residents'); loadResidentsData();
 		}
 
+		// ==========================================
+		// View Router
+		// ==========================================
 		function switchTab(tabId) {
 			document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden')); document.getElementById(`view-${tabId}`).classList.remove('hidden');
 			document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); 
 			const links = document.querySelectorAll(`.nav-link[data-target="${tabId}"]`);
 			links.forEach(l => l.classList.add('active'));
-			const titles = { 'dashboard': 'لوحة القيادة', 'residents': 'بيانات السكان', 'certificates': 'إصدار الشهادات', 'settings': 'النظام والمستخدمين' };
+			const titles = { 'dashboard': 'لوحة القيادة', 'residents': 'قاعدة بيانات السكان', 'certificates': 'إصدار الشهادات', 'settings': 'النظام والمستخدمين' };
 			document.getElementById('header-title').innerText = titles[tabId];
+			
 			if(tabId === 'dashboard' && currentUser.role !== 'citizen') updateDashboardCharts();
 			if(tabId === 'settings' && currentUser.role === 'admin') { loadUsersList(); loadDevicesList(); loadSessionsLog(); }
 			if(tabId === 'certificates') {
-				currentRef = `NSC-${Math.floor(1000+Math.random()*9000)}-${new Date().getFullYear()}`; 
+				const d = new Date(); const dateStr = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+				currentRef = `ANRC-${d.getFullYear()}-${dateStr}-${Math.floor(100+Math.random()*900)}`;
 				document.getElementById('preview-ref').innerText = currentRef;
 			}
 		}
 
+		// ==========================================
+		// Dashboards
+		// ==========================================
 		let chartLoc = null; let chartInc = null;
 		function updateDashboardCharts() {
 			if(allResidents.length === 0) return;
@@ -505,17 +527,22 @@
 			if(chartInc) chartInc.destroy(); chartInc = new Chart(document.getElementById('incomeChart').getContext('2d'), { type: 'doughnut', data: { labels: ['مستقر','متوسط','ضعيف'], datasets: [{ data: Object.values(incs), backgroundColor: ['#10B981', '#F59E0B', '#EF4444'], borderWidth: 0 }] }, options:{ maintainAspectRatio: false }});
 		}
 
+		// ==========================================
+		// Residents CRUD & Filter
+		// ==========================================
 		async function loadResidentsData() {
 			const tbody = document.getElementById('data-table-body');
 			try {
-				allResidents = await sbFetch('naseem_residents?order=created_at.desc'); renderTable(allResidents);
+				allResidents = await sbFetch('naseem_residents?order=created_at.desc'); 
+				filteredResidents = [...allResidents];
+				renderTable(allResidents);
 				if(currentUser.role !== 'citizen') { populateCertificateDropdown(); if(!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts(); }
-			} catch(e) { tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
+			} catch(e) { tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
 		}
 		
 		function renderTable(data) {
 			const tbody = document.getElementById('data-table-body'); const isManager = (currentUser.role === 'admin' || currentUser.role === 'manager');
-			if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-400">لا توجد بيانات.</td></tr>'; return; }
+			if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400">لا توجد بيانات مطابقة للبحث.</td></tr>'; return; }
 			let html = '';
 			data.forEach(row => {
 				let houseClass = "bg-amber-50 text-amber-700 border-amber-100";
@@ -525,7 +552,8 @@
 				html += `<tr class="hover:bg-slate-50 transition border-b border-slate-100">
 					<td class="p-4 font-bold text-slate-800 whitespace-nowrap">${row.full_name}</td>
 					<td class="p-4 font-mono text-xs text-slate-500 whitespace-nowrap">${row.national_id}</td>
-					<td class="p-4 whitespace-nowrap"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-slate-600">${row.location}</span></td>
+					<td class="p-4 whitespace-nowrap text-slate-600 font-bold text-xs">${row.profession || '-'}</td>
+					<td class="p-4 whitespace-nowrap"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-slate-600">${row.location} - ق ${row.house_number || '-'}</span></td>
 					<td class="p-4 font-bold font-mono whitespace-nowrap">${row.family_members_count}</td>
 					<td class="p-4 sensitive-col whitespace-nowrap ${!isManager ? 'hidden' : ''}"><span class="px-2 py-1 border rounded font-bold text-[11px] ${houseClass}">${row.housing_type||'-'}</span></td>
 					<td class="p-4 sensitive-col whitespace-nowrap ${!isManager ? 'hidden' : ''}">${row.marital_status||'-'}</td>
@@ -535,13 +563,58 @@
 			});
 			tbody.innerHTML = html; document.querySelectorAll('.sensitive-col, .admin-col').forEach(el => { if(isManager) el.classList.remove('hidden'); else el.classList.add('hidden'); });
 		}
-		function filterTable() { const term = document.getElementById('search-resident').value.toLowerCase(); renderTable(allResidents.filter(r => r.full_name.toLowerCase().includes(term) || r.national_id.includes(term))); }
+		
+		// Smart Filter including house_number and profession
+		function filterTable() { 
+			const term = document.getElementById('search-resident').value.toLowerCase(); 
+			filteredResidents = allResidents.filter(r => 
+				(r.full_name && r.full_name.toLowerCase().includes(term)) || 
+				(r.national_id && r.national_id.includes(term)) ||
+				(r.profession && r.profession.toLowerCase().includes(term)) ||
+				(r.house_number && r.house_number.toLowerCase().includes(term))
+			);
+			renderTable(filteredResidents); 
+		}
+
+		// Export to Excel (CSV format that opens in Excel)
+		function exportToExcel() {
+			if(filteredResidents.length === 0) return alert('لا توجد بيانات للتصدير.');
+			let csvContent = '\uFEFF'; // BOM for Arabic support in Excel
+			csvContent += "الاسم الرباعي,الرقم الوطني,المهنة,الموقع,رقم المنزل,عدد الأفراد,نوع السكن,الحالة الاجتماعية,مستوى الدخل\n";
+			
+			filteredResidents.forEach(r => {
+				let row = `"${r.full_name}","${r.national_id}","${r.profession || ''}","${r.location}","${r.house_number || ''}","${r.family_members_count}","${r.housing_type}","${r.marital_status}","${r.income_level}"`;
+				csvContent += row + "\n";
+			});
+			
+			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+			const link = document.createElement("a");
+			const url = URL.createObjectURL(blob);
+			link.setAttribute("href", url);
+			link.setAttribute("download", `سجل_النسيم_${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}.csv`);
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+		}
 
 		function openCitizenModal() { document.getElementById('citizen-form').reset(); document.getElementById('f_id').value = ''; document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> إضافة سجل جديد'; document.getElementById('add-modal').classList.remove('hidden'); }
 		function closeCitizenModal() { document.getElementById('add-modal').classList.add('hidden'); }
+		
 		function editCitizen(id) {
 			const citizen = allResidents.find(r => r.id === id); if(!citizen) return;
-			document.getElementById('f_id').value = citizen.id; document.getElementById('f_name').value = citizen.full_name; document.getElementById('f_nid').value = citizen.national_id; document.getElementById('f_phone').value = citizen.phone_number; document.getElementById('f_dob').value = citizen.birth_date || ''; document.getElementById('f_loc').value = citizen.location; document.getElementById('f_prof').value = citizen.profession || ''; document.getElementById('f_house').value = citizen.housing_type; document.getElementById('f_marital').value = citizen.marital_status; document.getElementById('f_fam').value = citizen.family_members_count; document.getElementById('f_income').value = citizen.income_level; document.getElementById('f_notes').value = citizen.special_issues || '';
+			document.getElementById('f_id').value = citizen.id; 
+			document.getElementById('f_name').value = citizen.full_name; 
+			document.getElementById('f_nid').value = citizen.national_id; 
+			document.getElementById('f_phone').value = citizen.phone_number; 
+			document.getElementById('f_dob').value = citizen.birth_date || ''; 
+			document.getElementById('f_loc').value = citizen.location; 
+			document.getElementById('f_house_num').value = citizen.house_number || ''; 
+			document.getElementById('f_prof').value = citizen.profession || ''; 
+			document.getElementById('f_house').value = citizen.housing_type; 
+			document.getElementById('f_marital').value = citizen.marital_status; 
+			document.getElementById('f_fam').value = citizen.family_members_count; 
+			document.getElementById('f_income').value = citizen.income_level; 
+			document.getElementById('f_notes').value = citizen.special_issues || '';
 			document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل السجل'; document.getElementById('add-modal').classList.remove('hidden');
 		}
 
@@ -549,13 +622,29 @@
 			if(!document.getElementById('citizen-form').checkValidity()) return document.getElementById('citizen-form').reportValidity();
 			const btn = document.getElementById('btn-save'); btn.innerHTML = 'جاري الحفظ...'; btn.disabled = true;
 			const id = document.getElementById('f_id').value;
-			const payload = { full_name: document.getElementById('f_name').value, national_id: document.getElementById('f_nid').value, phone_number: document.getElementById('f_phone').value, birth_date: document.getElementById('f_dob').value || null, location: document.getElementById('f_loc').value, profession: document.getElementById('f_prof').value, housing_type: document.getElementById('f_house').value, marital_status: document.getElementById('f_marital').value, family_members_count: parseInt(document.getElementById('f_fam').value), income_level: document.getElementById('f_income').value, special_issues: document.getElementById('f_notes').value };
+			const payload = { 
+				full_name: document.getElementById('f_name').value, 
+				national_id: document.getElementById('f_nid').value, 
+				phone_number: document.getElementById('f_phone').value, 
+				birth_date: document.getElementById('f_dob').value || null, 
+				location: document.getElementById('f_loc').value, 
+				house_number: document.getElementById('f_house_num').value, 
+				profession: document.getElementById('f_prof').value, 
+				housing_type: document.getElementById('f_house').value, 
+				marital_status: document.getElementById('f_marital').value, 
+				family_members_count: parseInt(document.getElementById('f_fam').value), 
+				income_level: document.getElementById('f_income').value, 
+				special_issues: document.getElementById('f_notes').value 
+			};
 			try {
 				if(id) await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) }); else { payload.created_by = currentUser.id; await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) }); }
 				closeCitizenModal(); loadResidentsData();
 			} catch(e) { alert('فشل الحفظ: ' + e.message); } finally { btn.innerHTML = 'حفظ البيانات'; btn.disabled = false; }
 		}
 
+		// ==========================================
+		// 7. Certificate Generation (Print & DB)
+		// ==========================================
 		function populateCertificateDropdown() { const sel = document.getElementById('cert-citizen-select'); sel.innerHTML = '<option value="">-- القائمة --</option>'; allResidents.forEach(r => sel.innerHTML += `<option value="${r.id}">${r.full_name} (${r.national_id})</option>`); }
 		function previewCertificate() {
 			const id = document.getElementById('cert-citizen-select').value;
@@ -569,224 +658,69 @@
 			if(!id) return alert('الرجاء اختيار مواطن أولاً');
 			const citizen = allResidents.find(r => r.id === id);
 			
-			// توليد رقم مرجعي مطابق لنمط الصورة (ANRC-YYYY-MMDD-XXX)
-			const d = new Date();
-			const dateStr = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-			const certRef = `ANRC-${d.getFullYear()}-${dateStr}-${Math.floor(100+Math.random()*900)}`;
-		
-			// حفظ الشهادة في قاعدة البيانات
 			try {
-				await sbFetch('naseem_certificates', { method: 'POST', body: JSON.stringify({ resident_id: citizen.id, ref_number: certRef, created_by: currentUser.id }) });
+				await sbFetch('naseem_certificates', { method: 'POST', body: JSON.stringify({ resident_id: citizen.id, ref_number: currentRef, created_by: currentUser.id }) });
 			} catch (e) { console.warn("لم يتم حفظ الـ Ref، قد يكون مكرراً.", e); }
-		
-			const cName = citizen.full_name; 
-			const cNid = citizen.national_id; 
-			const cLoc = `النسيم - ${citizen.location}`; 
+
+			const cName = citizen.full_name; const cNid = citizen.national_id; const cLoc = `النسيم - ${citizen.location} - ق ${citizen.house_number || '-'}`; 
 			
-			// تنسيق التاريخ (عربي / إنجليزي)
+			const d = new Date();
 			const arMonths = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 			const enMonths = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 			const arDate = `${d.getDate()} ${arMonths[d.getMonth()]} ${d.getFullYear()}`;
 			const enDate = `${d.getDate()} ${enMonths[d.getMonth()]} ${d.getFullYear()}`;
 			const formattedDate = `${enDate}  /  ${arDate}`;
-		
-			// رابط الباركود (Code 128)
+
 			const barcodeUrl = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${cNid}&scale=3&includetext=false`;
-		
+
 			const printHTML = `
-				<html dir="rtl" lang="ar">
-				<head>
-					<title>شهادة سكن - ${cName}</title>
-					<style>
-						@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;800&display=swap');
-						
-						@page { size: A4 portrait; margin: 0; }
-						body { 
-							font-family: 'Cairo', sans-serif; 
-							margin: 0; padding: 0; 
-							background: #fbfbf9; 
-							color: #1a202c; 
-							box-sizing: border-box;
-						}
-						.cert-container {
-							width: 210mm; height: 297mm;
-							padding: 20mm;
-							box-sizing: border-box;
-							position: relative;
-							background: #fff;
-						}
-						/* الإطارات المتداخلة (ذهبي وأزرق داكن) */
-						.border-outer {
-							position: absolute; top: 12mm; left: 12mm; right: 12mm; bottom: 12mm;
-							border: 4px solid #b08d55;
-							border-radius: 4px;
-						}
-						.border-inner {
-							position: absolute; top: 14mm; left: 14mm; right: 14mm; bottom: 14mm;
-							border: 1.5px solid #1c3c66;
-							border-radius: 2px;
-						}
-						
-						.content-wrapper {
-							position: relative; z-index: 10;
-							display: flex; flex-direction: column; height: 100%;
-						}
-		
-						/* الترويسة */
-						.header { 
-							display: flex; justify-content: space-between; align-items: center; 
-							border-bottom: 2px solid #b08d55; 
-							padding-bottom: 15px; margin-bottom: 30px; 
-						}
-						.header-right { display: flex; align-items: center; gap: 15px; }
-						.header-text { 
-							line-height: 1.6; font-size: 16px; font-weight: 800; text-align: right; 
-						}
-						.logo-container img { width: 120px; height: 120px; object-fit: contain; }
-						
-						/* العنوان */
-						.title-section { text-align: center; margin-bottom: 30px; }
-						.title-ar { 
-							font-family: 'Amiri', serif; font-size: 48px; font-weight: 700; 
-							margin: 0; color: #0f172a;
-						}
-						.title-en { 
-							font-size: 18px; letter-spacing: 2px; color: #475569; 
-							margin-top: -10px; font-family: sans-serif;
-						}
-		
-						/* النص */
-						.statement { 
-							font-size: 20px; line-height: 2.2; text-align: justify; 
-							margin-bottom: 40px; font-weight: 600; color: #1e293b;
-						}
-		
-						/* الجدول */
-						table { 
-							width: 100%; border-collapse: collapse; margin-bottom: 40px; 
-							border: 2px solid #1c3c66; border-radius: 8px; overflow: hidden;
-						}
-						tr:not(:last-child) { border-bottom: 1px solid #1c3c66; }
-						td { padding: 16px; font-size: 18px; border-left: 1px solid #1c3c66; }
-						td:last-child { border-left: none; }
-						.bg-gray { 
-							background-color: #f1f5f9; font-weight: 800; 
-							width: 25%; color: #0f172a; white-space: nowrap;
-						}
-						.val-cell { font-weight: 700; color: #1e293b; }
-						.flex-row { display: flex; justify-content: space-between; align-items: center; }
-						.en-text { font-family: sans-serif; font-size: 15px; color: #0f172a; font-weight: bold; }
-		
-						/* التوقيع والباركود */
-						.footer { 
-							display: flex; justify-content: space-between; align-items: flex-end;
-							margin-top: auto; padding-top: 20px;
-						}
-						.signature-box { text-align: center; font-weight: 800; font-size: 18px; width: 200px; }
-						.signature-line { border-top: 2px dotted #475569; margin-top: 50px; width: 100%; }
-						
-						.barcode-section { text-align: center; display: flex; flex-direction: column; align-items: center; }
-						.barcode-text { font-family: sans-serif; font-size: 12px; margin-bottom: 8px; color: #475569; font-weight: bold;}
-						.barcode-img { height: 50px; max-width: 220px; }
-						.barcode-val { font-family: sans-serif; font-size: 15px; font-weight: bold; letter-spacing: 2px; margin-top: 5px; }
-					</style>
+				<html dir="rtl" lang="ar"><head><title>شهادة سكن - ${cName}</title>
+				<style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;800&display=swap'); @page { size: A4 portrait; margin: 0; } body { font-family: 'Cairo', sans-serif; margin: 0; padding: 0; background: #fbfbf9; color: #1a202c; box-sizing: border-box; } .cert-container { width: 210mm; height: 297mm; padding: 20mm; box-sizing: border-box; position: relative; background: #fff; } .border-outer { position: absolute; top: 12mm; left: 12mm; right: 12mm; bottom: 12mm; border: 4px solid #b08d55; border-radius: 4px; } .border-inner { position: absolute; top: 14mm; left: 14mm; right: 14mm; bottom: 14mm; border: 1.5px solid #1c3c66; border-radius: 2px; } .content-wrapper { position: relative; z-index: 10; display: flex; flex-direction: column; height: 100%; } .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #b08d55; padding-bottom: 15px; margin-bottom: 30px; } .header-right { display: flex; align-items: center; gap: 15px; } .header-text { line-height: 1.6; font-size: 16px; font-weight: 800; text-align: right; } .logo-container img { width: 120px; height: 120px; object-fit: contain; } .title-section { text-align: center; margin-bottom: 30px; } .title-ar { font-family: 'Amiri', serif; font-size: 48px; font-weight: 700; margin: 0; color: #0f172a; } .title-en { font-size: 18px; letter-spacing: 2px; color: #475569; margin-top: -10px; font-family: sans-serif; } .statement { font-size: 20px; line-height: 2.2; text-align: justify; margin-bottom: 40px; font-weight: 600; color: #1e293b; } table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border: 2px solid #1c3c66; border-radius: 8px; overflow: hidden; } tr:not(:last-child) { border-bottom: 1px solid #1c3c66; } td { padding: 16px; font-size: 18px; border-left: 1px solid #1c3c66; } td:last-child { border-left: none; } .bg-gray { background-color: #f1f5f9; font-weight: 800; width: 25%; color: #0f172a; white-space: nowrap; } .val-cell { font-weight: 700; color: #1e293b; } .flex-row { display: flex; justify-content: space-between; align-items: center; } .en-text { font-family: sans-serif; font-size: 15px; color: #0f172a; font-weight: bold; } .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; } .signature-box { text-align: center; font-weight: 800; font-size: 18px; width: 200px; } .signature-line { border-top: 2px dotted #475569; margin-top: 50px; width: 100%; } .barcode-section { text-align: center; display: flex; flex-direction: column; align-items: center; } .barcode-text { font-family: sans-serif; font-size: 12px; margin-bottom: 8px; color: #475569; font-weight: bold;} .barcode-img { height: 50px; max-width: 220px; } .barcode-val { font-family: sans-serif; font-size: 15px; font-weight: bold; letter-spacing: 2px; margin-top: 5px; }</style>
 				</head>
 				<body>
-					<div class="cert-container">
-						<div class="border-outer"></div>
-						<div class="border-inner"></div>
-						
+					<div class="cert-container"><div class="border-outer"></div><div class="border-inner"></div>
 						<div class="content-wrapper">
 							<div class="header">
 								<div class="header-right">
-									<div class="flag-container">
-										<svg viewBox="0 0 120 60" width="80" height="40" style="border: 1px solid #cbd5e1;">
-											<rect width="120" height="20" fill="#D21034"/>
-											<rect y="20" width="120" height="20" fill="#FFFFFF"/>
-											<rect y="40" width="120" height="20" fill="#000000"/>
-											<polygon points="0,0 40,30 0,60" fill="#007229"/>
-										</svg>
-									</div>
-									<div class="header-text">
-										جمهورية السودان<br>
-										ولاية الخرطوم<br>
-										محلية شرق النيل - الحاج يوسف<br>
-										لجنة خدمات مدينة النسيم السكنية
-									</div>
+									<div class="flag-container"><svg viewBox="0 0 120 60" width="80" height="40" style="border: 1px solid #cbd5e1;"><rect width="120" height="20" fill="#D21034"/><rect y="20" width="120" height="20" fill="#FFFFFF"/><rect y="40" width="120" height="20" fill="#000000"/><polygon points="0,0 40,30 0,60" fill="#007229"/></svg></div>
+									<div class="header-text">جمهورية السودان<br>ولاية الخرطوم<br>محلية شرق النيل - الحاج يوسف<br>لجنة خدمات مدينة النسيم السكنية</div>
 								</div>
-								<div class="logo-container">
-									<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" alt="Logo">
-								</div>
+								<div class="logo-container"><img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" alt="Logo"></div>
 							</div>
-		
-							<div class="title-section">
-								<h1 class="title-ar">شهادة سكن</h1>
-								<div class="title-en">RESIDENCE CERTIFICATE</div>
-							</div>
-		
-							<div class="statement">
-								تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.
-							</div>
-		
+							<div class="title-section"><h1 class="title-ar">شهادة سكن</h1><div class="title-en">RESIDENCE CERTIFICATE</div></div>
+							<div class="statement">تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.</div>
 							<table>
-								<tr>
-									<td class="bg-gray">الاسم الرباعي:</td>
-									<td class="val-cell">${cName}</td>
-								</tr>
-								<tr>
-									<td class="bg-gray">الرقم الوطني:</td>
-									<td class="val-cell en-text" style="letter-spacing: 2px;">${cNid}</td>
-								</tr>
-								<tr>
-									<td class="bg-gray">الموقع الجغرافي:</td>
-									<td class="val-cell flex-row">
-										<span>${cLoc}</span>
-										<span class="en-text" dir="ltr">(Ref No): ${certRef}</span>
-									</td>
-								</tr>
-								<tr>
-									<td class="bg-gray">تاريخ الإصدار:</td>
-									<td class="val-cell flex-row">
-										<span dir="rtl">${formattedDate}</span>
-										<span class="en-text">:(Date of Issue)</span>
-									</td>
-								</tr>
+								<tr><td class="bg-gray">الاسم الرباعي:</td><td class="val-cell">${cName}</td></tr>
+								<tr><td class="bg-gray">الرقم الوطني:</td><td class="val-cell en-text" style="letter-spacing: 2px;">${cNid}</td></tr>
+								<tr><td class="bg-gray">الموقع الجغرافي:</td><td class="val-cell flex-row"><span>${cLoc}</span><span class="en-text" dir="ltr">(Ref No): ${currentRef}</span></td></tr>
+								<tr><td class="bg-gray">تاريخ الإصدار:</td><td class="val-cell flex-row"><span dir="rtl">${formattedDate}</span><span class="en-text">:(Date of Issue)</span></td></tr>
 							</table>
-		
 							<div class="footer">
-								<div class="signature-box">
-									توقيع مسئول الإحصاء
-									<div class="signature-line"></div>
-								</div>
-								
-								<div class="barcode-section">
-									<div class="barcode-text">Code 128 barcode linked to National ID</div>
-									<img src="${barcodeUrl}" class="barcode-img" alt="Barcode">
-									<div class="barcode-val">${cNid}</div>
-								</div>
-		
-								<div class="signature-box">
-									توقيع رئيس اللجنة
-									<div class="signature-line"></div>
-								</div>
+								<div class="signature-box">توقيع مسئول الإحصاء<div class="signature-line"></div></div>
+								<div class="barcode-section"><div class="barcode-text">Code 128 barcode linked to National ID</div><img src="${barcodeUrl}" class="barcode-img" alt="Barcode"><div class="barcode-val">${cNid}</div></div>
+								<div class="signature-box">توقيع رئيس اللجنة<div class="signature-line"></div></div>
 							</div>
 						</div>
 					</div>
-				</body>
-				</html>
-			`;
+				</body></html>`;
 			
-			const iframe = document.createElement('iframe'); 
-			iframe.style.position = 'fixed'; iframe.style.right = '-1000px'; iframe.style.bottom = '-1000px'; iframe.style.width = '0'; iframe.style.height = '0'; 
-			document.body.appendChild(iframe);
-			
-			const doc = iframe.contentWindow.document; 
-			doc.open(); doc.write(printHTML); doc.close();
-			
-			setTimeout(() => { 
-				iframe.contentWindow.focus(); iframe.contentWindow.print(); 
-				setTimeout(() => { document.body.removeChild(iframe); }, 2000); 
-			}, 1500); // زيادة وقت الانتظار قليلاً لضمان تحميل خط الأميري والباركود قبل الطباعة
+			const iframe = document.createElement('iframe'); iframe.style.position = 'fixed'; iframe.style.right = '-1000px'; iframe.style.bottom = '-1000px'; iframe.style.width = '0'; iframe.style.height = '0'; document.body.appendChild(iframe);
+			const doc = iframe.contentWindow.document; doc.open(); doc.write(printHTML); doc.close();
+			setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => { document.body.removeChild(iframe); }, 2000); }, 1500); 
+		}
+
+		// ==========================================
+		// 8. Admin Settings (Users, Devices, Logs)
+		// ==========================================
+		async function loadUsersList() {
+			const ul = document.getElementById('users-list');
+			try { const users = await sbFetch('naseem_acc'); ul.innerHTML = ''; users.forEach(u => ul.innerHTML += `<li class="py-3 px-4 flex justify-between items-center"><div class="flex flex-col"><span class="font-bold text-slate-700">${u.name}</span><span class="text-[11px] text-slate-400 font-mono">${u.email}</span></div><span class="text-[10px] uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded font-black">${u.role}</span></li>`); } catch(e) { ul.innerHTML = 'خطأ في الجلب'; }
+		}
+		async function saveUser() {
+			const payload = { name: document.getElementById('u_name').value, email: document.getElementById('u_email').value, password: document.getElementById('u_pass').value, role: document.getElementById('u_role').value, security_question: 'ما هو اسم مدرستك الابتدائية؟', security_answer: 'النسيم', f2a_email: document.getElementById('u_email').value };
+			if(!payload.name || !payload.email) return alert('البيانات ناقصة');
+			const btn = document.getElementById('btn-save-user'); btn.innerHTML = 'جاري...'; btn.disabled = true;
+			try { await sbFetch('naseem_acc', { method: 'POST', body: JSON.stringify(payload) }); alert('تم الحفظ'); loadUsersList(); document.getElementById('u_name').value=''; document.getElementById('u_email').value=''; document.getElementById('u_pass').value=''; } catch(e) { alert(e.message); } finally { btn.innerHTML = 'إنشاء الحساب'; btn.disabled = false; }
 		}
 
 		async function loadDevicesList() {
@@ -798,7 +732,7 @@
 				devices.forEach(d => {
 					const userName = (users.find(u => u.id === d.user_id) || {}).name || 'مجهول';
 					const statusHtml = d.status === 'approved' ? '<span class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full font-bold text-xs border border-emerald-100 block w-fit mx-auto">مصرح ✔️</span>' : `<div class="flex justify-center gap-2"><button onclick="updateDeviceStatus('${d.id}', 'approved')" class="bg-emerald-500 text-white px-3 py-1 rounded shadow-sm hover:bg-emerald-600 text-xs font-bold">تفعيل</button><button onclick="deleteDevice('${d.id}')" class="bg-slate-200 text-slate-600 px-3 py-1 rounded shadow-sm hover:bg-slate-300 text-xs font-bold">رفض</button></div>`;
-					html += `<tr class="hover:bg-slate-50 transition border-b border-slate-100"><td class="p-3 font-bold text-slate-700 whitespace-nowrap">${userName}<br><span class="text-[10px] text-slate-400 font-mono font-normal">${d.device_model || 'Desktop'} / ${d.os || '-'}</span></td><td class="p-3 whitespace-nowrap"><span class="block font-bold text-slate-800">${d.browser || '-'}</span></td><td class="p-3 text-left whitespace-nowrap"><span class="font-bold text-[11px] text-slate-600 block">${d.country || '-'}</span><span class="font-mono text-[10px] text-slate-400">${d.ip_address || '-'}</span></td><td class="p-3 text-center align-middle">${statusHtml}</td></tr>`;
+					html += `<tr class="hover:bg-slate-50 transition border-b border-slate-100"><td class="p-3 font-bold text-slate-700 whitespace-nowrap">${userName}<br><span class="text-[10px] text-slate-400 font-mono font-normal">${d.device_uuid.substring(0,8)}</span></td><td class="p-3 whitespace-nowrap"><span class="block font-bold text-slate-800">${d.device_model || '-'} / ${d.os || '-'}</span><span class="text-[11px] text-slate-500">${d.browser || '-'}</span></td><td class="p-3 text-left whitespace-nowrap"><span class="font-bold text-[11px] text-slate-600 block" dir="ltr">${d.country || '-'}</span><span class="font-mono text-[10px] text-slate-400">${d.ip_address || '-'}</span></td><td class="p-3 text-center align-middle">${statusHtml}</td></tr>`;
 				}); tbody.innerHTML = html;
 			} catch(e) { tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-red-500">خطأ: ${e.message}</td></tr>`; }
 		}
