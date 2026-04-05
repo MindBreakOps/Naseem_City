@@ -118,12 +118,20 @@
 				</a>
 			</div>
 		</div>
-		<div class="absolute bottom-0 w-full p-4 border-t border-slate-800 bg-slate-950 flex justify-between items-center cursor-pointer hover:bg-black transition z-10" onclick="logout()">
+		<div class="absolute bottom-0 w-full p-4 border-t border-slate-800 bg-slate-950 flex justify-between items-center z-10">
 			<div class="flex items-center gap-3">
-				<div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700"><svg class="svg-icon text-slate-400 w-4 h-4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div>
-				<div><p class="font-bold text-xs text-white" id="user-name">User Name</p><p class="text-[10px] text-slate-500" id="user-role" style="font-family: sans-serif;">Role</p></div>
+				<div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700 cursor-pointer" onclick="logout()">
+					<svg class="svg-icon text-red-500 w-4 h-4"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+				</div>
+				<div>
+					<p class="font-bold text-xs text-white" id="user-name">User Name</p>
+					<p class="text-[10px] text-slate-500" id="user-role" style="font-family: sans-serif;">Role</p>
+				</div>
+				<button onclick="openProfileModal()" class="flex items-center gap-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-1.5 rounded transition">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+					حسابي
+				</button>
 			</div>
-			<svg class="svg-icon text-red-500 hover:text-red-400"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
 		</div>
 	</aside>
 
@@ -319,7 +327,7 @@
 			</div>
 			<div class="p-4 md:p-8 overflow-y-auto bg-white flex-1">
 				<form id="citizen-form" onsubmit="event.preventDefault();" class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-					<input type="hidden" id="f_id"> 
+					<input type="hidden" id="f_id">
 					<div class="md:col-span-3 pb-2 mb-2 border-b-2 border-slate-100"><h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">البيانات الأساسية والموقع</h4></div>
 					
 					<div class="md:col-span-2"><label class="form-label required">الاسم الرباعي</label><input type="text" id="f_name" class="form-input bg-slate-50" required></div>
@@ -349,6 +357,53 @@
 		</div>
 	</div>
 
+	<div id="profile-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+		<div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in">
+			<div class="bg-slate-800 p-4 text-white flex justify-between items-center">
+				<h3 class="font-bold text-lg flex items-center gap-2">
+					<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+					إعدادات الأمان وحسابي
+				</h3>
+				<button onclick="closeProfileModal()" class="text-slate-300 hover:text-white transition"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+			</div>
+			<div class="p-5 max-h-[75vh] overflow-y-auto">
+				<div class="space-y-4">
+					<div class="bg-blue-50 p-3 rounded text-xs text-blue-800 font-bold border border-blue-100">
+						يمكنك تغيير أسئلة الأمان الخاصة بك وإجاباتها، أو تغيير كلمة المرور. اترك حقل كلمة المرور فارغاً إذا كنت لا تود تغييرها.
+					</div>
+					
+					<div>
+						<label class="block text-xs font-bold text-slate-700 mb-1">تغيير كلمة المرور الجديدة (اختياري)</label>
+						<input type="text" id="prof-pass" placeholder="اتركه فارغاً إذا لا تريد التغيير" class="w-full border border-slate-300 px-3 py-2 rounded focus:border-blue-500 outline-none text-sm font-mono">
+					</div>
+					<hr class="border-slate-100">
+					
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<label class="block text-[11px] font-bold text-slate-500 mb-1">السؤال الأول</label>
+							<input type="text" id="prof-q1" class="w-full border border-slate-300 px-3 py-2 rounded text-sm mb-2" placeholder="اكتب سؤالك هنا">
+							<input type="text" id="prof-a1" class="w-full border-2 border-slate-200 bg-slate-50 px-3 py-2 rounded font-bold text-sm text-blue-700" placeholder="الإجابة السرية">
+						</div>
+						<div>
+							<label class="block text-[11px] font-bold text-slate-500 mb-1">السؤال الثاني</label>
+							<input type="text" id="prof-q2" class="w-full border border-slate-300 px-3 py-2 rounded text-sm mb-2" placeholder="اكتب سؤالك هنا">
+							<input type="text" id="prof-a2" class="w-full border-2 border-slate-200 bg-slate-50 px-3 py-2 rounded font-bold text-sm text-blue-700" placeholder="الإجابة السرية">
+						</div>
+						<div class="md:col-span-2">
+							<label class="block text-[11px] font-bold text-slate-500 mb-1">السؤال الثالث</label>
+							<input type="text" id="prof-q3" class="w-full border border-slate-300 px-3 py-2 rounded text-sm mb-2" placeholder="اكتب سؤالك هنا">
+							<input type="text" id="prof-a3" class="w-full border-2 border-slate-200 bg-slate-50 px-3 py-2 rounded font-bold text-sm text-blue-700" placeholder="الإجابة السرية">
+						</div>
+					</div>
+				</div>
+				<div class="mt-6 flex justify-end gap-3">
+					<button onclick="closeProfileModal()" class="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded transition">إلغاء</button>
+					<button onclick="saveProfileSettings()" id="btn-save-prof" class="px-6 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded transition shadow-md">حفظ التعديلات</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<script>
 		// ==========================================
 		// 1. CONFIGURATION & AUTH ENGINE
@@ -371,7 +426,6 @@
 		// Password Recovery Listener & Injector
 		// ==========================================
 		window.addEventListener('DOMContentLoaded', () => {
-			// إضافة زر نسيت كلمة المرور ديناميكياً
 			const step1Div = document.getElementById('step-1');
 			if(step1Div) {
 				const forgotBtn = document.createElement('button');
@@ -381,7 +435,6 @@
 				step1Div.appendChild(forgotBtn);
 			}
 	
-			// التقاط توكن الاستعادة القادم من رابط الإيميل
 			const hash = window.location.hash;
 			if(hash && hash.includes('type=recovery')) {
 				const params = new URLSearchParams(hash.substring(1));
@@ -481,27 +534,51 @@
 				`;
 				document.getElementById('step-1').classList.add('hidden'); document.getElementById('step-2').classList.remove('hidden');
 			} catch(e) { 
-				localStorage.removeItem('ns_jwt'); alert('البيانات غير صحيحة'); 
-			} finally { btn.innerHTML = 'تسجيل الدخول'; }
+				localStorage.removeItem('ns_jwt'); alert('السبب الحقيقي للرفض: ' + e.message); 
+			}
 		}
 	
 		async function checkSecurityAndSendOTP() {
-			const a1 = document.getElementById('ans1').value.trim(); const a2 = document.getElementById('ans2').value.trim(); const a3 = document.getElementById('ans3').value.trim();
-			const btn = document.getElementById('btn-verify-qa');
+			const a1 = document.getElementById('ans1').value.trim();
+			const a2 = document.getElementById('ans2').value.trim();
+			const a3 = document.getElementById('ans3').value.trim();
 			
-			if(a1 === currentUser.a1 && a2 === currentUser.a2 && a3 === currentUser.a3) {
+			const btn = document.getElementById('btn-verify-qa');
+		
+			if (!currentUser.a1 || !currentUser.a2 || !currentUser.a3) {
+				alert("خطأ تقني: إجابات الأمان غير مسجلة لهذا الحساب في قاعدة البيانات (Profiles).");
+				return;
+			}
+		
+			const match1 = a1 === currentUser.a1.trim();
+			const match2 = a2 === currentUser.a2.trim();
+			const match3 = a3 === currentUser.a3.trim();
+		
+			if (match1 && match2 && match3) {
 				btn.innerHTML = '<div class="loader"></div>';
 				try {
-					const otp = Math.floor(100000 + Math.random() * 900000).toString(); const exp = new Date(Date.now() + 3 * 60000).toISOString(); 
+					const otp = Math.floor(100000 + Math.random() * 900000).toString(); 
+					const exp = new Date(Date.now() + 3 * 60000).toISOString(); 
 					currentOtpEmail = currentUser.email; 
+					
 					await sbFetch('naseem_otp', { method: 'POST', body: JSON.stringify({ email: currentOtpEmail, otp: otp, expires_at: exp }) });
 					fetch(`${GAS_URL}?action=sendOTP&email=${encodeURIComponent(currentOtpEmail)}&otp=${otp}`, { method: 'GET', mode: 'no-cors' }).catch(e=>e); 
 					
-					document.getElementById('step-2').classList.add('hidden'); document.getElementById('step-3').classList.remove('hidden'); startOtpTimer();
-				} catch(e) { alert(e.message); btn.innerHTML = 'التحقق وإرسال رمز الـ OTP'; }
-			} else { alert('الإجابات غير متطابقة. لا يمكن إرسال رمز التحقق (OTP) أو العبور إلا بعد إدخال الإجابات الصحيحة للحماية.'); }
+					document.getElementById('step-2').classList.add('hidden'); 
+					document.getElementById('step-3').classList.remove('hidden'); 
+					startOtpTimer();
+				} catch(e) { 
+					alert("فشل إرسال الـ OTP: " + e.message); 
+					btn.innerHTML = 'التحقق وإرسال رمز الـ OTP'; 
+				}
+			} else {
+				let errorMsg = "الإجابات غير متطابقة:\n";
+				if (!match1) errorMsg += "- خطأ في السؤال الأول\n";
+				if (!match2) errorMsg += "- خطأ في السؤال الثاني\n";
+				if (!match3) errorMsg += "- خطأ في السؤال الثالث\n";
+				alert(errorMsg);
+			}
 		}
-		
 		function startOtpTimer() {
 			let t = 180; clearInterval(timerInterval);
 			timerInterval = setInterval(() => { t--; document.getElementById('otp-timer').innerText = `0${Math.floor(t/60)}:${(t%60).toString().padStart(2,'0')}`; if(t<=0) { clearInterval(timerInterval); alert("انتهت صلاحية الرمز، حاول مجدداً"); location.reload(); } }, 1000);
@@ -526,7 +603,56 @@
 				else await sbFetch('naseem_trusted_devices', { method: 'POST', body: JSON.stringify(payload) });
 			}
 		}
-	
+
+		// ==========================================
+		// User Profile Management
+		// ==========================================
+		function openProfileModal() {
+			if(!currentUser) return;
+			document.getElementById('prof-q1').value = currentUser.q1 || '';
+			document.getElementById('prof-a1').value = currentUser.a1 || '';
+			document.getElementById('prof-q2').value = currentUser.q2 || '';
+			document.getElementById('prof-a2').value = currentUser.a2 || '';
+			document.getElementById('prof-q3').value = currentUser.q3 || '';
+			document.getElementById('prof-a3').value = currentUser.a3 || '';
+			document.getElementById('prof-pass').value = ''; 
+			document.getElementById('profile-modal').classList.remove('hidden');
+		}
+		
+		function closeProfileModal() { document.getElementById('profile-modal').classList.add('hidden'); }
+		
+		async function saveProfileSettings() {
+			const q1 = document.getElementById('prof-q1').value.trim(); const a1 = document.getElementById('prof-a1').value.trim();
+			const q2 = document.getElementById('prof-q2').value.trim(); const a2 = document.getElementById('prof-a2').value.trim();
+			const q3 = document.getElementById('prof-q3').value.trim(); const a3 = document.getElementById('prof-a3').value.trim();
+			const pass = document.getElementById('prof-pass').value.trim();
+			
+			if(!q1 || !a1 || !q2 || !a2 || !q3 || !a3) return alert('الرجاء عدم ترك أي سؤال أو إجابة فارغة!');
+		
+			const btn = document.getElementById('btn-save-prof'); btn.innerHTML = 'جاري الحفظ...'; btn.disabled = true;
+			try {
+				if (pass) {
+					if (pass.length < 6) throw new Error('كلمة المرور يجب أن تكون 6 أحرف على الأقل.');
+					const res = await fetch(`${SUPABASE_URL.replace('/rest/v1', '')}/auth/v1/user`, {
+						method: 'PUT',
+						headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${localStorage.getItem('ns_jwt')}`, 'Content-Type': 'application/json' },
+						body: JSON.stringify({ password: pass })
+					});
+					if(!res.ok) throw new Error('فشل تغيير كلمة المرور في السيرفر.');
+				}
+		
+				await sbFetch(`naseem_profiles?id=eq.${currentUser.id}`, {
+					method: 'PATCH',
+					body: JSON.stringify({ q1, a1, q2, a2, q3, a3 })
+				});
+		
+				currentUser.q1 = q1; currentUser.a1 = a1; currentUser.q2 = q2; currentUser.a2 = a2; currentUser.q3 = q3; currentUser.a3 = a3;
+		
+				alert('تم تحديث إعدادات الأمان الخاصة بك بنجاح! 🛡️');
+				closeProfileModal();
+			} catch(e) { alert('خطأ: ' + e.message); } finally { btn.innerHTML = 'حفظ التعديلات'; btn.disabled = false; }
+		}
+
 		async function logout() { await logSession('Logout'); await sbAuth('logout', {}).catch(e=>e); localStorage.removeItem('ns_jwt'); location.reload(); }
 	
 		// ==========================================
