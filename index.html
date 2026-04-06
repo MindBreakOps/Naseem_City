@@ -835,17 +835,20 @@
 	
 		// ==========================================
 		// Certificate Generation & Admin Settings
-		// ==========================================
+		// 1. الدالة المصححة للبحث في شاشة إصدار الشهادات
 		function searchCitizenForCert() {
 			const term = document.getElementById('cert-citizen-search').value.toLowerCase().trim();
 			const resultsBox = document.getElementById('cert-search-results');
 			
 			if (term.length < 2) { resultsBox.classList.add('hidden'); return; }
 
-			// إظهار فقط المواطنين المعتمدين (approved)
+			// التعديل هنا: السماح للسجلات القديمة بالظهور (التي ليس لها حالة)، وتحويل الرقم لـ String لمنع الأخطاء
 			const matches = allResidents.filter(r => 
-				r.status === 'approved' && 
-				((r.full_name && r.full_name.toLowerCase().includes(term)) || (r.national_id && r.national_id.includes(term)))
+				(r.status === 'approved' || !r.status || r.status === '') && 
+				(
+					(r.full_name && r.full_name.toLowerCase().includes(term)) || 
+					(r.national_id && String(r.national_id).includes(term))
+				)
 			).slice(0, 10); 
 
 			if (matches.length === 0) {
@@ -864,6 +867,18 @@
 			
 			resultsBox.innerHTML = html;
 			resultsBox.classList.remove('hidden');
+		}
+
+		// 2. الدالة المصححة للبحث في الجدول الرئيسي (لحمايته من نفس الخطأ مع الرقم الوطني)
+		function filterTable() { 
+			const term = document.getElementById('search-resident').value.toLowerCase(); 
+			filteredResidents = allResidents.filter(r => 
+				(r.full_name && r.full_name.toLowerCase().includes(term)) || 
+				(r.national_id && String(r.national_id).includes(term)) || 
+				(r.profession && r.profession.toLowerCase().includes(term)) || 
+				(r.house_number && String(r.house_number).toLowerCase().includes(term)) 
+			); 
+			renderTable(filteredResidents); 
 		}
 
 		function selectCitizenForCert(id, name) {
