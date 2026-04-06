@@ -216,15 +216,18 @@
 								<tr>
 									<th class="p-4 border-b whitespace-nowrap">الاسم الرباعي</th>
 									<th class="p-4 border-b whitespace-nowrap">الرقم الوطني</th>
-									<th class="p-4 border-b whitespace-nowrap">المهنة</th> <th class="p-4 border-b whitespace-nowrap">الموقع والقطعة</th> <th class="p-4 border-b whitespace-nowrap">الأسرة</th>
-									<th class="p-4 border-b sensitive-col whitespace-nowrap">السكن</th>
-									<th class="p-4 border-b sensitive-col whitespace-nowrap">الحالة</th>
+									<th class="p-4 border-b whitespace-nowrap">المهنة</th> 
+                                    <th class="p-4 border-b whitespace-nowrap">الموقع والقطعة</th> 
+                                    <th class="p-4 border-b whitespace-nowrap">الأسرة</th>
+									<th class="p-4 border-b sensitive-col whitespace-nowrap">المستند</th>
+                                    <th class="p-4 border-b sensitive-col whitespace-nowrap">الاعتماد</th>
+                                    <th class="p-4 border-b sensitive-col whitespace-nowrap">السكن</th>
 									<th class="p-4 border-b sensitive-col whitespace-nowrap text-center">الدخل</th>
 									<th class="p-4 border-b text-center admin-col whitespace-nowrap">إجراء</th>
 								</tr>
 							</thead>
 							<tbody id="data-table-body" class="divide-y divide-slate-100 text-slate-600 font-medium bg-white">
-								<tr><td colspan="9" class="p-8 text-center text-slate-400">جاري التحميل...</td></tr>
+								<tr><td colspan="10" class="p-8 text-center text-slate-400">جاري التحميل...</td></tr>
 							</tbody>
 						</table>
 					</div>
@@ -348,8 +351,8 @@
 					<div class="md:col-span-3 pb-2 mb-2 mt-4 border-b-2 border-slate-100"><h4 class="text-sm font-black text-slate-400 uppercase tracking-wider">البيانات السرية والإحصائية</h4></div>
 					
 					<div><label class="form-label">المهنة</label><input type="text" id="f_prof" class="form-input bg-slate-50"></div>
-					<div><label class="form-label">تاريخ الميلاد</label><input type="date" id="f_dob" class="form-input bg-slate-50 font-mono"></div>
-					<div><label class="form-label">الحالة الاجتماعية</label><select id="f_marital" class="form-input bg-slate-50"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option></select></div>
+					<div><label class="form-label">حالة الاعتماد (للجنة)</label><select id="f_status" class="form-input bg-blue-50 font-bold text-blue-800"><option value="pending">قيد المراجعة</option><option value="approved">معتمد ✔️</option></select></div>
+                    <div><label class="form-label">الحالة الاجتماعية</label><select id="f_marital" class="form-input bg-slate-50"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option></select></div>
 					
 					<div><label class="form-label">السكن</label><select id="f_house" class="form-input bg-slate-50"><option value="مالك">مالك</option><option value="مستأجر">مستأجر</option><option value="مؤقت">مؤقت (حارس منزل)</option></select></div>
 					<div><label class="form-label">عدد أفراد الأسرة</label><input type="number" id="f_fam" min="1" value="1" class="form-input bg-slate-50 font-mono"></div>
@@ -431,7 +434,7 @@
 		})();
 	
 		// ==========================================
-		// Password Recovery Listener & Injector
+		// Password Recovery Listener
 		// ==========================================
 		window.addEventListener('DOMContentLoaded', () => {
 			const step1Div = document.getElementById('step-1');
@@ -689,7 +692,7 @@
 	
 		function switchTab(tabId) {
 			const role = (currentUser.role || '').toLowerCase().trim(); const isManager = (role === 'admin' || role === 'manager');
-			if(!isManager && (tabId === 'certificates' || tabId === 'settings' || tabId === 'dashboard')) return alert('غير مصرح لك بدخول هذه الشاشة.'); // حماية الصلاحيات
+			if(!isManager && (tabId === 'certificates' || tabId === 'settings' || tabId === 'dashboard')) return alert('غير مصرح لك بدخول هذه الشاشة.'); 
 			
 			document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden')); document.getElementById(`view-${tabId}`).classList.remove('hidden');
 			document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); const links = document.querySelectorAll(`.nav-link[data-target="${tabId}"]`); links.forEach(l => l.classList.add('active'));
@@ -713,7 +716,7 @@
 		}
 	
 		// ==========================================
-		// Residents CRUD 
+		// Residents CRUD (Updated with Status & Image)
 		// ==========================================
 		async function loadResidentsData() {
 			const tbody = document.getElementById('data-table-body');
@@ -721,40 +724,113 @@
 				allResidents = await sbFetch('naseem_residents?order=created_at.desc'); filteredResidents = [...allResidents]; renderTable(allResidents);
 				const role = (currentUser.role || '').toLowerCase().trim(); const isManager = (role === 'admin' || role === 'manager');
 				if(isManager) { if(!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts(); }
-			} catch(e) { tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-red-500">خطأ في الجلب (تأكد من الصلاحيات)</td></tr>`; }
+			} catch(e) { tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-red-500">خطأ في الجلب (تأكد من الصلاحيات)</td></tr>`; }
 		}
 		
 		function renderTable(data) {
 			const tbody = document.getElementById('data-table-body'); 
 			const role = (currentUser.role || '').toLowerCase().trim(); const isManager = (role === 'admin' || role === 'manager');
-			if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400">لا توجد بيانات.</td></tr>'; return; }
-			let html = '';
+			if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">لا توجد بيانات.</td></tr>'; return; }
+			
+            let html = '';
 			data.forEach(row => {
 				let houseClass = "bg-amber-50 text-amber-700 border-amber-100";
 				if (row.housing_type === 'مالك') houseClass = "bg-emerald-50 text-emerald-700 border-emerald-100"; else if (row.housing_type === 'مستأجر') houseClass = "bg-blue-50 text-blue-700 border-blue-100";
-				html += `<tr class="hover:bg-slate-50 transition border-b border-slate-100"><td class="p-4 font-bold text-slate-800 whitespace-nowrap">${row.full_name}</td><td class="p-4 font-mono text-xs text-slate-500 whitespace-nowrap">${row.national_id}</td><td class="p-4 whitespace-nowrap text-slate-600 font-bold text-xs">${row.profession || '-'}</td><td class="p-4 whitespace-nowrap"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-slate-600">${row.location} - ق ${row.house_number || '-'}</span></td><td class="p-4 font-bold font-mono whitespace-nowrap">${row.family_members_count}</td><td class="p-4 sensitive-col whitespace-nowrap ${!isManager ? 'hidden' : ''}"><span class="px-2 py-1 border rounded font-bold text-[11px] ${houseClass}">${row.housing_type||'-'}</span></td><td class="p-4 sensitive-col whitespace-nowrap ${!isManager ? 'hidden' : ''}">${row.marital_status||'-'}</td><td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}"><span class="w-3 h-3 inline-block rounded-full shadow-sm ${row.income_level==='اخضر'?'bg-emerald-500':row.income_level==='اصفر'?'bg-amber-500':'bg-red-500'}"></span></td><td class="p-4 text-center admin-col whitespace-nowrap ${!isManager ? 'hidden' : ''}"><button onclick="editCitizen('${row.id}')" class="text-blue-600 hover:text-blue-800 text-xs font-bold bg-blue-50 px-3 py-1 rounded">تعديل</button></td></tr>`;
+				
+                // تصميم حالة الاعتماد
+                let statusLabel = row.status === 'pending' 
+                    ? '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-black shadow-sm">قيد المراجعة</span>'
+                    : '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-black shadow-sm">معتمد ✔️</span>';
+
+                // زر عرض الصورة
+                let imageBtn = row.id_image_url 
+                    ? `<a href="${row.id_image_url}" target="_blank" class="text-blue-500 hover:text-blue-700 hover:underline text-[11px] font-bold flex items-center justify-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> عرض</a>` 
+                    : '<span class="text-slate-300 text-[10px]">لا يوجد</span>';
+
+				html += `
+                <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                    <td class="p-4 font-bold text-slate-800 whitespace-nowrap">${row.full_name}</td>
+                    <td class="p-4 font-mono text-xs text-slate-500 whitespace-nowrap">${row.national_id}</td>
+                    <td class="p-4 whitespace-nowrap text-slate-600 font-bold text-xs">${row.profession || '-'}</td>
+                    <td class="p-4 whitespace-nowrap"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-slate-600">${row.location} - ق ${row.house_number || '-'}</span></td>
+                    <td class="p-4 font-bold font-mono whitespace-nowrap text-center">${row.family_members_count}</td>
+                    
+                    <td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}">${imageBtn}</td>
+                    <td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}">${statusLabel}</td>
+                    <td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}"><span class="px-2 py-1 border rounded font-bold text-[11px] ${houseClass}">${row.housing_type||'-'}</span></td>
+                    <td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}"><span class="w-3 h-3 inline-block rounded-full shadow-sm ${row.income_level==='اخضر'?'bg-emerald-500':row.income_level==='اصفر'?'bg-amber-500':'bg-red-500'}"></span></td>
+                    
+                    <td class="p-4 text-center admin-col whitespace-nowrap ${!isManager ? 'hidden' : ''}">
+                        <button onclick="editCitizen('${row.id}')" class="text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 text-[11px] font-bold px-3 py-1 rounded transition shadow-sm">تعديل/اعتماد</button>
+                    </td>
+                </tr>`;
 			});
-			tbody.innerHTML = html; document.querySelectorAll('.sensitive-col, .admin-col').forEach(el => { if(isManager) el.classList.remove('hidden'); else el.classList.add('hidden'); });
+			tbody.innerHTML = html; 
+            document.querySelectorAll('.sensitive-col, .admin-col').forEach(el => { if(isManager) el.classList.remove('hidden'); else el.classList.add('hidden'); });
 		}
 		
 		function filterTable() { const term = document.getElementById('search-resident').value.toLowerCase(); filteredResidents = allResidents.filter(r => (r.full_name && r.full_name.toLowerCase().includes(term)) || (r.national_id && r.national_id.includes(term)) || (r.profession && r.profession.toLowerCase().includes(term)) || (r.house_number && r.house_number.toLowerCase().includes(term)) ); renderTable(filteredResidents); }
 	
 		function exportToExcel() {
 			if(filteredResidents.length === 0) return alert('لا توجد بيانات للتصدير.');
-			let csvContent = '\uFEFF'; csvContent += "الاسم الرباعي,الرقم الوطني,المهنة,الموقع,رقم المنزل,عدد الأفراد,نوع السكن,الحالة الاجتماعية,مستوى الدخل\n";
-			filteredResidents.forEach(r => { let row = `"${r.full_name}","${r.national_id}","${r.profession || ''}","${r.location}","${r.house_number || ''}","${r.family_members_count}","${r.housing_type}","${r.marital_status}","${r.income_level}"`; csvContent += row + "\n"; });
+			let csvContent = '\uFEFF'; csvContent += "الاسم الرباعي,الرقم الوطني,المهنة,الموقع,رقم المنزل,عدد الأفراد,حالة الاعتماد,نوع السكن,الحالة الاجتماعية,مستوى الدخل\n";
+			filteredResidents.forEach(r => { let row = `"${r.full_name}","${r.national_id}","${r.profession || ''}","${r.location}","${r.house_number || ''}","${r.family_members_count}","${r.status}","${r.housing_type}","${r.marital_status}","${r.income_level}"`; csvContent += row + "\n"; });
 			const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", `سجل_النسيم_${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 		}
 	
-		function openCitizenModal() { document.getElementById('citizen-form').reset(); document.getElementById('f_id').value = ''; document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> إضافة سجل جديد'; document.getElementById('add-modal').classList.remove('hidden'); }
-		function closeCitizenModal() { document.getElementById('add-modal').classList.add('hidden'); }
-		function editCitizen(id) { const citizen = allResidents.find(r => r.id === id); if(!citizen) return; document.getElementById('f_id').value = citizen.id; document.getElementById('f_name').value = citizen.full_name; document.getElementById('f_nid').value = citizen.national_id; document.getElementById('f_phone').value = citizen.phone_number; document.getElementById('f_dob').value = citizen.birth_date || ''; document.getElementById('f_loc').value = citizen.location; document.getElementById('f_house_num').value = citizen.house_number || ''; document.getElementById('f_prof').value = citizen.profession || ''; document.getElementById('f_house').value = citizen.housing_type; document.getElementById('f_marital').value = citizen.marital_status; document.getElementById('f_fam').value = citizen.family_members_count; document.getElementById('f_income').value = citizen.income_level; document.getElementById('f_notes').value = citizen.special_issues || ''; document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل السجل'; document.getElementById('add-modal').classList.remove('hidden'); }
+		function openCitizenModal() { 
+            document.getElementById('citizen-form').reset(); 
+            document.getElementById('f_id').value = ''; 
+            document.getElementById('f_status').value = 'approved'; // افتراضياً معتمد لو أنشأه الأدمن
+            document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> إضافة سجل جديد'; 
+            document.getElementById('add-modal').classList.remove('hidden'); 
+        }
+		
+        function closeCitizenModal() { document.getElementById('add-modal').classList.add('hidden'); }
+		
+        function editCitizen(id) { 
+            const citizen = allResidents.find(r => r.id === id); if(!citizen) return; 
+            document.getElementById('f_id').value = citizen.id; 
+            document.getElementById('f_name').value = citizen.full_name; 
+            document.getElementById('f_nid').value = citizen.national_id; 
+            document.getElementById('f_phone').value = citizen.phone_number; 
+            document.getElementById('f_loc').value = citizen.location; 
+            document.getElementById('f_house_num').value = citizen.house_number || ''; 
+            document.getElementById('f_prof').value = citizen.profession || ''; 
+            document.getElementById('f_status').value = citizen.status || 'pending'; // قراءة الحالة الحالية
+            document.getElementById('f_marital').value = citizen.marital_status || 'اعزب'; 
+            document.getElementById('f_house').value = citizen.housing_type; 
+            document.getElementById('f_fam').value = citizen.family_members_count; 
+            document.getElementById('f_income').value = citizen.income_level; 
+            document.getElementById('f_notes').value = citizen.special_issues || ''; 
+            document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل واعتماد السجل'; 
+            document.getElementById('add-modal').classList.remove('hidden'); 
+        }
 	
 		async function saveCitizen() {
 			if(!document.getElementById('citizen-form').checkValidity()) return document.getElementById('citizen-form').reportValidity();
 			const btn = document.getElementById('btn-save'); btn.innerHTML = 'جاري الحفظ...'; btn.disabled = true; const id = document.getElementById('f_id').value;
-			const payload = { full_name: document.getElementById('f_name').value, national_id: document.getElementById('f_nid').value, phone_number: document.getElementById('f_phone').value, birth_date: document.getElementById('f_dob').value || null, location: document.getElementById('f_loc').value, house_number: document.getElementById('f_house_num').value, profession: document.getElementById('f_prof').value, housing_type: document.getElementById('f_house').value, marital_status: document.getElementById('f_marital').value, family_members_count: parseInt(document.getElementById('f_fam').value), income_level: document.getElementById('f_income').value, special_issues: document.getElementById('f_notes').value };
-			try { if(id) await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) }); else { payload.created_by = currentUser.id; await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) }); } closeCitizenModal(); loadResidentsData(); } catch(e) { alert('فشل الحفظ: ' + e.message); } finally { btn.innerHTML = 'حفظ البيانات'; btn.disabled = false; }
+			
+            const payload = { 
+                full_name: document.getElementById('f_name').value, 
+                national_id: document.getElementById('f_nid').value, 
+                phone_number: document.getElementById('f_phone').value, 
+                location: document.getElementById('f_loc').value, 
+                house_number: document.getElementById('f_house_num').value, 
+                profession: document.getElementById('f_prof').value, 
+                status: document.getElementById('f_status').value, // إرسال الحالة المحدثة
+                marital_status: document.getElementById('f_marital').value, 
+                housing_type: document.getElementById('f_house').value, 
+                family_members_count: parseInt(document.getElementById('f_fam').value), 
+                income_level: document.getElementById('f_income').value, 
+                special_issues: document.getElementById('f_notes').value 
+            };
+			
+            try { 
+                if(id) await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) }); 
+                else { payload.created_by = currentUser.id; await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) }); } 
+                closeCitizenModal(); loadResidentsData(); 
+            } catch(e) { alert('فشل الحفظ: ' + e.message); } finally { btn.innerHTML = 'حفظ البيانات'; btn.disabled = false; }
 		}
 	
 		// ==========================================
@@ -766,13 +842,14 @@
 			
 			if (term.length < 2) { resultsBox.classList.add('hidden'); return; }
 
+			// إظهار فقط المواطنين المعتمدين (approved)
 			const matches = allResidents.filter(r => 
-				(r.full_name && r.full_name.toLowerCase().includes(term)) || 
-				(r.national_id && r.national_id.includes(term))
+				r.status === 'approved' && 
+				((r.full_name && r.full_name.toLowerCase().includes(term)) || (r.national_id && r.national_id.includes(term)))
 			).slice(0, 10); 
 
 			if (matches.length === 0) {
-				resultsBox.innerHTML = '<li class="p-3 text-sm text-slate-500 text-center font-bold">لا توجد نتائج مطابقة</li>';
+				resultsBox.innerHTML = '<li class="p-3 text-sm text-slate-500 text-center font-bold">لا توجد نتائج معتمدة مطابقة</li>';
 				resultsBox.classList.remove('hidden'); return;
 			}
 
@@ -820,7 +897,6 @@
 			const cName = citizen.full_name; const cNid = citizen.national_id; const cLoc = `النسيم - ${citizen.location} - ق ${citizen.house_number || '-'}`; 
 			const arMonths = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]; const enMonths = ["January","February","March","April","May","June","July","August","September","October","November","December"]; 
 			
-			// فصل التواريخ لتجنب تداخل اللغات
 			const arDate = `${d.getDate()} ${arMonths[d.getMonth()]} ${d.getFullYear()}`; 
 			const enDate = `${d.getDate()} ${enMonths[d.getMonth()]} ${d.getFullYear()}`; 
 			
