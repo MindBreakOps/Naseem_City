@@ -217,11 +217,11 @@
 									<th class="p-4 border-b whitespace-nowrap">الاسم الرباعي</th>
 									<th class="p-4 border-b whitespace-nowrap">الرقم الوطني</th>
 									<th class="p-4 border-b whitespace-nowrap">المهنة</th> 
-                                    <th class="p-4 border-b whitespace-nowrap">الموقع والقطعة</th> 
-                                    <th class="p-4 border-b whitespace-nowrap">الأسرة</th>
+									<th class="p-4 border-b whitespace-nowrap">الموقع والقطعة</th> 
+									<th class="p-4 border-b whitespace-nowrap">الأسرة</th>
 									<th class="p-4 border-b sensitive-col whitespace-nowrap">المستند</th>
-                                    <th class="p-4 border-b sensitive-col whitespace-nowrap">الاعتماد</th>
-                                    <th class="p-4 border-b sensitive-col whitespace-nowrap">السكن</th>
+									<th class="p-4 border-b sensitive-col whitespace-nowrap">الاعتماد</th>
+									<th class="p-4 border-b sensitive-col whitespace-nowrap">السكن</th>
 									<th class="p-4 border-b sensitive-col whitespace-nowrap text-center">الدخل</th>
 									<th class="p-4 border-b text-center admin-col whitespace-nowrap">إجراء</th>
 								</tr>
@@ -352,7 +352,7 @@
 					
 					<div><label class="form-label">المهنة</label><input type="text" id="f_prof" class="form-input bg-slate-50"></div>
 					<div><label class="form-label">حالة الاعتماد (للجنة)</label><select id="f_status" class="form-input bg-blue-50 font-bold text-blue-800"><option value="pending">قيد المراجعة</option><option value="approved">معتمد ✔️</option></select></div>
-                    <div><label class="form-label">الحالة الاجتماعية</label><select id="f_marital" class="form-input bg-slate-50"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option></select></div>
+					<div><label class="form-label">الحالة الاجتماعية</label><select id="f_marital" class="form-input bg-slate-50"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option></select></div>
 					
 					<div><label class="form-label">السكن</label><select id="f_house" class="form-input bg-slate-50"><option value="مالك">مالك</option><option value="مستأجر">مستأجر</option><option value="مؤقت">مؤقت (حارس منزل)</option></select></div>
 					<div><label class="form-label">عدد أفراد الأسرة</label><input type="number" id="f_fam" min="1" value="1" class="form-input bg-slate-50 font-mono"></div>
@@ -421,7 +421,7 @@
 		// ==========================================
 		const SUPABASE_URL = 'https://lzobdqlbsxjlupyewdqq.supabase.co/rest/v1';
 		const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx6b2JkcWxic3hqbHVweWV3ZHFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTY0MDQsImV4cCI6MjA4OTU3MjQwNH0.fH-bV3QiQUbk_6L-clwwdHlZTnTIYAIJeKysMhUlBIs';
-		const GAS_URL = 'https://script.google.com/macros/s/AKfycbzeR7L8dfzk7vtMNr6Zv_0VQP3n5-R3oWL79PQ0lT0aux4L6261yKPm8M4Jh9VE2DUm/exec';
+		const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3M0pH4dXIegs0QcjVkYWs9j6VnoutiUPRSxrV57_o1Fxvl0Ri5icqKbxJQrVw148Q/exec';
 		
 		let currentUser = null; let timerInterval = null; let currentOtpEmail = null; let allResidents = []; let filteredResidents = []; let currentRef = "";
 		
@@ -432,55 +432,168 @@
 			};
 			const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'}); document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${URL.createObjectURL(blob)}">`);
 		})();
+		
+	// ==========================================
+	// Password Recovery Listener (Smart UI & Quota Protection)
+	// ==========================================
+	window.addEventListener('DOMContentLoaded', () => {
+		const step1Div = document.getElementById('step-1');
+		if(step1Div) {
+			const forgotBtn = document.createElement('button');
+			forgotBtn.id = 'btn-forgot-pass';
+			forgotBtn.innerText = 'هل نسيت كلمة المرور؟ استعادة الآن';
+			forgotBtn.className = 'block w-full text-center text-sm text-blue-600 hover:text-blue-800 hover:underline mt-4 font-bold transition';
+			forgotBtn.onclick = initiateRecovery;
+			step1Div.appendChild(forgotBtn);
+		}
+	});
 	
-		// ==========================================
-		// Password Recovery Listener
-		// ==========================================
-		window.addEventListener('DOMContentLoaded', () => {
-			const step1Div = document.getElementById('step-1');
-			if(step1Div) {
-				const forgotBtn = document.createElement('button');
-				forgotBtn.innerText = 'هل نسيت كلمة المرور؟ استعادة الآن';
-				forgotBtn.className = 'block w-full text-center text-sm text-blue-600 hover:text-blue-800 hover:underline mt-4 font-bold transition';
-				forgotBtn.onclick = recoverPassword;
-				step1Div.appendChild(forgotBtn);
-			}
+	async function initiateRecovery() {
+		const email = document.getElementById('login-email').value.trim();
+		if(!email) return alert('الرجاء كتابة بريدك الإلكتروني في الحقل المخصص أولاً، ثم الضغط على استعادة.');
 	
-			const hash = window.location.hash;
-			if(hash && hash.includes('type=recovery')) {
-				const params = new URLSearchParams(hash.substring(1));
-				const token = params.get('access_token');
-				if(token) {
-					setTimeout(async () => {
-						const newPass = prompt('أهلاً بك! تم التحقق من هويتك بنجاح.\nالرجاء إدخال كلمة المرور الجديدة (يجب أن تتكون من 6 أحرف/أرقام على الأقل):');
-						if(newPass && newPass.length >= 6) {
-							try {
-								const res = await fetch(`${SUPABASE_URL.replace('/rest/v1', '')}/auth/v1/user`, {
-									method: 'PUT',
-									headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-									body: JSON.stringify({ password: newPass })
-								});
-								if(!res.ok) throw new Error('فشل في التحديث');
-								alert('تم تغيير كلمة المرور بنجاح! سيتم إعادة تحديث الصفحة لتتمكن من تسجيل الدخول.');
-								window.location.hash = ''; location.reload();
-							} catch(e) { alert('حدث خطأ أثناء الاتصال بقاعدة البيانات لتغيير الرمز.'); }
-						} else { alert('تم الإلغاء أو أن كلمة المرور قصيرة جداً.'); window.location.hash = ''; }
-					}, 500);
-				}
-			}
-		});
+		const forgotBtn = document.getElementById('btn-forgot-pass');
+		const originalText = forgotBtn.innerText;
+		
+		// استجابة فورية وتعطيل الزر لمنع التكرار
+		forgotBtn.innerHTML = '<div class="loader" style="width:16px;height:16px;border-width:2px;"></div>';
+		forgotBtn.disabled = true;
 	
-		async function recoverPassword() {
-			const email = document.getElementById('login-email').value.trim();
-			if(!email) return alert('الرجاء كتابة بريدك الإلكتروني في الحقل المخصص أولاً، ثم الضغط على استعادة.');
-			const btn = document.getElementById('btn-step-1'); const oldText = btn.innerHTML; btn.innerHTML = '<div class="loader"></div>';
-			try {
+		const cooldownMs = 10 * 60 * 1000; // 10 دقائق
+		const lastReq = localStorage.getItem('last_recover_otp_' + email);
+		const now = Date.now();
+	
+		try {
+			// حماية الحصة: لا ترسل إيميل جديد إلا إذا مرت 10 دقائق
+			if (!lastReq || (now - lastReq > cooldownMs)) {
 				await sbAuth('recover', { email: email });
-				alert('تم إرسال رابط آمن لاستعادة كلمة المرور!\n\nيرجى مراجعة بريدك الإلكتروني (وكذلك صندوق المهملات Spam)، واضغط على الرابط لتغيير كلمة المرور.');
-			} catch(e) { alert('حدث خطأ: ' + e.message); } finally { btn.innerHTML = oldText; }
+				localStorage.setItem('last_recover_otp_' + email, now.toString());
+			} else {
+				const remainingMins = Math.ceil((cooldownMs - (now - lastReq)) / 60000);
+				alert(`تم إرسال رمز مؤخراً إلى بريدك.\nلحماية النظام، لا يمكنك طلب رمز جديد إلا بعد ${remainingMins} دقيقة.\nالرجاء التحقق من صندوق الوارد أو المهملات (Spam).`);
+			}
+	
+			// الانتقال لواجهة الاستعادة الأنيقة
+			showRecoveryUI(email);
+	
+		} catch(e) {
+			alert('حدث خطأ: ' + e.message);
+			forgotBtn.innerHTML = originalText;
+			forgotBtn.disabled = false;
+		}
+	}
+	
+	function showRecoveryUI(email) {
+		document.getElementById('step-1').classList.add('hidden');
+		
+		let recDiv = document.getElementById('step-recover');
+		if(!recDiv) {
+			recDiv = document.createElement('div');
+			recDiv.id = 'step-recover';
+			recDiv.className = 'animate-in';
+			document.getElementById('step-1').parentNode.appendChild(recDiv);
 		}
 	
-		function toggleSidebar() { document.getElementById('sidebar').classList.toggle('translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden'); }
+		recDiv.innerHTML = `
+			<div class="bg-blue-50/50 border border-blue-100 p-4 mb-6 rounded-xl">
+				<p class="text-xs text-blue-800 font-bold leading-relaxed text-center">أدخل رمز التحقق (6 أرقام) المرسل إلى بريدك لتغيير كلمة المرور.</p>
+			</div>
+			<div class="mb-4">
+				<label class="form-label flex justify-between"><span>رمز التحقق</span></label>
+				<input type="number" id="recover-otp" class="form-input text-center text-2xl tracking-[0.5em] font-mono bg-slate-50" maxlength="6">
+			</div>
+			<div id="new-pass-container" class="hidden mb-6 animate-in">
+				<label class="form-label text-emerald-600">كلمة المرور الجديدة</label>
+				<input type="password" id="recover-new-pass" class="form-input border-emerald-300 bg-emerald-50 focus:border-emerald-500" placeholder="••••••••" style="font-family: sans-serif;">
+			</div>
+			<button id="btn-recover-action" onclick="verifyRecoveryOTP('${email}')" class="w-full btn-primary shadow-lg">التحقق من الرمز</button>
+			<button onclick="cancelRecovery()" class="w-full mt-4 text-sm font-bold text-slate-500 hover:text-slate-800 transition underline">إلغاء والعودة لتسجيل الدخول</button>
+		`;
+		recDiv.classList.remove('hidden');
+	}
+	
+	let recoveryAccessToken = null;
+	
+	async function verifyRecoveryOTP(email) {
+		const otp = document.getElementById('recover-otp').value.trim();
+		if(!otp || otp.length < 6) return alert('الرجاء إدخال الرمز المكون من 6 أرقام بشكل صحيح.');
+	
+		const btn = document.getElementById('btn-recover-action');
+		btn.innerHTML = '<div class="loader"></div>';
+		btn.disabled = true;
+	
+		try {
+			const verifyRes = await fetch(`${SUPABASE_URL.replace('/rest/v1', '')}/auth/v1/verify`, {
+				method: 'POST',
+				headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email: email, token: otp, type: 'recovery' })
+			});
+	
+			const verifyData = await verifyRes.json();
+			if(!verifyRes.ok) throw new Error(verifyData.error_description || verifyData.msg || 'الرمز خاطئ أو منتهي الصلاحية');
+	
+			recoveryAccessToken = verifyData.access_token;
+	
+			// قفل حقل الـ OTP وإظهار حقل كلمة المرور الجديدة
+			document.getElementById('recover-otp').disabled = true;
+			document.getElementById('recover-otp').classList.add('opacity-50');
+			document.getElementById('new-pass-container').classList.remove('hidden');
+			
+			btn.innerText = 'حفظ كلمة المرور الجديدة';
+			btn.onclick = saveNewPassword;
+			btn.classList.replace('btn-primary', 'btn-success');
+			btn.disabled = false;
+	
+		} catch(e) {
+			alert('حدث خطأ: ' + e.message);
+			btn.innerText = 'التحقق من الرمز';
+			btn.disabled = false;
+		}
+	}
+	
+	async function saveNewPassword() {
+		const newPass = document.getElementById('recover-new-pass').value;
+		if(!newPass || newPass.length < 6) return alert('كلمة المرور يجب أن تكون 6 أحرف على الأقل.');
+	
+		const btn = document.getElementById('btn-recover-action');
+		btn.innerHTML = '<div class="loader"></div>';
+		btn.disabled = true;
+	
+		try {
+			const updateRes = await fetch(`${SUPABASE_URL.replace('/rest/v1', '')}/auth/v1/user`, {
+				method: 'PUT',
+				headers: {
+					'apikey': SUPABASE_KEY,
+					'Authorization': `Bearer ${recoveryAccessToken}`,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ password: newPass })
+			});
+	
+			if(!updateRes.ok) throw new Error('فشل تحديث كلمة المرور. حاول مجدداً.');
+	
+			alert('تم تغيير كلمة المرور بنجاح! 🎉\nسيتم إعادة تحميل الصفحة لتسجيل الدخول.');
+			
+			// مسح العداد لكي يتمكن من الاستعادة مستقبلاً إذا نسيها
+			localStorage.removeItem('last_recover_otp_' + document.getElementById('login-email').value.trim()); 
+			location.reload();
+	
+		} catch(e) {
+			alert('حدث خطأ: ' + e.message);
+			btn.innerText = 'حفظ كلمة المرور الجديدة';
+			btn.disabled = false;
+		}
+	}
+	
+	function cancelRecovery() {
+		document.getElementById('step-recover').classList.add('hidden');
+		document.getElementById('step-1').classList.remove('hidden');
+		const forgotBtn = document.getElementById('btn-forgot-pass');
+		if(forgotBtn) {
+			forgotBtn.innerText = 'هل نسيت كلمة المرور؟ استعادة الآن';
+			forgotBtn.disabled = false;
+		}
+	}
 	
 		async function sbAuth(endpoint, body) {
 			const url = SUPABASE_URL.replace('/rest/v1', `/auth/v1/${endpoint}`);
@@ -732,41 +845,41 @@
 			const role = (currentUser.role || '').toLowerCase().trim(); const isManager = (role === 'admin' || role === 'manager');
 			if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">لا توجد بيانات.</td></tr>'; return; }
 			
-            let html = '';
+			let html = '';
 			data.forEach(row => {
 				let houseClass = "bg-amber-50 text-amber-700 border-amber-100";
 				if (row.housing_type === 'مالك') houseClass = "bg-emerald-50 text-emerald-700 border-emerald-100"; else if (row.housing_type === 'مستأجر') houseClass = "bg-blue-50 text-blue-700 border-blue-100";
 				
-                // تصميم حالة الاعتماد
-                let statusLabel = row.status === 'pending' 
-                    ? '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-black shadow-sm">قيد المراجعة</span>'
-                    : '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-black shadow-sm">معتمد ✔️</span>';
+				// تصميم حالة الاعتماد
+				let statusLabel = row.status === 'pending' 
+					? '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-black shadow-sm">قيد المراجعة</span>'
+					: '<span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-black shadow-sm">معتمد ✔️</span>';
 
-                // زر عرض الصورة
-                let imageBtn = row.id_image_url 
-                    ? `<a href="${row.id_image_url}" target="_blank" class="text-blue-500 hover:text-blue-700 hover:underline text-[11px] font-bold flex items-center justify-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> عرض</a>` 
-                    : '<span class="text-slate-300 text-[10px]">لا يوجد</span>';
+				// زر عرض الصورة
+				let imageBtn = row.id_image_url 
+					? `<a href="${row.id_image_url}" target="_blank" class="text-blue-500 hover:text-blue-700 hover:underline text-[11px] font-bold flex items-center justify-center gap-1"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> عرض</a>` 
+					: '<span class="text-slate-300 text-[10px]">لا يوجد</span>';
 
 				html += `
-                <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                    <td class="p-4 font-bold text-slate-800 whitespace-nowrap">${row.full_name}</td>
-                    <td class="p-4 font-mono text-xs text-slate-500 whitespace-nowrap">${row.national_id}</td>
-                    <td class="p-4 whitespace-nowrap text-slate-600 font-bold text-xs">${row.profession || '-'}</td>
-                    <td class="p-4 whitespace-nowrap"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-slate-600">${row.location} - ق ${row.house_number || '-'}</span></td>
-                    <td class="p-4 font-bold font-mono whitespace-nowrap text-center">${row.family_members_count}</td>
-                    
-                    <td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}">${imageBtn}</td>
-                    <td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}">${statusLabel}</td>
-                    <td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}"><span class="px-2 py-1 border rounded font-bold text-[11px] ${houseClass}">${row.housing_type||'-'}</span></td>
-                    <td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}"><span class="w-3 h-3 inline-block rounded-full shadow-sm ${row.income_level==='اخضر'?'bg-emerald-500':row.income_level==='اصفر'?'bg-amber-500':'bg-red-500'}"></span></td>
-                    
-                    <td class="p-4 text-center admin-col whitespace-nowrap ${!isManager ? 'hidden' : ''}">
-                        <button onclick="editCitizen('${row.id}')" class="text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 text-[11px] font-bold px-3 py-1 rounded transition shadow-sm">تعديل/اعتماد</button>
-                    </td>
-                </tr>`;
+				<tr class="hover:bg-slate-50 transition border-b border-slate-100">
+					<td class="p-4 font-bold text-slate-800 whitespace-nowrap">${row.full_name}</td>
+					<td class="p-4 font-mono text-xs text-slate-500 whitespace-nowrap">${row.national_id}</td>
+					<td class="p-4 whitespace-nowrap text-slate-600 font-bold text-xs">${row.profession || '-'}</td>
+					<td class="p-4 whitespace-nowrap"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold text-slate-600">${row.location} - ق ${row.house_number || '-'}</span></td>
+					<td class="p-4 font-bold font-mono whitespace-nowrap text-center">${row.family_members_count}</td>
+					
+					<td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}">${imageBtn}</td>
+					<td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}">${statusLabel}</td>
+					<td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}"><span class="px-2 py-1 border rounded font-bold text-[11px] ${houseClass}">${row.housing_type||'-'}</span></td>
+					<td class="p-4 sensitive-col whitespace-nowrap text-center ${!isManager ? 'hidden' : ''}"><span class="w-3 h-3 inline-block rounded-full shadow-sm ${row.income_level==='اخضر'?'bg-emerald-500':row.income_level==='اصفر'?'bg-amber-500':'bg-red-500'}"></span></td>
+					
+					<td class="p-4 text-center admin-col whitespace-nowrap ${!isManager ? 'hidden' : ''}">
+						<button onclick="editCitizen('${row.id}')" class="text-blue-600 hover:text-white border border-blue-200 hover:bg-blue-600 text-[11px] font-bold px-3 py-1 rounded transition shadow-sm">تعديل/اعتماد</button>
+					</td>
+				</tr>`;
 			});
 			tbody.innerHTML = html; 
-            document.querySelectorAll('.sensitive-col, .admin-col').forEach(el => { if(isManager) el.classList.remove('hidden'); else el.classList.add('hidden'); });
+			document.querySelectorAll('.sensitive-col, .admin-col').forEach(el => { if(isManager) el.classList.remove('hidden'); else el.classList.add('hidden'); });
 		}
 		
 		function filterTable() { const term = document.getElementById('search-resident').value.toLowerCase(); filteredResidents = allResidents.filter(r => (r.full_name && r.full_name.toLowerCase().includes(term)) || (r.national_id && r.national_id.includes(term)) || (r.profession && r.profession.toLowerCase().includes(term)) || (r.house_number && r.house_number.toLowerCase().includes(term)) ); renderTable(filteredResidents); }
@@ -779,76 +892,73 @@
 		}
 	
 		function openCitizenModal() { 
-            document.getElementById('citizen-form').reset(); 
-            document.getElementById('f_id').value = ''; 
-            document.getElementById('f_status').value = 'approved'; // افتراضياً معتمد لو أنشأه الأدمن
-            document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> إضافة سجل جديد'; 
-            document.getElementById('add-modal').classList.remove('hidden'); 
-        }
+			document.getElementById('citizen-form').reset(); 
+			document.getElementById('f_id').value = ''; 
+			document.getElementById('f_status').value = 'approved'; // افتراضياً معتمد لو أنشأه الأدمن
+			document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg> إضافة سجل جديد'; 
+			document.getElementById('add-modal').classList.remove('hidden'); 
+		}
 		
-        function closeCitizenModal() { document.getElementById('add-modal').classList.add('hidden'); }
+		function closeCitizenModal() { document.getElementById('add-modal').classList.add('hidden'); }
 		
-        function editCitizen(id) { 
-            const citizen = allResidents.find(r => r.id === id); if(!citizen) return; 
-            document.getElementById('f_id').value = citizen.id; 
-            document.getElementById('f_name').value = citizen.full_name; 
-            document.getElementById('f_nid').value = citizen.national_id; 
-            document.getElementById('f_phone').value = citizen.phone_number; 
-            document.getElementById('f_loc').value = citizen.location; 
-            document.getElementById('f_house_num').value = citizen.house_number || ''; 
-            document.getElementById('f_prof').value = citizen.profession || ''; 
-            document.getElementById('f_status').value = citizen.status || 'pending'; // قراءة الحالة الحالية
-            document.getElementById('f_marital').value = citizen.marital_status || 'اعزب'; 
-            document.getElementById('f_house').value = citizen.housing_type; 
-            document.getElementById('f_fam').value = citizen.family_members_count; 
-            document.getElementById('f_income').value = citizen.income_level; 
-            document.getElementById('f_notes').value = citizen.special_issues || ''; 
-            document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل واعتماد السجل'; 
-            document.getElementById('add-modal').classList.remove('hidden'); 
-        }
+		function editCitizen(id) { 
+			const citizen = allResidents.find(r => r.id === id); if(!citizen) return; 
+			document.getElementById('f_id').value = citizen.id; 
+			document.getElementById('f_name').value = citizen.full_name; 
+			document.getElementById('f_nid').value = citizen.national_id; 
+			document.getElementById('f_phone').value = citizen.phone_number; 
+			document.getElementById('f_loc').value = citizen.location; 
+			document.getElementById('f_house_num').value = citizen.house_number || ''; 
+			document.getElementById('f_prof').value = citizen.profession || ''; 
+			document.getElementById('f_status').value = citizen.status || 'pending'; // قراءة الحالة الحالية
+			document.getElementById('f_marital').value = citizen.marital_status || 'اعزب'; 
+			document.getElementById('f_house').value = citizen.housing_type; 
+			document.getElementById('f_fam').value = citizen.family_members_count; 
+			document.getElementById('f_income').value = citizen.income_level; 
+			document.getElementById('f_notes').value = citizen.special_issues || ''; 
+			document.getElementById('modal-title').innerHTML = '<svg class="svg-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل واعتماد السجل'; 
+			document.getElementById('add-modal').classList.remove('hidden'); 
+		}
 	
 		async function saveCitizen() {
 			if(!document.getElementById('citizen-form').checkValidity()) return document.getElementById('citizen-form').reportValidity();
 			const btn = document.getElementById('btn-save'); btn.innerHTML = 'جاري الحفظ...'; btn.disabled = true; const id = document.getElementById('f_id').value;
 			
-            const payload = { 
-                full_name: document.getElementById('f_name').value, 
-                national_id: document.getElementById('f_nid').value, 
-                phone_number: document.getElementById('f_phone').value, 
-                location: document.getElementById('f_loc').value, 
-                house_number: document.getElementById('f_house_num').value, 
-                profession: document.getElementById('f_prof').value, 
-                status: document.getElementById('f_status').value, // إرسال الحالة المحدثة
-                marital_status: document.getElementById('f_marital').value, 
-                housing_type: document.getElementById('f_house').value, 
-                family_members_count: parseInt(document.getElementById('f_fam').value), 
-                income_level: document.getElementById('f_income').value, 
-                special_issues: document.getElementById('f_notes').value 
-            };
+			const payload = { 
+				full_name: document.getElementById('f_name').value, 
+				national_id: document.getElementById('f_nid').value, 
+				phone_number: document.getElementById('f_phone').value, 
+				location: document.getElementById('f_loc').value, 
+				house_number: document.getElementById('f_house_num').value, 
+				profession: document.getElementById('f_prof').value, 
+				status: document.getElementById('f_status').value, // إرسال الحالة المحدثة
+				marital_status: document.getElementById('f_marital').value, 
+				housing_type: document.getElementById('f_house').value, 
+				family_members_count: parseInt(document.getElementById('f_fam').value), 
+				income_level: document.getElementById('f_income').value, 
+				special_issues: document.getElementById('f_notes').value 
+			};
 			
-            try { 
-                if(id) await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) }); 
-                else { payload.created_by = currentUser.id; await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) }); } 
-                closeCitizenModal(); loadResidentsData(); 
-            } catch(e) { alert('فشل الحفظ: ' + e.message); } finally { btn.innerHTML = 'حفظ البيانات'; btn.disabled = false; }
+			try { 
+				if(id) await sbFetch(`naseem_residents?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(payload) }); 
+				else { payload.created_by = currentUser.id; await sbFetch('naseem_residents', { method: 'POST', body: JSON.stringify(payload) }); } 
+				closeCitizenModal(); loadResidentsData(); 
+			} catch(e) { alert('فشل الحفظ: ' + e.message); } finally { btn.innerHTML = 'حفظ البيانات'; btn.disabled = false; }
 		}
 	
 		// ==========================================
 		// Certificate Generation & Admin Settings
-		// 1. الدالة المصححة للبحث في شاشة إصدار الشهادات
+		// ==========================================
 		function searchCitizenForCert() {
 			const term = document.getElementById('cert-citizen-search').value.toLowerCase().trim();
 			const resultsBox = document.getElementById('cert-search-results');
 			
 			if (term.length < 2) { resultsBox.classList.add('hidden'); return; }
 
-			// التعديل هنا: السماح للسجلات القديمة بالظهور (التي ليس لها حالة)، وتحويل الرقم لـ String لمنع الأخطاء
+			// إظهار فقط المواطنين المعتمدين (approved)
 			const matches = allResidents.filter(r => 
-				(r.status === 'approved' || !r.status || r.status === '') && 
-				(
-					(r.full_name && r.full_name.toLowerCase().includes(term)) || 
-					(r.national_id && String(r.national_id).includes(term))
-				)
+				r.status === 'approved' && 
+				((r.full_name && r.full_name.toLowerCase().includes(term)) || (r.national_id && r.national_id.includes(term)))
 			).slice(0, 10); 
 
 			if (matches.length === 0) {
@@ -867,18 +977,6 @@
 			
 			resultsBox.innerHTML = html;
 			resultsBox.classList.remove('hidden');
-		}
-
-		// 2. الدالة المصححة للبحث في الجدول الرئيسي (لحمايته من نفس الخطأ مع الرقم الوطني)
-		function filterTable() { 
-			const term = document.getElementById('search-resident').value.toLowerCase(); 
-			filteredResidents = allResidents.filter(r => 
-				(r.full_name && r.full_name.toLowerCase().includes(term)) || 
-				(r.national_id && String(r.national_id).includes(term)) || 
-				(r.profession && r.profession.toLowerCase().includes(term)) || 
-				(r.house_number && String(r.house_number).toLowerCase().includes(term)) 
-			); 
-			renderTable(filteredResidents); 
 		}
 
 		function selectCitizenForCert(id, name) {
