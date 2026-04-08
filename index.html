@@ -1025,7 +1025,6 @@
 </head>
 <body>
 
-<!-- ═══════════════════════════════════ LOGIN ═══════════════════════════════════ -->
 <div id="login-screen">
 	<div class="login-bg">
 		<div class="login-grid"></div>
@@ -1038,7 +1037,6 @@
 		<div class="login-title">مدينة النسيم</div>
 		<div class="login-subtitle">Security &amp; Admin Portal</div>
 
-		<!-- Step indicators -->
 		<div class="step-indicator" style="margin-top: 28px;">
 			<div class="step active" id="si-1">1</div>
 			<div class="step-line" id="sl-1"></div>
@@ -1047,7 +1045,6 @@
 			<div class="step inactive" id="si-3">3</div>
 		</div>
 
-		<!-- Step 1 -->
 		<div id="step-1">
 			<div class="field-group">
 				<label class="field-label">البريد الإلكتروني</label>
@@ -1062,10 +1059,8 @@
 			</button>
 		</div>
 
-		<!-- Step 2 (security questions — injected dynamically) -->
 		<div id="step-2" class="hidden"></div>
 
-		<!-- Step 3 -->
 		<div id="step-3" class="hidden">
 			<div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:20px;">
 				<p style="font-size:12px;color:rgba(255,255,255,0.6);font-weight:600;line-height:1.7;">تم إرسال رمز الدخول (OTP) المكون من 6 أرقام إلى بريدك الإلكتروني.</p>
@@ -1083,12 +1078,9 @@
 			</div>
 			<button id="btn-step-3" onclick="handleLoginStep3()" class="btn-login">اعتماد الدخول</button>
 		</div>
-
-		<!-- Recovery step (injected dynamically) -->
 	</div>
 </div>
 
-<!-- ═══════════════════════════════════ SIDEBAR ═══════════════════════════════════ -->
 <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
 <aside id="sidebar" class="no-print">
@@ -1118,8 +1110,18 @@
 			<span>قاعدة السكان</span>
 		</div>
 
+		<div class="nav-item nav-link" data-target="competencies" onclick="switchTab('competencies'); closeSidebar();">
+			<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+			<span>الكفاءات والخبرات</span>
+		</div>
+
 		<div id="admin-menu" class="hidden">
 			<div class="nav-label" style="margin-top:20px;">إدارة</div>
+
+			<div class="nav-item nav-link" data-target="committee" onclick="switchTab('committee'); closeSidebar();">
+				<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+				<span>لجنة الحي</span>
+			</div>
 
 			<div class="nav-item nav-link" data-target="certificates" onclick="switchTab('certificates'); closeSidebar();">
 				<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
@@ -1150,9 +1152,7 @@
 	</div>
 </aside>
 
-<!-- ═══════════════════════════════════ MAIN ═══════════════════════════════════ -->
 <main>
-	<!-- Topbar -->
 	<div class="topbar no-print">
 		<div class="topbar-left">
 			<button onclick="toggleSidebar()" style="display:none;background:none;border:none;cursor:pointer;color:var(--navy-3);padding:4px;" id="menu-btn">
@@ -1178,10 +1178,8 @@
 		</div>
 	</div>
 
-	<!-- Views -->
 	<div class="content-area" id="content-scroll">
 
-		<!-- ── Dashboard ── -->
 		<div id="view-dashboard" class="app-view">
 			<div class="stats-grid">
 				<div class="stat-card navy">
@@ -1240,7 +1238,6 @@
 			</div>
 		</div>
 
-		<!-- ── Residents ── -->
 		<div id="view-residents" class="app-view hidden" style="height:calc(100vh - 108px);">
 			<div class="panel">
 				<div class="panel-header">
@@ -1285,7 +1282,65 @@
 			</div>
 		</div>
 
-		<!-- ── Certificates ── -->
+		<div id="view-competencies" class="app-view hidden" style="height:calc(100vh - 108px);">
+			<div class="panel">
+				<div class="panel-header">
+					<div>
+						<h3 style="font-size:15px;font-weight:900;color:var(--navy);">سجل الكفاءات والخبرات</h3>
+						<p style="font-size:11px;color:var(--slate-5);margin-top:2px;">يتم التعرف عليهم واستخراجهم تلقائياً من السجل المدني الرئيسي بناءً على المسميات المهنية.</p>
+					</div>
+				</div>
+				<div class="table-scroll">
+					<table class="data-table" dir="rtl">
+						<thead>
+							<tr>
+								<th>الاسم الرباعي</th>
+								<th>الرقم الوطني</th>
+								<th>التخصص / المهنة</th>
+								<th>رقم الهاتف</th>
+								<th>الموقع · القطعة</th>
+							</tr>
+						</thead>
+						<tbody id="competencies-table-body">
+							<tr><td colspan="5"><div class="empty-state"><div class="loader loader-dark" style="width:24px;height:24px;margin:0 auto 12px;"></div><p>جاري سحب الكفاءات...</p></div></td></tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+		<div id="view-committee" class="app-view hidden">
+			<div class="settings-grid">
+				<div class="settings-card">
+					<div class="settings-card-head">
+						<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+						أعضاء لجنة الحي
+					</div>
+					<div class="settings-card-body" style="padding:0;">
+						<div class="empty-state">
+							<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+							<p>لا يوجد أعضاء مسجلين</p>
+							<small>سيتم تفعيل ربط الأعضاء مع قاعدة بيانات السكان قريباً.</small>
+						</div>
+					</div>
+				</div>
+
+				<div class="settings-card">
+					<div class="settings-card-head">
+						<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+						الخدمات والمشاريع
+					</div>
+					<div class="settings-card-body" style="padding:0;">
+						<div class="empty-state">
+							<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+							<p>لوحة الخدمات قيد الإنشاء</p>
+							<small>ستتمكن قريباً من إدارة ومتابعة خدمات المياه، الكهرباء، والخدمات الصحية.</small>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
 		<div id="view-certificates" class="app-view hidden">
 			<div class="cert-layout">
 				<div class="cert-panel">
@@ -1333,7 +1388,6 @@
 			</div>
 		</div>
 
-		<!-- ── Settings ── -->
 		<div id="view-settings" class="app-view hidden">
 			<div class="settings-grid">
 
@@ -1419,7 +1473,6 @@
 	</div>
 </main>
 
-<!-- ═══════════════════════════════════ ADD/EDIT MODAL ═══════════════════════════════════ -->
 <div id="add-modal" class="modal-overlay hidden no-print">
 	<div class="modal-box">
 		<div class="modal-head">
@@ -1504,7 +1557,6 @@
 	</div>
 </div>
 
-<!-- ═══════════════════════════════════ PROFILE MODAL ═══════════════════════════════════ -->
 <div id="profile-modal" class="modal-overlay hidden no-print">
 	<div class="modal-box profile-modal-box">
 		<div class="modal-head">
@@ -1908,14 +1960,18 @@
 	function switchTab(tabId) {
 		const role = (currentUser.role || '').toLowerCase().trim();
 		const isManager = role === 'admin' || role === 'manager';
-		if (!isManager && ['certificates','settings','dashboard'].includes(tabId)) return alert('غير مصرح لك بدخول هذه الشاشة');
+		if (!isManager && ['certificates','settings','dashboard','committee'].includes(tabId)) return alert('غير مصرح لك بدخول هذه الشاشة');
+		
 		document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
 		document.getElementById(`view-${tabId}`).classList.remove('hidden');
 		document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 		document.querySelectorAll(`.nav-link[data-target="${tabId}"]`).forEach(l => l.classList.add('active'));
-		const titles = { dashboard:'لوحة القيادة', residents:'قاعدة بيانات السكان', certificates:'إصدار الشهادات', settings:'النظام والمستخدمين' };
+		
+		const titles = { dashboard:'لوحة القيادة', residents:'قاعدة بيانات السكان', competencies:'سجل الكفاءات والخبرات', committee:'إدارة لجنة الحي', certificates:'إصدار الشهادات', settings:'النظام والمستخدمين' };
 		document.getElementById('header-title').innerText = titles[tabId] || '';
+		
 		if (tabId === 'dashboard' && isManager) updateDashboardCharts();
+		if (tabId === 'competencies') renderCompetencies(); // 👈 استدعاء توليد الكفاءات
 		if (tabId === 'settings' && role === 'admin') { loadUsersList(); loadDevicesList(); loadSessionsLog(); }
 		if (tabId === 'certificates') {
 			const d = new Date(); const ds = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
@@ -1971,6 +2027,9 @@
 			const role = (currentUser.role || '').toLowerCase().trim();
 			const isManager = role === 'admin' || role === 'manager';
 			if (isManager && !document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts();
+			
+			// إذا كانت شاشة الكفاءات مفتوحة، نحدثها أيضاً
+			if (!document.getElementById('view-competencies').classList.contains('hidden')) renderCompetencies();
 		} catch(e) {
 			tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><p style="color:var(--red);">فشل تحميل البيانات</p><small>${e.message}</small></div></td></tr>`;
 		}
@@ -2005,7 +2064,12 @@
 				<td style="text-align:center;${!isManager?'display:none;':''}" class="sensitive-col">${statusBadge}</td>
 				<td style="text-align:center;${!isManager?'display:none;':''}" class="sensitive-col"><span class="badge ${hBadge}">${row.housing_type||'—'}</span></td>
 				<td style="text-align:center;${!isManager?'display:none;':''}" class="sensitive-col"><span class="income-dot ${incDot}"></span></td>
-				<td style="text-align:center;${!isManager?'display:none;':''}" class="admin-col"><button onclick="editCitizen('${row.id}')" class="action-btn">تعديل</button></td>
+				<td style="text-align:center;${!isManager?'display:none;':''}" class="admin-col">
+					<div style="display:flex; justify-content:center; gap:6px;">
+						<button onclick="editCitizen('${row.id}')" class="action-btn">تعديل</button>
+						<button onclick="deleteCitizen('${row.id}')" class="action-btn" style="border-color:var(--red-mid); color:var(--red);">حذف</button>
+					</div>
+				</td>
 			</tr>`;
 		});
 		tbody.innerHTML = html;
@@ -2031,6 +2095,15 @@
 		const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
 		a.download = `سجل_النسيم_${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}.csv`;
 		document.body.appendChild(a); a.click(); document.body.removeChild(a);
+	}
+
+	// ── Delete Citizen
+	async function deleteCitizen(id) {
+		if (!confirm('هل أنت متأكد من حذف هذا السجل نهائياً؟\nسيتم إزالة بيانات هذا المواطن من النظام ولا يمكن التراجع عن ذلك.')) return;
+		try {
+			await sbFetch(`naseem_residents?id=eq.${id}`, { method:'DELETE' });
+			loadResidentsData();
+		} catch(e) { alert('فشل الحذف: ' + e.message); }
 	}
 
 	function openCitizenModal() {
@@ -2092,6 +2165,36 @@
 	}
 
 	// ══════════════════════════════════════════════
+	// COMPETENCIES (الكفاءات)
+	// ══════════════════════════════════════════════
+	function renderCompetencies() {
+		const tbody = document.getElementById('competencies-table-body');
+		// فلتر الكلمات المفتاحية للبحث عن الكفاءات داخل المهنة
+		const keywords = ['طبيب', 'دكتور', 'مهندس', 'أستاذ', 'استاذ', 'بروف', 'مدير', 'خبير', 'محامي', 'صيدلي', 'مستشار', 'مبرمج'];
+		
+		const competencies = allResidents.filter(r => {
+			if (!r.profession) return false;
+			const prof = r.profession.toLowerCase();
+			return keywords.some(kw => prof.includes(kw));
+		});
+
+		if (competencies.length === 0) {
+			tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>لا توجد كفاءات مسجلة حالياً</p><small>سيتم الإضافة تلقائياً بمجرد تسجيل مواطنين بالمسميات المهنية المستهدفة.</small></div></td></tr>`;
+			return;
+		}
+
+		tbody.innerHTML = competencies.map(c => `
+			<tr>
+				<td class="name-cell">${c.full_name}</td>
+				<td class="mono-cell">${c.national_id}</td>
+				<td style="font-weight:700; color:var(--blue);">${c.profession}</td>
+				<td class="mono-cell" style="font-size:13px; color:var(--navy);">${c.phone_number || '—'}</td>
+				<td><span class="loc-tag">${c.location} · ق ${c.house_number || '—'}</span></td>
+			</tr>
+		`).join('');
+	}
+
+	// ══════════════════════════════════════════════
 	// CERTIFICATES
 	// ══════════════════════════════════════════════
 	function searchCitizenForCert() {
@@ -2100,7 +2203,7 @@
 		if (term.length < 2) { box.classList.add('hidden'); return; }
 		const matches = allResidents.filter(r =>
 			r.status === 'approved' &&
-			((r.full_name && r.full_name.toLowerCase().includes(term)) || (r.national_id && r.national_id.includes(term)))
+			((r.full_name && r.full_name.toLowerCase().includes(term)) || (r.national_id && String(r.national_id).includes(term)))
 		).slice(0,10);
 		if (matches.length === 0) {
 			box.innerHTML = '<li class="autocomplete-item" style="justify-content:center;color:var(--slate-5);">لا توجد نتائج معتمدة</li>';
