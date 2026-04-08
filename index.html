@@ -595,6 +595,18 @@
 		}
 	}
 	
+	// 👇 تمت إعادة إضافة دالة القائمة الجانبية هنا 👇
+	function toggleSidebar() { 
+		document.getElementById('sidebar').classList.toggle('translate-x-full'); 
+		document.getElementById('mobile-overlay').classList.toggle('hidden'); 
+	}
+	
+	async function sbAuth(endpoint, body) {
+		const url = SUPABASE_URL.replace('/rest/v1', `/auth/v1/${endpoint}`);
+		const res = await fetch(url, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+		const data = await res.json(); if (!res.ok) throw new Error(data.error_description || data.msg || 'فشل في العملية'); return data;
+	}
+	
 		async function sbAuth(endpoint, body) {
 			const url = SUPABASE_URL.replace('/rest/v1', `/auth/v1/${endpoint}`);
 			const res = await fetch(url, { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
