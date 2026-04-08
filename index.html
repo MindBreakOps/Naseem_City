@@ -906,52 +906,6 @@
 		.empty-state p { font-weight: 700; font-size: 13px; }
 		.empty-state small { font-size: 11px; color: var(--slate-6); }
 
-		/* ─── Responsive ─── */
-		@media (max-width: 1024px) {
-			#sidebar {
-				position: fixed;
-				right: 0;
-				top: 0;
-				height: 100%;
-				transform: translateX(100%);
-			}
-			#sidebar.open { transform: translateX(0); }
-			.stats-grid { grid-template-columns: repeat(2, 1fr); }
-			.charts-grid { grid-template-columns: 1fr; }
-			.cert-layout { grid-template-columns: 1fr; }
-			.settings-grid { grid-template-columns: 1fr; }
-			.settings-grid .full { grid-column: span 1; }
-		}
-
-		@media (max-width: 640px) {
-			.stats-grid { grid-template-columns: repeat(2, 1fr); }
-			.form-grid { grid-template-columns: 1fr; }
-			.form-grid .col-2, .form-grid .col-3 { grid-column: span 1; }
-			.section-divider { grid-column: span 1; }
-			.search-input { width: 100%; }
-			.content-area { padding: 16px; }
-			.topbar { padding: 0 16px; }
-		}
-
-		/* ─── Mobile overlay ─── */
-		#sidebar-overlay {
-			display: none;
-			position: fixed;
-			inset: 0;
-			background: rgba(15,23,42,0.5);
-			backdrop-filter: blur(2px);
-			z-index: 25;
-		}
-
-		#sidebar-overlay.show { display: block; }
-
-		/* ─── Print ─── */
-		@media print {
-			body * { visibility: hidden; }
-			#print-area, #print-area * { visibility: visible; }
-			#print-area { position: absolute; left: 0; top: 0; width: 100%; }
-		}
-
 		/* ─── Link style for image ─── */
 		.img-link {
 			display: inline-flex;
@@ -1022,6 +976,76 @@
 		.step.inactive { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.25); }
 		.step-line { flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
 		.step-line.done { background: rgba(16,185,129,0.3); }
+
+		/* ─── SVG Map Styles ─── */
+		.gis-layout { display: flex; gap: 16px; height: 100%; }
+		.gis-sidebar { width: 320px; background: white; border: 1px solid var(--slate-8); border-radius: var(--radius-lg); display: flex; flex-direction: column; box-shadow: var(--shadow-sm); flex-shrink: 0; overflow: hidden; z-index: 10; }
+		.map-container { flex: 1; background: var(--slate-8); border-radius: var(--radius-lg); overflow: auto; position: relative; border: 1px solid var(--slate-7); cursor: grab; z-index: 5; }
+		.map-container:active { cursor: grabbing; }
+		.map-container svg { min-width: 1200px; width: 100%; height: auto; display: block; transition: transform 0.2s; }
+		
+		.map-container svg path:hover, .map-container svg rect:hover, .map-container svg polygon:hover {
+			fill: rgba(59, 130, 246, 0.5) !important;
+			cursor: pointer;
+			stroke: #1D4ED8;
+			stroke-width: 2px;
+		}
+		
+		.highlighted-plot {
+			fill: rgba(220, 38, 38, 0.7) !important;
+			stroke: #991B1B !important;
+			stroke-width: 3px !important;
+			animation: pulse-plot 1.5s infinite;
+		}
+		
+		@keyframes pulse-plot {
+			0% { filter: drop-shadow(0 0 0 rgba(220,38,38,0.8)); }
+			70% { filter: drop-shadow(0 0 10px rgba(220,38,38,0)); }
+			100% { filter: drop-shadow(0 0 0 rgba(220,38,38,0)); }
+		}
+
+		/* 📱 إعدادات تجاوب الموبايل (إصلاح تداخل القائمة) 📱 */
+		@media (max-width: 1024px) {
+			#sidebar { position: fixed; right: 0; top: 0; height: 100%; transform: translateX(100%); z-index: 999 !important; }
+			#sidebar-overlay { z-index: 998 !important; }
+			
+			.stats-grid { grid-template-columns: repeat(2, 1fr); }
+			.charts-grid { grid-template-columns: 1fr; }
+			.cert-layout { grid-template-columns: 1fr; }
+			.settings-grid { grid-template-columns: 1fr; }
+			.settings-grid .full { grid-column: span 1; }
+			
+			.gis-layout { flex-direction: column; }
+			.gis-sidebar { width: 100%; max-height: 45vh; flex-shrink: 1; }
+			.map-container { min-height: 45vh; }
+		}
+
+		@media (max-width: 640px) {
+			.form-grid { grid-template-columns: 1fr; }
+			.form-grid .col-2, .form-grid .col-3 { grid-column: span 1; }
+			.section-divider { grid-column: span 1; }
+			.search-input { width: 100%; }
+			.content-area { padding: 16px; }
+			.topbar { padding: 0 16px; }
+		}
+
+		/* ─── Mobile overlay ─── */
+		#sidebar-overlay {
+			display: none;
+			position: fixed;
+			inset: 0;
+			background: rgba(15,23,42,0.5);
+			backdrop-filter: blur(2px);
+		}
+
+		#sidebar-overlay.show { display: block; }
+
+		/* ─── Print ─── */
+		@media print {
+			body * { visibility: hidden; }
+			#print-area, #print-area * { visibility: visible; }
+			#print-area { position: absolute; left: 0; top: 0; width: 100%; }
+		}
 	</style>
 </head>
 <body>
@@ -1110,7 +1134,10 @@
 			<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
 			<span>قاعدة السكان</span>
 		</div>
-
+		<div class="nav-item nav-link" data-target="map" onclick="switchTab('map'); closeSidebar();">
+			<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+			<span>الخريطة التفاعلية</span>
+		</div>
 		<div class="nav-item nav-link" data-target="competencies" onclick="switchTab('competencies'); closeSidebar();">
 			<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
 			<span>الكفاءات والخبرات</span>
@@ -1282,6 +1309,41 @@
 				</div>
 			</div>
 		</div>
+
+		<div id="view-map" class="app-view hidden" style="height:calc(100vh - 108px);">
+			<div class="gis-layout">
+				
+				<div class="gis-sidebar">
+					<div style="padding: 20px; border-bottom: 1px solid var(--slate-8); background: var(--slate-10);">
+						<h3 style="font-size:16px; font-weight:900; color:var(--navy); margin-bottom: 4px;">الربط الجغرافي (GIS)</h3>
+						<p style="font-size:11px; color:var(--slate-5);">ابحث برقم القطعة أو اضغط عليها في الخريطة.</p>
+					</div>
+					<div style="padding: 20px; overflow-y: auto; flex: 1;">
+						<div class="search-input-wrap" style="margin-bottom: 16px;">
+							<div class="search-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+							<input type="text" id="map-search-input" onkeyup="searchPlotInMap()" placeholder="رقم القطعة (مثال: 145)" class="search-input" style="width: 100%;">
+						</div>
+						<div id="map-search-result">
+							<div class="empty-state" style="padding: 30px 10px;">
+								<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:30px; height:30px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+								<p>أدخل رقم القطعة للبحث</p>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="map-container" id="map-container">
+					<div style="position: absolute; top: 16px; left: 16px; background: rgba(15,23,42,0.8); color: white; padding: 8px 16px; border-radius: 99px; font-size: 11px; font-weight: 700; backdrop-filter: blur(4px); z-index: 10;">
+						اسحب للتجول في الخريطة واضغط على القطع التفاعلية ✋
+					</div>
+					
+				<div id="interactive-svg-wrapper">
+					<div style="padding: 60px; text-align: center; color: var(--slate-5);">
+						<div class="loader loader-dark" style="width: 30px; height: 30px; margin: 0 auto 12px;"></div>
+						<p style="font-weight: 700; font-size: 14px;">جاري تحميل الخريطة التفاعلية...</p>
+						<p style="font-size: 11px; margin-top: 4px;">قد يستغرق هذا بضع ثوانٍ بسبب حجم المخطط</p>
+					</div>
+				</div>
 
 		<div id="view-competencies" class="app-view hidden" style="height:calc(100vh - 108px);">
 			<div class="panel">
@@ -2032,14 +2094,14 @@
 	function switchTab(tabId) {
 		const role = (currentUser.role || '').toLowerCase().trim();
 		const isManager = role === 'admin' || role === 'manager';
-		if (!isManager && ['certificates','settings','dashboard','committee'].includes(tabId)) return alert('غير مصرح لك بدخول هذه الشاشة');
+		if (!isManager && ['certificates','settings','dashboard','committee', 'map'].includes(tabId)) return alert('غير مصرح لك بدخول هذه الشاشة');
 		
 		document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
 		document.getElementById(`view-${tabId}`).classList.remove('hidden');
 		document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 		document.querySelectorAll(`.nav-link[data-target="${tabId}"]`).forEach(l => l.classList.add('active'));
 		
-		const titles = { dashboard:'لوحة القيادة', residents:'قاعدة بيانات السكان', competencies:'سجل الكفاءات والخبرات', committee:'إدارة لجنة الحي', certificates:'إصدار الشهادات', settings:'النظام والمستخدمين' };
+		const titles = { dashboard:'لوحة القيادة', map:'الخريطة التفاعلية', residents:'قاعدة بيانات السكان', competencies:'سجل الكفاءات والخبرات', committee:'إدارة لجنة الحي', certificates:'إصدار الشهادات', settings:'النظام والمستخدمين' };
 		document.getElementById('header-title').innerText = titles[tabId] || '';
 		
 		if (tabId === 'dashboard' && isManager) updateDashboardCharts();
@@ -2167,6 +2229,133 @@
 		const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
 		a.download = `سجل_النسيم_${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}.csv`;
 		document.body.appendChild(a); a.click(); document.body.removeChild(a);
+	}
+	// دالة تحميل الخريطة برمجياً
+	async function loadMapSVG() {
+		const wrapper = document.getElementById('interactive-svg-wrapper');
+		try {
+			// سيقوم بسحب ملف map.svg الذي رفعته بجوار index.html
+			const response = await fetch('map.svg'); 
+			if (!response.ok) throw new Error('لم يتم العثور على الملف');
+			
+			const svgData = await response.text();
+			wrapper.innerHTML = svgData; // وضع الكود في الشاشة فوراً
+			
+			// ضبط أبعاد الخريطة لتملأ الشاشة
+			const svgElement = wrapper.querySelector('svg');
+			if (svgElement) {
+				svgElement.style.width = '100%';
+				svgElement.style.height = 'auto';
+				svgElement.id = 'map-loaded-flag'; // علامة تفيد بأن الخريطة حُملت
+			}
+		} catch (error) {
+			wrapper.innerHTML = '<div class="empty-state"><p style="color:var(--red);">فشل تحميل الخريطة!</p><small>تأكد من رفع ملف map.svg إلى GitHub.</small></div>';
+		}
+	}
+	// ══════════════════════════════════════════════
+	// INTERACTIVE MAP (GIS) LOGIC
+	// ══════════════════════════════════════════════
+	
+	// 1. تفعيل السحب والتجول (Drag to Scroll) داخل الخريطة
+	const mapContainer = document.getElementById('map-container');
+	let isDraggingMap = false, startMapX, startMapY, scrollMapLeft, scrollMapTop;
+	
+	mapContainer.addEventListener('mousedown', (e) => {
+		isDraggingMap = true;
+		startMapX = e.pageX - mapContainer.offsetLeft;
+		startMapY = e.pageY - mapContainer.offsetTop;
+		scrollMapLeft = mapContainer.scrollLeft;
+		scrollMapTop = mapContainer.scrollTop;
+	});
+	mapContainer.addEventListener('mouseleave', () => isDraggingMap = false);
+	mapContainer.addEventListener('mouseup', () => isDraggingMap = false);
+	mapContainer.addEventListener('mousemove', (e) => {
+		if (!isDraggingMap) return;
+		e.preventDefault();
+		const x = e.pageX - mapContainer.offsetLeft;
+		const y = e.pageY - mapContainer.offsetTop;
+		mapContainer.scrollLeft = scrollMapLeft - (x - startMapX);
+		mapContainer.scrollTop = scrollMapTop - (y - startMapY);
+	});
+	
+	// 2. التقاط ضغطات الماوس على الـ SVG
+	document.getElementById('interactive-svg-wrapper').addEventListener('click', function(e) {
+		const target = e.target;
+		
+		// محاولة استخراج رقم القطعة (إما من الـ ID إذا تم تجهيز الخريطة، أو من النص المكتوب داخلها)
+		let plotNumber = target.id || target.parentElement.id; 
+		
+		if (!plotNumber && target.tagName === 'text') {
+			plotNumber = target.textContent.trim(); // قراءة الرقم من النصوص المكتوبة في الخريطة
+		} else if (!plotNumber && target.parentElement.tagName === 'g') {
+			// البحث عن أي نص داخل نفس المجموعة (Group) التي ضغط عليها
+			const textNode = target.parentElement.querySelector('text');
+			if(textNode) plotNumber = textNode.textContent.trim();
+		}
+	
+		if (plotNumber) {
+			// تنظيف أي تمييز سابق
+			document.querySelectorAll('.highlighted-plot').forEach(el => el.classList.remove('highlighted-plot'));
+			
+			// تمييز القطعة المحددة باللون الأحمر النابض
+			if(target.tagName === 'path' || target.tagName === 'rect' || target.tagName === 'polygon') {
+				target.classList.add('highlighted-plot');
+			} else if (target.parentElement.tagName === 'g') {
+				const shape = target.parentElement.querySelector('path, rect, polygon');
+				if (shape) shape.classList.add('highlighted-plot');
+			}
+	
+			// كتابة الرقم في مربع البحث والبحث عنه في قاعدة البيانات
+			document.getElementById('map-search-input').value = plotNumber;
+			searchPlotInMap();
+		}
+	});
+	
+	// 3. البحث في قاعدة البيانات
+	function searchPlotInMap() {
+		const term = document.getElementById('map-search-input').value.toLowerCase().trim();
+		const resultContainer = document.getElementById('map-search-result');
+		
+		// مسح التحديد إذا كان البحث فارغاً
+		if (term === '') {
+			document.querySelectorAll('.highlighted-plot').forEach(el => el.classList.remove('highlighted-plot'));
+			resultContainer.innerHTML = `<div class="empty-state" style="padding: 30px 10px;"><svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="width:30px; height:30px;"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg><p>أدخل رقم القطعة للبحث</p></div>`;
+			return;
+		}
+	
+		const matches = allResidents.filter(r => r.house_number && r.house_number.toLowerCase().includes(term));
+	
+		if (matches.length === 0) {
+			resultContainer.innerHTML = `<div class="empty-state" style="padding: 30px 10px; color: var(--red);"><p>لم يتم العثور على مالك مسجل لهذه القطعة.</p></div>`;
+			return;
+		}
+	
+		let html = '';
+		matches.forEach(m => {
+			const statusBadge = m.status === 'approved' ? '<span class="badge badge-emerald">معتمد</span>' : '<span class="badge badge-slate">مراجعة</span>';
+			html += `
+			<div style="background: var(--slate-9); border: 1px solid var(--slate-8); padding: 16px; border-radius: var(--radius-md); margin-bottom: 12px; transition: all 0.2s;">
+				<div style="display:flex; justify-content:space-between; margin-bottom: 8px;">
+					<span style="font-size:11px; font-weight:800; color:var(--slate-5);">القطعة: <span style="color:var(--navy); font-family:'IBM Plex Mono',monospace;">${m.house_number}</span></span>
+					${statusBadge}
+				</div>
+				<h4 style="font-size:14px; font-weight:900; color:var(--navy); margin:0 0 4px;">${m.full_name}</h4>
+				<p style="font-size:12px; color:var(--slate-6); margin:0 0 12px; font-weight:600;">${m.profession || 'المهنة غير محددة'}</p>
+				<div style="display:flex; gap:8px;">
+					<button onclick="viewCitizenCard('${m.id}')" class="btn btn-primary" style="flex:1; justify-content:center; padding: 6px; font-size:11px;">عرض البيانات</button>
+				</div>
+			</div>
+			`;
+		});
+		resultContainer.innerHTML = html;
+	
+		// محاولة تلوين القطعة في الخريطة تلقائياً إذا تم البحث عنها يدوياً
+		const targetPlot = document.getElementById(term); // سيعمل إذا كان الـ SVG يحتوي على IDs صحيحة
+		if(targetPlot) {
+			document.querySelectorAll('.highlighted-plot').forEach(el => el.classList.remove('highlighted-plot'));
+			targetPlot.classList.add('highlighted-plot');
+			targetPlot.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
+		}
 	}
 
 	async function deleteCitizen(id) {
