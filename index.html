@@ -10,6 +10,7 @@
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 	<style>
 		:root {
 			--red: #DC2626;
@@ -1473,6 +1474,73 @@
 	</div>
 </main>
 
+<div id="view-modal" class="modal-overlay hidden no-print" style="z-index: 60;">
+	<div style="width: 100%; max-width: 450px; display: flex; flex-direction: column; gap: 16px; animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1);">
+		
+		<div id="printable-card" style="background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.15); position: relative; border: 1px solid var(--slate-8);">
+			
+			<div style="background: var(--navy); padding: 24px; text-align: center; border-bottom: 4px solid var(--red); position: relative;">
+				<div style="width: 64px; height: 64px; background: white; border-radius: 16px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+					<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" style="width: 40px; height: 40px; object-fit: contain;">
+				</div>
+				<h2 id="vc-name" style="color: white; font-size: 20px; font-weight: 900; margin: 0; line-height: 1.2;">اسم المواطن</h2>
+				<p id="vc-nid" style="color: rgba(255,255,255,0.7); font-family: 'IBM Plex Mono', monospace; font-size: 14px; margin-top: 4px; letter-spacing: 2px;">12345678901</p>
+				<div id="vc-status" style="position: absolute; top: 16px; right: 16px;"></div>
+			</div>
+
+			<div style="padding: 24px; background: #FAFAFA;">
+				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+					<div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid var(--slate-8);">
+						<div style="font-size: 10px; color: var(--slate-5); font-weight: 800; margin-bottom: 4px;">المهنة</div>
+						<div id="vc-prof" style="font-size: 13px; font-weight: 700; color: var(--navy);">—</div>
+					</div>
+					<div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid var(--slate-8);">
+						<div style="font-size: 10px; color: var(--slate-5); font-weight: 800; margin-bottom: 4px;">رقم الهاتف</div>
+						<div id="vc-phone" style="font-size: 14px; font-weight: 700; color: var(--blue); font-family: 'IBM Plex Mono', monospace;">—</div>
+					</div>
+					<div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid var(--slate-8); grid-column: span 2;">
+						<div style="font-size: 10px; color: var(--slate-5); font-weight: 800; margin-bottom: 4px;">الموقع الجغرافي والقطعة</div>
+						<div id="vc-loc" style="font-size: 14px; font-weight: 800; color: var(--navy);">—</div>
+					</div>
+					<div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid var(--slate-8);">
+						<div style="font-size: 10px; color: var(--slate-5); font-weight: 800; margin-bottom: 4px;">الحالة الاجتماعية</div>
+						<div id="vc-marital" style="font-size: 13px; font-weight: 700; color: var(--navy);">—</div>
+					</div>
+					<div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid var(--slate-8);">
+						<div style="font-size: 10px; color: var(--slate-5); font-weight: 800; margin-bottom: 4px;">حالة السكن</div>
+						<div id="vc-housing" style="font-size: 13px; font-weight: 700; color: var(--navy);">—</div>
+					</div>
+					<div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid var(--slate-8);">
+						<div style="font-size: 10px; color: var(--slate-5); font-weight: 800; margin-bottom: 4px;">أفراد الأسرة</div>
+						<div id="vc-fam" style="font-size: 14px; font-weight: 800; color: var(--navy); font-family: 'IBM Plex Mono', monospace;">—</div>
+					</div>
+					<div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid var(--slate-8);">
+						<div style="font-size: 10px; color: var(--slate-5); font-weight: 800; margin-bottom: 4px;">عقارات بالنسيم</div>
+						<div id="vc-props" style="font-size: 14px; font-weight: 800; color: var(--navy); font-family: 'IBM Plex Mono', monospace;">—</div>
+					</div>
+				</div>
+
+				<div style="margin-top: 16px; background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px; border-radius: 10px;">
+					<div style="font-size: 10px; color: #D97706; font-weight: 800; margin-bottom: 4px;">ملاحظات خاصة (لجنة الحي)</div>
+					<div id="vc-notes" style="font-size: 12px; font-weight: 600; color: #92400E; line-height: 1.6;">لا توجد ملاحظات.</div>
+				</div>
+			</div>
+			
+			<div style="background: white; padding: 12px; text-align: center; border-top: 1px dashed var(--slate-8);">
+				<p style="margin: 0; font-size: 10px; color: var(--slate-5); font-weight: 700;">تم استخراج هذه البيانات من السجل المدني للجنة خدمات مدينة النسيم</p>
+			</div>
+		</div>
+
+		<div style="display: flex; gap: 12px; width: 100%;">
+			<button onclick="closeViewModal()" class="btn" style="flex: 1; justify-content: center; background: white; color: var(--navy); border: 1px solid var(--slate-7);">إغلاق</button>
+			<button onclick="downloadCardImage()" id="btn-download-card" class="btn btn-primary" style="flex: 2; justify-content: center;">
+				<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+				تصوير وحفظ كصورة
+			</button>
+		</div>
+	</div>
+</div>
+
 <div id="add-modal" class="modal-overlay hidden no-print">
 	<div class="modal-box">
 		<div class="modal-head">
@@ -1519,12 +1587,12 @@
 						<input type="text" id="f_prof" class="form-input">
 					</div>
 					<div class="form-field">
-						<label class="form-label">حالة الاعتماد</label>
-						<select id="f_status" class="form-input"><option value="pending">قيد المراجعة</option><option value="approved">معتمد ✔️</option></select>
+						<label class="form-label">الحالة الاجتماعية</label>
+						<select id="f_marital" class="form-input"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option><option value="ارملة">أرملة</option><option value="مطلقة">مطلقة</option></select>
 					</div>
 					<div class="form-field">
-						<label class="form-label">الحالة الاجتماعية</label>
-						<select id="f_marital" class="form-input"><option value="اعزب">أعزب</option><option value="متزوج">متزوج</option></select>
+						<label class="form-label">عدد العقارات بالنسيم</label>
+						<input type="number" id="f_owned_props" min="0" value="0" class="form-input mono">
 					</div>
 
 					<div class="form-field">
@@ -1540,9 +1608,13 @@
 						<select id="f_income" class="form-input"><option value="اخضر">أخضر (مستقر)</option><option value="اصفر">أصفر (متوسط)</option><option value="احمر">أحمر (ضعيف)</option></select>
 					</div>
 
-					<div class="form-field col-3">
+					<div class="form-field col-2">
 						<label class="form-label">ملاحظات خاصة</label>
 						<textarea id="f_notes" class="form-input" rows="2" style="resize:vertical;"></textarea>
+					</div>
+					<div class="form-field">
+						<label class="form-label">حالة الاعتماد</label>
+						<select id="f_status" class="form-input" style="background-color: var(--slate-9); font-weight: bold; color: var(--blue);"><option value="pending">قيد المراجعة</option><option value="approved">معتمد ✔️</option></select>
 					</div>
 				</div>
 			</form>
@@ -1971,7 +2043,7 @@
 		document.getElementById('header-title').innerText = titles[tabId] || '';
 		
 		if (tabId === 'dashboard' && isManager) updateDashboardCharts();
-		if (tabId === 'competencies') renderCompetencies(); // 👈 استدعاء توليد الكفاءات
+		if (tabId === 'competencies') renderCompetencies(); 
 		if (tabId === 'settings' && role === 'admin') { loadUsersList(); loadDevicesList(); loadSessionsLog(); }
 		if (tabId === 'certificates') {
 			const d = new Date(); const ds = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
@@ -2028,7 +2100,6 @@
 			const isManager = role === 'admin' || role === 'manager';
 			if (isManager && !document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts();
 			
-			// إذا كانت شاشة الكفاءات مفتوحة، نحدثها أيضاً
 			if (!document.getElementById('view-competencies').classList.contains('hidden')) renderCompetencies();
 		} catch(e) {
 			tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><p style="color:var(--red);">فشل تحميل البيانات</p><small>${e.message}</small></div></td></tr>`;
@@ -2066,6 +2137,7 @@
 				<td style="text-align:center;${!isManager?'display:none;':''}" class="sensitive-col"><span class="income-dot ${incDot}"></span></td>
 				<td style="text-align:center;${!isManager?'display:none;':''}" class="admin-col">
 					<div style="display:flex; justify-content:center; gap:6px;">
+						<button onclick="viewCitizenCard('${row.id}')" class="action-btn" style="border-color:var(--emerald); color:var(--emerald);">عرض</button>
 						<button onclick="editCitizen('${row.id}')" class="action-btn">تعديل</button>
 						<button onclick="deleteCitizen('${row.id}')" class="action-btn" style="border-color:var(--red-mid); color:var(--red);">حذف</button>
 					</div>
@@ -2089,15 +2161,14 @@
 	function exportToExcel() {
 		if (filteredResidents.length === 0) return alert('لا توجد بيانات للتصدير');
 		let csv = '\uFEFF';
-		csv += 'الاسم الرباعي,الرقم الوطني,المهنة,الموقع,رقم المنزل,عدد الأفراد,حالة الاعتماد,نوع السكن,الحالة الاجتماعية,مستوى الدخل\n';
-		filteredResidents.forEach(r => { csv += `"${r.full_name}","${r.national_id}","${r.profession||''}","${r.location}","${r.house_number||''}","${r.family_members_count}","${r.status}","${r.housing_type}","${r.marital_status}","${r.income_level}"\n`; });
+		csv += 'الاسم الرباعي,الرقم الوطني,المهنة,الموقع,رقم المنزل,عدد الأفراد,عدد العقارات,حالة الاعتماد,نوع السكن,الحالة الاجتماعية,مستوى الدخل\n';
+		filteredResidents.forEach(r => { csv += `"${r.full_name}","${r.national_id}","${r.profession||''}","${r.location}","${r.house_number||''}","${r.family_members_count}","${r.owned_properties_count||0}","${r.status}","${r.housing_type}","${r.marital_status||''}","${r.income_level||''}"\n`; });
 		const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
 		const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
 		a.download = `سجل_النسيم_${new Date().toLocaleDateString('en-GB').replace(/\//g,'-')}.csv`;
 		document.body.appendChild(a); a.click(); document.body.removeChild(a);
 	}
 
-	// ── Delete Citizen
 	async function deleteCitizen(id) {
 		if (!confirm('هل أنت متأكد من حذف هذا السجل نهائياً؟\nسيتم إزالة بيانات هذا المواطن من النظام ولا يمكن التراجع عن ذلك.')) return;
 		try {
@@ -2133,6 +2204,7 @@
 		document.getElementById('f_notes').value = c.special_issues || '';
 		document.getElementById('modal-title').innerHTML = `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;color:var(--red);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل واعتماد السجل`;
 		document.getElementById('add-modal').classList.remove('hidden');
+		document.getElementById('f_owned_props').value = c.owned_properties_count || 0;
 	}
 
 	async function saveCitizen() {
@@ -2152,6 +2224,7 @@
 			marital_status: document.getElementById('f_marital').value,
 			housing_type: document.getElementById('f_house').value,
 			family_members_count: parseInt(document.getElementById('f_fam').value),
+			owned_properties_count: parseInt(document.getElementById('f_owned_props').value) || 0,
 			income_level: document.getElementById('f_income').value,
 			special_issues: document.getElementById('f_notes').value
 		};
@@ -2169,7 +2242,6 @@
 	// ══════════════════════════════════════════════
 	function renderCompetencies() {
 		const tbody = document.getElementById('competencies-table-body');
-		// فلتر الكلمات المفتاحية للبحث عن الكفاءات داخل المهنة
 		const keywords = ['طبيب', 'دكتور', 'مهندس', 'أستاذ', 'استاذ', 'بروف', 'مدير', 'خبير', 'محامي', 'صيدلي', 'مستشار', 'مبرمج'];
 		
 		const competencies = allResidents.filter(r => {
@@ -2192,6 +2264,63 @@
 				<td><span class="loc-tag">${c.location} · ق ${c.house_number || '—'}</span></td>
 			</tr>
 		`).join('');
+	}
+
+	// ══════════════════════════════════════════════
+	// VIEW CARD & DOWNLOAD IMAGE
+	// ══════════════════════════════════════════════
+	function viewCitizenCard(id) {
+		const c = allResidents.find(r => r.id === id); 
+		if (!c) return;
+		
+		document.getElementById('vc-name').innerText = c.full_name || '—';
+		document.getElementById('vc-nid').innerText = c.national_id || '—';
+		document.getElementById('vc-prof').innerText = c.profession || '—';
+		document.getElementById('vc-phone').innerText = c.phone_number || '—';
+		document.getElementById('vc-loc').innerText = `النسيم (${c.location}) - ق ${c.house_number || '—'}`;
+		document.getElementById('vc-marital').innerText = c.marital_status || '—';
+		document.getElementById('vc-housing').innerText = c.housing_type || '—';
+		document.getElementById('vc-fam').innerText = c.family_members_count || '1';
+		document.getElementById('vc-props').innerText = c.owned_properties_count || '0';
+		document.getElementById('vc-notes').innerText = c.special_issues || 'لا توجد ملاحظات مسجلة.';
+
+		const statusHtml = c.status === 'approved' 
+			? '<span style="background:#ECFDF5; color:#059669; padding:4px 10px; border-radius:99px; font-size:10px; font-weight:800;">معتمد ✔️</span>'
+			: '<span style="background:var(--slate-9); color:var(--slate-5); padding:4px 10px; border-radius:99px; font-size:10px; font-weight:800;">قيد المراجعة</span>';
+		document.getElementById('vc-status').innerHTML = statusHtml;
+
+		document.getElementById('view-modal').classList.remove('hidden');
+	}
+
+	function closeViewModal() {
+		document.getElementById('view-modal').classList.add('hidden');
+	}
+
+	function downloadCardImage() {
+		const btn = document.getElementById('btn-download-card');
+		const originalText = btn.innerHTML;
+		btn.innerHTML = '<span class="loader" style="width:14px;height:14px;border-width:2px;vertical-align:middle;"></span> جاري المعالجة...';
+		btn.disabled = true;
+
+		const cardElement = document.getElementById('printable-card');
+		const citizenName = document.getElementById('vc-name').innerText;
+
+		html2canvas(cardElement, { 
+			scale: 2, 
+			useCORS: true, 
+			backgroundColor: null
+		}).then(canvas => {
+			const imageURL = canvas.toDataURL('image/png');
+			const link = document.createElement('a');
+			link.download = `بيانات_المواطن_${citizenName.replace(/\s+/g, '_')}.png`;
+			link.href = imageURL;
+			link.click();
+		}).catch(err => {
+			alert("حدث خطأ أثناء إنشاء الصورة.");
+		}).finally(() => {
+			btn.innerHTML = originalText;
+			btn.disabled = false;
+		});
 	}
 
 	// ══════════════════════════════════════════════
@@ -2243,13 +2372,19 @@
 		const d = new Date(); const ds = String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
 		const certRef = `ANRC-${d.getFullYear()}-${ds}-${Math.floor(100+Math.random()*900)}`;
 		try { await sbFetch('naseem_certificates', { method:'POST', body:JSON.stringify({ resident_id:citizen.id, ref_number:certRef, created_by:currentUser.id }) }); } catch(e) {}
-		const cName = citizen.full_name, cNid = citizen.national_id, cLoc = `النسيم - ${citizen.location} - ق ${citizen.house_number||'-'}`;
+		
+		const cName = citizen.full_name;
+		const cNid = citizen.national_id;
+		const cLoc = `النسيم - ${citizen.location}`;
+		const cHouse = citizen.house_number || '-';
+
 		const arMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 		const enMonths = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 		const arDate = `${d.getDate()} ${arMonths[d.getMonth()]} ${d.getFullYear()}`;
 		const enDate = `${d.getDate()} ${enMonths[d.getMonth()]} ${d.getFullYear()}`;
 		const barcodeUrl = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${cNid}&scale=3&includetext=false`;
-		const printHTML = `<html dir="rtl" lang="ar"><head><title>شهادة سكن - ${cName}</title><style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;800&display=swap'); @page { size: A4 portrait; margin: 0; } body { font-family: 'Cairo', sans-serif; margin: 0; padding: 0; background: #fbfbf9; color: #1a202c; box-sizing: border-box; } .cert-container { width: 210mm; height: 297mm; padding: 20mm; box-sizing: border-box; position: relative; background: #fff; } .border-outer { position: absolute; top: 12mm; left: 12mm; right: 12mm; bottom: 12mm; border: 4px solid #b08d55; border-radius: 4px; } .border-inner { position: absolute; top: 14mm; left: 14mm; right: 14mm; bottom: 14mm; border: 1.5px solid #1c3c66; border-radius: 2px; } .content-wrapper { position: relative; z-index: 10; display: flex; flex-direction: column; height: 100%; } .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #b08d55; padding-bottom: 15px; margin-bottom: 30px; } .header-right { display: flex; align-items: center; gap: 15px; } .header-text { line-height: 1.6; font-size: 16px; font-weight: 800; text-align: right; } .logo-container img { width: 120px; height: 120px; object-fit: contain; } .title-section { text-align: center; margin-bottom: 30px; } .title-ar { font-family: 'Amiri', serif; font-size: 48px; font-weight: 700; margin: 0; color: #0f172a; } .title-en { font-size: 18px; letter-spacing: 2px; color: #475569; margin-top: -10px; font-family: sans-serif; } .statement { font-size: 20px; line-height: 2.2; text-align: justify; margin-bottom: 40px; font-weight: 600; color: #1e293b; } table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border: 2px solid #1c3c66; border-radius: 8px; overflow: hidden; } tr:not(:last-child) { border-bottom: 1px solid #1c3c66; } td { padding: 16px; font-size: 18px; border-left: 1px solid #1c3c66; } td:last-child { border-left: none; } .bg-gray { background-color: #f1f5f9; font-weight: 800; width: 25%; color: #0f172a; white-space: nowrap; } .val-cell { font-weight: 700; color: #1e293b; } .flex-row { display: flex; justify-content: space-between; align-items: center; } .en-text { font-family: sans-serif; font-size: 15px; color: #0f172a; font-weight: bold; } .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; } .signature-box { text-align: center; font-weight: 800; font-size: 18px; width: 200px; } .signature-line { border-top: 2px dotted #475569; margin-top: 50px; width: 100%; } .barcode-section { text-align: center; display: flex; flex-direction: column; align-items: center; } .barcode-text { font-family: sans-serif; font-size: 12px; margin-bottom: 8px; color: #475569; font-weight: bold;} .barcode-img { height: 50px; max-width: 220px; } .barcode-val { font-family: sans-serif; font-size: 15px; font-weight: bold; letter-spacing: 2px; margin-top: 5px; } .date-box { display: flex; align-items: center; gap: 10px; }</style></head><body><div class="cert-container"><div class="border-outer"></div><div class="border-inner"></div><div class="content-wrapper"><div class="header"><div class="header-right"><div><svg viewBox="0 0 120 60" width="80" height="40" style="border:1px solid #cbd5e1;"><rect width="120" height="20" fill="#D21034"/><rect y="20" width="120" height="20" fill="#FFFFFF"/><rect y="40" width="120" height="20" fill="#000000"/><polygon points="0,0 40,30 0,60" fill="#007229"/></svg></div><div class="header-text">جمهورية السودان<br>ولاية الخرطوم<br>محلية شرق النيل - الحاج يوسف<br>لجنة خدمات مدينة النسيم السكنية</div></div><div class="logo-container"><img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" alt="Logo"></div></div><div class="title-section"><h1 class="title-ar">شهادة سكن</h1><div class="title-en">RESIDENCE CERTIFICATE</div></div><div class="statement">تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.</div><table><tr><td class="bg-gray">الاسم الرباعي:</td><td class="val-cell">${cName}</td></tr><tr><td class="bg-gray">الرقم الوطني:</td><td class="val-cell en-text" style="letter-spacing:2px;">${cNid}</td></tr><tr><td class="bg-gray">الموقع الجغرافي:</td><td class="val-cell flex-row"><span>${cLoc}</span><span class="en-text" dir="ltr">Ref No: ${certRef}</span></td></tr><tr><td class="bg-gray">تاريخ الإصدار:</td><td class="val-cell flex-row"><div class="date-box"><span dir="rtl">${arDate}</span><span>/</span><span dir="ltr">${enDate}</span></div><span class="en-text" dir="ltr">Date of Issue:</span></td></tr></table><div class="footer"><div class="signature-box">توقيع مسئول الإحصاء<div class="signature-line"></div></div><div class="barcode-section"><div class="barcode-text">Code 128 barcode linked to National ID</div><img src="${barcodeUrl}" class="barcode-img" alt="Barcode"><div class="barcode-val">${cNid}</div></div><div class="signature-box">توقيع رئيس اللجنة<div class="signature-line"></div></div></div></div></div></body></html>`;
+		
+		const printHTML = `<html dir="rtl" lang="ar"><head><title>شهادة سكن - ${cName}</title><style>@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;800&display=swap'); @page { size: A4 portrait; margin: 0; } body { font-family: 'Cairo', sans-serif; margin: 0; padding: 0; background: #fbfbf9; color: #1a202c; box-sizing: border-box; } .cert-container { width: 210mm; height: 297mm; padding: 20mm; box-sizing: border-box; position: relative; background: #fff; } .border-outer { position: absolute; top: 12mm; left: 12mm; right: 12mm; bottom: 12mm; border: 4px solid #b08d55; border-radius: 4px; } .border-inner { position: absolute; top: 14mm; left: 14mm; right: 14mm; bottom: 14mm; border: 1.5px solid #1c3c66; border-radius: 2px; } .content-wrapper { position: relative; z-index: 10; display: flex; flex-direction: column; height: 100%; } .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #b08d55; padding-bottom: 15px; margin-bottom: 30px; } .header-right { display: flex; align-items: center; gap: 15px; } .header-text { line-height: 1.6; font-size: 16px; font-weight: 800; text-align: right; } .logo-container img { width: 120px; height: 120px; object-fit: contain; } .title-section { text-align: center; margin-bottom: 30px; } .title-ar { font-family: 'Amiri', serif; font-size: 48px; font-weight: 700; margin: 0; color: #0f172a; } .title-en { font-size: 18px; letter-spacing: 2px; color: #475569; margin-top: -10px; font-family: sans-serif; } .statement { font-size: 20px; line-height: 2.2; text-align: justify; margin-bottom: 40px; font-weight: 600; color: #1e293b; } table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border: 2px solid #1c3c66; border-radius: 8px; overflow: hidden; } tr:not(:last-child) { border-bottom: 1px solid #1c3c66; } td { padding: 16px; font-size: 18px; border-left: 1px solid #1c3c66; } td:last-child { border-left: none; } .bg-gray { background-color: #f1f5f9; font-weight: 800; width: 25%; color: #0f172a; white-space: nowrap; } .val-cell { font-weight: 700; color: #1e293b; } .flex-row { display: flex; justify-content: space-between; align-items: center; } .en-text { font-family: sans-serif; font-size: 15px; color: #0f172a; font-weight: bold; } .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; } .signature-box { text-align: center; font-weight: 800; font-size: 18px; width: 200px; } .signature-line { border-top: 2px dotted #475569; margin-top: 50px; width: 100%; } .barcode-section { text-align: center; display: flex; flex-direction: column; align-items: center; } .barcode-text { font-family: sans-serif; font-size: 12px; margin-bottom: 8px; color: #475569; font-weight: bold;} .barcode-img { height: 50px; max-width: 220px; } .barcode-val { font-family: sans-serif; font-size: 15px; font-weight: bold; letter-spacing: 2px; margin-top: 5px; } .date-box { display: flex; align-items: center; gap: 10px; }</style></head><body><div class="cert-container"><div class="border-outer"></div><div class="border-inner"></div><div class="content-wrapper"><div class="header"><div class="header-right"><div><svg viewBox="0 0 120 60" width="80" height="40" style="border:1px solid #cbd5e1;"><rect width="120" height="20" fill="#D21034"/><rect y="20" width="120" height="20" fill="#FFFFFF"/><rect y="40" width="120" height="20" fill="#000000"/><polygon points="0,0 40,30 0,60" fill="#007229"/></svg></div><div class="header-text">جمهورية السودان<br>ولاية الخرطوم<br>محلية شرق النيل - الحاج يوسف<br>لجنة خدمات مدينة النسيم السكنية</div></div><div class="logo-container"><img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" alt="Logo"></div></div><div class="title-section"><h1 class="title-ar">شهادة سكن</h1><div class="title-en">RESIDENCE CERTIFICATE</div></div><div class="statement">تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.</div><table><tr><td class="bg-gray">الاسم الرباعي:</td><td class="val-cell">${cName}</td></tr><tr><td class="bg-gray">الرقم الوطني:</td><td class="val-cell en-text" style="letter-spacing:2px;">${cNid}</td></tr><tr><td class="bg-gray">المنطقة السكنية:</td><td class="val-cell">${cLoc}</td></tr><tr><td class="bg-gray">رقم المنزل / القطعة:</td><td class="val-cell flex-row"><span>${cHouse}</span><span class="en-text" dir="ltr">Ref No: ${certRef}</span></td></tr><tr><td class="bg-gray">تاريخ الإصدار:</td><td class="val-cell flex-row"><div class="date-box"><span dir="rtl">${arDate}</span><span>/</span><span dir="ltr">${enDate}</span></div><span class="en-text" dir="ltr">Date of Issue:</span></td></tr></table><div class="footer"><div class="signature-box">توقيع مسئول الإحصاء<div class="signature-line"></div></div><div class="barcode-section"><div class="barcode-text">Code 128 barcode linked to National ID</div><img src="${barcodeUrl}" class="barcode-img" alt="Barcode"><div class="barcode-val">${cNid}</div></div><div class="signature-box">توقيع رئيس اللجنة<div class="signature-line"></div></div></div></div></div></body></html>`;
 		const iframe = document.createElement('iframe'); iframe.style.cssText='position:fixed;right:-9999px;bottom:-9999px;width:0;height:0;'; document.body.appendChild(iframe);
 		const doc = iframe.contentWindow.document; doc.open(); doc.write(printHTML); doc.close();
 		setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); setTimeout(() => document.body.removeChild(iframe), 2000); }, 1500);
