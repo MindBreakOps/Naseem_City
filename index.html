@@ -2095,7 +2095,8 @@
 		const role = (currentUser.role || '').toLowerCase().trim();
 		const isManager = role === 'admin' || role === 'manager';
 		if (!isManager && ['certificates','settings','dashboard','committee', 'map'].includes(tabId)) return alert('غير مصرح لك بدخول هذه الشاشة');
-		
+		if (tabId === 'competencies') renderCompetencies();
+		if (tabId === 'map' && !document.getElementById('map-loaded-flag')) loadMapSVG();
 		document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
 		document.getElementById(`view-${tabId}`).classList.remove('hidden');
 		document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
