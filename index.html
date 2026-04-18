@@ -2223,7 +2223,8 @@
 		const tbody = document.getElementById('data-table-body');
 		tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="loader loader-dark" style="width:24px;height:24px;margin:0 auto 12px;"></div><p>جاري التحميل...</p></div></td></tr>`;
 		try {
-			allResidents = await sbFetch('naseem_residents?order=created_at.desc');
+			// هذا السطر سيجلب الجميع بغض النظر عن الحالة
+			allResidents = await sbFetch('naseem_residents?select=*&order=created_at.desc');
 			filteredResidents = [...allResidents];
 			renderTable(allResidents);
 			const role = (currentUser.role || '').toLowerCase().trim();
