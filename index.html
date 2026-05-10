@@ -1151,6 +1151,12 @@
 			<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
 			<span>الكفاءات والخبرات</span>
 		</div>
+		
+		<div class="nav-item nav-link" data-target="profile" onclick="switchTab('profile'); closeSidebar();">
+			<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+			<span>الملف الشامل والهوية</span>
+		</div>
+
 
 		<div id="admin-menu" class="hidden">
 			<div class="nav-label" style="margin-top:20px;">إدارة</div>
@@ -1381,7 +1387,155 @@
 			</div>
 		</div>
 
-		<div id="view-committee" class="app-view hidden">
+	<div id="view-profile" class="app-view hidden">
+		<div class="cert-layout">
+			
+			<div style="display:flex; flex-direction:column; gap:16px;">
+				<div style="font-size:11px;font-weight:800;color:var(--slate-5);text-transform:uppercase;letter-spacing:1.5px;font-family:'IBM Plex Mono',monospace;">الهوية الذكية (E-ID)</div>
+				
+				<div id="eid-export-wrap" style="display:flex; flex-direction:column; gap:16px; align-items:center; padding:20px; background:var(--slate-9); border-radius:16px; border:1px solid var(--slate-8);">
+					
+					<div id="eid-front" style="width:400px; height:252px; background:linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%); border-radius:14px; border:1px solid #94a3b8; box-shadow:0 8px 20px rgba(0,0,0,0.1); position:relative; overflow:hidden; direction:rtl; font-family:'Tajawal', sans-serif;">
+						<div style="position:absolute; inset:0; opacity:0.04; background-image: url('https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png'); background-size: 50%; background-position: center; background-repeat:no-repeat; z-index:1;"></div>
+						
+						<div style="text-align:center; padding-top:12px; z-index:2; position:relative;">
+							<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" style="position:absolute; right:16px; top:12px; width:38px; opacity:0.9; background:white; padding:4px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+							<img src="https://flagcdn.com/w80/sd.png" style="position:absolute; left:16px; top:16px; width:32px; border-radius:3px; box-shadow:0 1px 3px rgba(0,0,0,0.2);">
+							
+							<div style="font-size:14px; font-weight:900; color:#0f172a;">مدينة النسيم السكنية</div>
+							<div style="font-size:10px; font-weight:800; color:#334155; margin-top:2px;">لجنة خدمات وإحصاء السكان</div>
+							<div style="font-size:8px; font-weight:700; color:#64748b; font-family:'IBM Plex Mono',monospace; margin-top:2px; letter-spacing:1px;">NASEEM UNIFIED SYSTEM</div>
+							<div style="font-size:14px; font-weight:900; color:#dc2626; margin-top:6px; letter-spacing:1px;">بطاقة هوية مقيم</div>
+						</div>
+			
+						<div style="display:flex; padding:8px 16px; gap:16px; z-index:2; position:relative; margin-top:6px;">
+							<div style="flex:1;">
+								<div style="font-size:9px; color:#64748b; font-weight:700;">الرقم الوطني / National No</div>
+								<div id="eid-front-nid" style="font-size:15px; font-weight:900; font-family:'IBM Plex Mono',monospace; letter-spacing:2px; color:#0f172a; margin-bottom:8px;">—</div>
+								
+								<div style="font-size:9px; color:#64748b; font-weight:700;">الاسم / Name</div>
+								<div id="eid-front-name" style="font-size:14px; font-weight:900; color:#0f172a; margin-bottom:8px; line-height:1.2;">—</div>
+								
+								<div style="font-size:9px; color:#64748b; font-weight:700;">العنوان ومكان الميلاد / Address & POB</div>
+								<div id="eid-front-dob" style="font-size:12px; font-weight:800; color:#0f172a; line-height:1.5;">—</div>
+							</div>
+							
+							<div style="width:85px; display:flex; flex-direction:column; align-items:center; gap:6px;">
+								<div onclick="document.getElementById('photo-upload').click()" title="اضغط لرفع الصورة" style="width:85px; height:105px; border:2px solid #cbd5e1; border-radius:8px; background:#fff; overflow:hidden; position:relative; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.05);">
+									<img id="eid-photo" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
+									<div id="eid-photo-placeholder" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; background:#f8fafc;">
+										<svg fill="none" stroke="#94A3B8" stroke-width="1.5" viewBox="0 0 24 24" style="width:24px; height:24px; margin-bottom:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+										<span style="font-size:9px; font-weight:800; color:#64748B;">رفع صورة</span>
+									</div>
+									<div id="eid-photo-loading" class="hidden" style="position:absolute; inset:0; background:rgba(255,255,255,0.9); display:flex; align-items:center; justify-content:center;">
+										<div class="loader loader-dark"></div>
+									</div>
+								</div>
+								<div style="font-size:8px; font-weight:700; color:#64748b;">توقيع حامل البطاقة</div>
+								<div style="width:70px; height:15px; border-bottom:1px dashed #94a3b8;"></div>
+							</div>
+						</div>
+					</div>
+			
+					<div id="eid-back" style="width:400px; height:252px; background:#f1f5f9; border-radius:14px; border:1px solid #94a3b8; box-shadow:0 8px 20px rgba(0,0,0,0.1); position:relative; overflow:hidden; direction:rtl; font-family:'Tajawal', sans-serif; display:flex; flex-direction:column;">
+						<div style="display:flex; justify-content:space-between; padding:16px 20px; flex:1;">
+							<div style="flex:1; display:grid; grid-template-columns:1fr 1fr; gap:y:8px; gap-x:16px; align-content:start;">
+								<div><div style="font-size:9px; color:#64748b; font-weight:700;">فصيلة الدم</div><div id="eid-back-blood" style="font-size:14px; font-weight:900; color:#dc2626; font-family:'IBM Plex Mono',monospace;">—</div></div>
+								<div><div style="font-size:9px; color:#64748b; font-weight:700;">الجنس / Sex</div><div id="eid-back-gender" style="font-size:12px; font-weight:800; color:#0f172a;">—</div></div>
+								<div style="grid-column:span 2;"><div style="font-size:9px; color:#64748b; font-weight:700;">المهنة / Profession</div><div id="eid-back-prof" style="font-size:12px; font-weight:800; color:#0f172a;">—</div></div>
+								<div><div style="font-size:9px; color:#64748b; font-weight:700;">تاريخ الإصدار</div><div id="eid-back-issue" style="font-size:12px; font-weight:800; color:#0f172a; font-family:'IBM Plex Mono',monospace;">—</div></div>
+								<div><div style="font-size:9px; color:#64748b; font-weight:700;">تاريخ الانتهاء</div><div id="eid-back-expiry" style="font-size:12px; font-weight:800; color:#0f172a; font-family:'IBM Plex Mono',monospace;">—</div></div>
+								<div style="grid-column:span 2;"><div style="font-size:9px; color:#64748b; font-weight:700;">جهة الإصدار</div><div style="font-size:12px; font-weight:800; color:#0f172a;">مكتب إحصاء لجنة النسيم</div></div>
+							</div>
+							<div style="width:80px; display:flex; flex-direction:column; align-items:center;">
+								<div style="width:75px; height:75px; background:#fff; border:1px solid #cbd5e1; padding:2px; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.05);"><img id="eid-back-qr" src="" style="width:100%; height:100%; object-fit:contain;"></div>
+								<div style="font-size:10px; font-weight:800; font-family:'IBM Plex Mono',monospace; margin-top:8px; color:#475569; letter-spacing:1px;">SN:<span id="eid-serial">00000</span></div>
+							</div>
+						</div>
+						<div style="background:#ffffff; border-top:1px solid #cbd5e1; padding:10px 16px; font-family:'Courier New', monospace; font-size:14px; font-weight:bold; letter-spacing:2px; color:#0f172a; text-align:left; direction:ltr; line-height:1.2;">
+							<div id="eid-mrz-1">I&lt;SDN0000000000&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
+							<div id="eid-mrz-2">9001015M2612316SDN&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;9</div>
+							<div id="eid-mrz-3">NAME&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;&lt;</div>
+						</div>
+					</div>
+				</div>
+				
+				<input type="file" id="photo-upload" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+				<input type="hidden" id="current-profile-id">
+			
+				<button onclick="downloadEID()" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; font-size:14px; background:linear-gradient(135deg, #b91c1c, #991b1b);">
+					<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-left:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+					تصدير البطاقة (الوجه والظهر)
+				</button>
+			</div>
+	
+			<div style="display:flex; flex-direction:column; gap:16px;">
+				
+				<div id="profile-search-wrap" class="panel-header" style="border-radius:var(--radius-lg); margin-bottom:8px;">
+					<div class="search-input-wrap" style="width:100%;">
+						<div class="search-icon"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+						<input type="text" id="profile-search" onkeyup="searchForProfile()" placeholder="ابحث بالاسم أو الرقم الوطني..." class="search-input" style="width:100%;">
+						<ul id="profile-search-results" class="autocomplete-list hidden"></ul>
+					</div>
+				</div>
+	
+				<div class="settings-grid" style="grid-template-columns: 1fr 1fr;">
+					<div class="settings-card full">
+						<div class="settings-card-head">
+							<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+							البيانات المهنية والسيرة الذاتية (CV)
+						</div>
+						<div class="settings-card-body form-grid">
+							<div class="form-field"><label class="form-label">المهنة الحالية</label><div class="form-input" id="p-job" style="background:var(--slate-10);">—</div></div>
+							<div class="form-field"><label class="form-label">جهة العمل</label><div class="form-input" id="p-company" style="background:var(--slate-10);">—</div></div>
+							<div class="form-field"><label class="form-label">المؤهل الأكاديمي</label><div class="form-input" id="p-degree" style="background:var(--slate-10);">—</div></div>
+							<div class="form-field col-3"><label class="form-label">نبذة عن الخبرات (CV)</label><div class="form-input" id="p-cv" style="background:var(--slate-10); min-height:60px;">—</div></div>
+						</div>
+					</div>
+	
+					<div class="settings-card">
+						<div class="settings-card-head" style="color:var(--red);">
+							<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+							السجل الصحي
+						</div>
+						<div class="settings-card-body">
+							<div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid var(--slate-8); padding-bottom:8px;">
+								<span style="font-size:12px; font-weight:700; color:var(--slate-5);">فصيلة الدم</span>
+								<span id="p-blood" style="font-weight:900; color:var(--red); font-family:'IBM Plex Mono',monospace;">—</span>
+							</div>
+							<div style="display:flex; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid var(--slate-8); padding-bottom:8px;">
+								<span style="font-size:12px; font-weight:700; color:var(--slate-5);">أمراض مزمنة</span>
+								<span id="p-chronic" style="font-weight:800; color:var(--navy);">—</span>
+							</div>
+							<div style="display:flex; justify-content:space-between;">
+								<span style="font-size:12px; font-weight:700; color:var(--slate-5);">حساسية أدوية</span>
+								<span id="p-allergies" style="font-weight:800; color:var(--navy);">—</span>
+							</div>
+						</div>
+					</div>
+	
+					<div class="settings-card">
+						<div class="settings-card-head" style="color:var(--amber);">
+							<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+							بيانات الطوارئ
+						</div>
+						<div class="settings-card-body">
+							<div style="font-size:10px; color:var(--slate-5); font-weight:800; margin-bottom:4px;">اسم شخص للطوارئ</div>
+							<div id="p-em-name" style="font-size:13px; font-weight:800; color:var(--navy); margin-bottom:12px;">—</div>
+							
+							<div style="font-size:10px; color:var(--slate-5); font-weight:800; margin-bottom:4px;">صلة القرابة</div>
+							<div id="p-em-relation" style="font-size:13px; font-weight:800; color:var(--navy); margin-bottom:12px;">—</div>
+							
+							<div style="font-size:10px; color:var(--slate-5); font-weight:800; margin-bottom:4px;">رقم هاتف الطوارئ</div>
+							<div id="p-em-phone" style="font-size:14px; font-weight:900; color:var(--blue); font-family:'IBM Plex Mono',monospace;">—</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<div id="view-committee" class="app-view hidden">
 			<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
 				<div>
 					<h3 style="font-size:16px; font-weight:900; color:var(--navy);">إدارة لجنة الحي والخدمات</h3>
@@ -1628,9 +1782,12 @@
 
 		<div style="display: flex; gap: 12px; width: 100%;">
 			<button onclick="closeViewModal()" class="btn" style="flex: 1; justify-content: center; background: white; color: var(--navy); border: 1px solid var(--slate-7);">إغلاق</button>
-			<button onclick="downloadCardImage()" id="btn-download-card" class="btn btn-primary" style="flex: 2; justify-content: center;">
+			<input type="file" id="photo-upload" accept="image/*" class="hidden" onchange="handlePhotoUpload(event)">
+			<input type="hidden" id="current-profile-id">
+			
+			<button onclick="downloadEID()" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px; font-size:14px; background:linear-gradient(135deg, #b91c1c, #991b1b);">
 				<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-				تصوير وحفظ كصورة
+				تصدير البطاقة (الوجه والظهر)
 			</button>
 		</div>
 	</div>
@@ -1711,6 +1868,43 @@
 						<label class="form-label">حالة الاعتماد</label>
 						<select id="f_status" class="form-input" style="background-color: var(--slate-9); font-weight: bold; color: var(--blue);"><option value="pending">قيد المراجعة</option><option value="approved">معتمد ✔️</option></select>
 					</div>
+				</div>
+				<div class="section-divider"><div class="section-divider-label">البيانات الصحية والطوارئ</div></div>
+				<div class="form-field">
+					<label class="form-label">فصيلة الدم</label>
+					<select id="f_blood" class="form-input">
+						<option value="">غير محدد</option>
+						<option value="A+">A+</option><option value="A-">A-</option>
+						<option value="B+">B+</option><option value="B-">B-</option>
+						<option value="O+">O+</option><option value="O-">O-</option>
+						<option value="AB+">AB+</option><option value="AB-">AB-</option>
+					</select>
+				</div>
+				<div class="form-field">
+					<label class="form-label">أمراض مزمنة</label>
+					<input type="text" id="f_chronic" class="form-input" placeholder="مثال: سكري، ضغط...">
+				</div>
+				<div class="form-field">
+					<label class="form-label">اسم جهة الاتصال (طوارئ)</label>
+					<input type="text" id="f_em_name" class="form-input">
+				</div>
+				<div class="form-field">
+					<label class="form-label">هاتف الطوارئ</label>
+					<input type="number" id="f_em_phone" class="form-input mono">
+				</div>
+				
+				<div class="section-divider"><div class="section-divider-label">التفاصيل المهنية والأكاديمية</div></div>
+				<div class="form-field">
+					<label class="form-label">المؤهل الأكاديمي</label>
+					<input type="text" id="f_degree" class="form-input" placeholder="بكالوريوس، ماجستير...">
+				</div>
+				<div class="form-field">
+					<label class="form-label">اسم الشركة / جهة العمل</label>
+					<input type="text" id="f_company" class="form-input">
+				</div>
+				<div class="form-field col-3">
+					<label class="form-label">ملخص السيرة الذاتية (CV)</label>
+					<textarea id="f_cv" class="form-input" rows="3" placeholder="اكتب نبذة عن الخبرات والمهارات..."></textarea>
 				</div>
 			</form>
 		</div>
@@ -1821,7 +2015,9 @@
 	// ══════════════════════════════════════════════
 	const SUPABASE_URL = 'https://qeamepjbrixhwgzmhwvw.supabase.co/rest/v1';
 	const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlYW1lcGpicml4aHdnem1od3Z3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MDQwNDIsImV4cCI6MjA5MjA4MDA0Mn0.rr-Jp_YoJxjEztZ5vqU36nem_Pedg7cc2J8XL74SdYg';
-	const GAS_URL = 'https://script.google.com/macros/s/AKfycbw3M0pH4dXIegs0QcjVkYWs9j6VnoutiUPRSxrV57_o1Fxvl0Ri5icqKbxJQrVw148Q/execc';
+	
+	const GAS_PHOTO_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzvMkvcnB0vrLcO90I6Ac4meIbk16hQJYmuW2hDKowqx_vnYWeecFKlNXETyaj6RaLmqw/exec';
+	const GAS_URL = 'https://script.google.com/macros/s/AKfycbwHAreb8v9sGX708Mnqi_IOisBSvSjLY6S9mGEyPSDQzQxGcEiL5vyQNswukqy-vXscdQ/exec';
 
 	let currentUser = null, timerInterval = null, currentOtpEmail = null, allResidents = [], filteredResidents = [], currentRef = "";
 
@@ -2091,13 +2287,33 @@
 		} catch(e) { alert(e.message); btn.innerText = 'اعتماد الدخول'; btn.disabled = false; }
 	}
 
-	async function registerDeviceIfChecked() {
+async function registerDeviceIfChecked() {
 		if (document.getElementById('remember-device') && document.getElementById('remember-device').checked) {
-			const fp = await getDeviceFingerprint(); const devId = getDeviceId();
-			const payload = { user_id:currentUser.id, device_uuid:devId, status:'pending', os:fp.os, browser:fp.browser, screen_size:fp.screenSize, ip_address:fp.ip, country:fp.country, device_model:fp.deviceModel };
-			const ex = await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`);
-			if (ex && ex.length > 0) await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`, { method:'PATCH', body:JSON.stringify(payload) });
-			else await sbFetch('naseem_trusted_devices', { method:'POST', body:JSON.stringify(payload) });
+			try {
+				const fp = await getDeviceFingerprint(); 
+				const devId = getDeviceId();
+				const payload = { 
+					user_id: currentUser.id, 
+					device_uuid: devId, 
+					status: 'approved', // 🟢 تم التغيير إلى معتمد مباشرة لتجنب تكرار الـ OTP
+					os: fp.os, 
+					browser: fp.browser, 
+					screen_size: fp.screenSize, 
+					ip_address: fp.ip, 
+					country: fp.country, 
+					device_model: fp.deviceModel 
+				};
+				
+				// فحص هل الجهاز موجود مسبقاً لمنع التكرار
+				const ex = await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`);
+				if (ex && ex.length > 0) {
+					await sbFetch(`naseem_trusted_devices?device_uuid=eq.${devId}`, { method:'PATCH', body:JSON.stringify(payload) });
+				} else {
+					await sbFetch('naseem_trusted_devices', { method:'POST', body:JSON.stringify(payload) });
+				}
+			} catch (e) {
+				console.log("Device save note:", e.message);
+			}
 		}
 	}
 
@@ -2165,35 +2381,57 @@
 		loadResidentsData();
 	}
 
-	function switchTab(tabId) {
-		const role = (currentUser.role || '').toLowerCase().trim();
+function switchTab(tabId) {
+		const role = (currentUser && currentUser.role ? currentUser.role.toLowerCase().trim() : '');
 		const isManager = role === 'admin' || role === 'manager';
-		if (!isManager && ['certificates','settings','dashboard','committee','map'].includes(tabId)) return alert('غير مصرح لك بدخول هذه الشاشة');
 		
+		if (!isManager && ['certificates','settings','dashboard','committee','map'].includes(tabId)) {
+			return alert('غير مصرح لك بدخول هذه الشاشة');
+		}
+	
+		// إخفاء كل الشاشات بأمان
 		document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
-		document.getElementById(`view-${tabId}`).classList.remove('hidden');
+		
+		// إظهار الشاشة المطلوبة بأمان (إذا لم تكن موجودة لن يتوقف النظام)
+		const targetView = document.getElementById(`view-${tabId}`);
+		if (targetView) targetView.classList.remove('hidden');
+	
 		document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 		document.querySelectorAll(`.nav-link[data-target="${tabId}"]`).forEach(l => l.classList.add('active'));
+	
+		const titles = { 
+			dashboard: 'لوحة القيادة', map: 'الخريطة التفاعلية', residents: 'قاعدة بيانات السكان', 
+			competencies: 'سجل الكفاءات والخبرات', committee: 'إدارة لجنة الحي', 
+			certificates: 'إصدار الشهادات', settings: 'النظام والمستخدمين', profile: 'الملف الشامل والهوية' 
+		};
 		
-		const titles = { dashboard:'لوحة القيادة', map:'الخريطة التفاعلية', residents:'قاعدة بيانات السكان', competencies:'سجل الكفاءات والخبرات', committee:'إدارة لجنة الحي', certificates:'إصدار الشهادات', settings:'النظام والمستخدمين' };
-		document.getElementById('header-title').innerText = titles[tabId] || '';
-		
+		const hTitle = document.getElementById('header-title');
+		if (hTitle) hTitle.innerText = titles[tabId] || '';
+	
+		// تشغيل وظائف الشاشة المطلوبة
 		if (tabId === 'dashboard' && isManager) updateDashboardCharts();
-		
-		// Fix: Check if map is loaded, if not, load it!
-		if (tabId === 'map') {
-			if (!document.getElementById('map-loaded-flag')) {
-				loadMapSVG();
-			}
-		}
-		
-		if (tabId === 'committee') loadCommitteeData(); // 👈 جلب بيانات اللجنة // 👈 جلب بيانات اللجنة
-		if (tabId === 'competencies') renderCompetencies(); 
+		if (tabId === 'map') { if (!document.getElementById('map-loaded-flag')) loadMapSVG(); }
+		if (tabId === 'committee') loadCommitteeData();
+		if (tabId === 'competencies') renderCompetencies();
 		if (tabId === 'settings' && role === 'admin') { loadUsersList(); loadDevicesList(); loadSessionsLog(); }
 		if (tabId === 'certificates') {
 			const d = new Date(); const ds = String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
 			currentRef = `ANRC-${d.getFullYear()}-${ds}-${Math.floor(100+Math.random()*900)}`;
-			document.getElementById('preview-ref').innerText = currentRef;
+			const refEl = document.getElementById('preview-ref');
+			if (refEl) refEl.innerText = currentRef;
+		}
+		
+		// منطق صفحة الملف الشخصي المحمي من الأخطاء
+		if (tabId === 'profile') {
+			const pSearch = document.getElementById('profile-search-wrap');
+			if (role === 'citizen') {
+				if (pSearch) pSearch.style.display = 'none';
+				const myRecord = allResidents.find(r => r.created_by === currentUser.id) || allResidents[0];
+				if (myRecord && typeof renderFullProfile === 'function') renderFullProfile(myRecord.id);
+			} else {
+				if (pSearch) pSearch.style.display = 'flex';
+				if (typeof renderFullProfile === 'function') renderFullProfile(null);
+			}
 		}
 	}
 
@@ -2478,14 +2716,25 @@
 		document.getElementById('modal-title').innerHTML = `<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:18px;height:18px;color:var(--red);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل واعتماد السجل`;
 		document.getElementById('add-modal').classList.remove('hidden');
 		document.getElementById('f_owned_props').value = c.owned_properties_count || 0;
+		// داخل دالة editCitizen(id)
+		document.getElementById('f_blood').value = c.blood_type || '';
+		document.getElementById('f_chronic').value = c.chronic_diseases || '';
+		document.getElementById('f_em_name').value = c.emergency_contact_name || '';
+		document.getElementById('f_em_phone').value = c.emergency_phone || '';
+		document.getElementById('f_degree').value = c.academic_degree || '';
+		document.getElementById('f_company').value = c.company_name || '';
+		document.getElementById('f_cv').value = c.cv_summary || '';
 	}
 
-	async function saveCitizen() {
+async function saveCitizen() {
 		if (!document.getElementById('citizen-form').checkValidity()) return document.getElementById('citizen-form').reportValidity();
 		const btn = document.getElementById('btn-save');
 		btn.innerHTML = '<span class="loader" style="width:14px;height:14px;border-width:2px;vertical-align:middle;"></span> جاري...';
 		btn.disabled = true;
+		
 		const id = document.getElementById('f_id').value;
+		
+		// تجميع البيانات بدقة
 		const payload = {
 			full_name: document.getElementById('f_name').value,
 			national_id: document.getElementById('f_nid').value,
@@ -2496,18 +2745,38 @@
 			status: document.getElementById('f_status').value,
 			marital_status: document.getElementById('f_marital').value,
 			housing_type: document.getElementById('f_house').value,
-			family_members_count: parseInt(document.getElementById('f_fam').value),
+			family_members_count: parseInt(document.getElementById('f_fam').value) || 1,
 			owned_properties_count: parseInt(document.getElementById('f_owned_props').value) || 0,
 			income_level: document.getElementById('f_income').value,
-			special_issues: document.getElementById('f_notes').value
+			special_issues: document.getElementById('f_notes').value,
+			// الحقول الجديدة (الملف الشامل)
+			blood_type: document.getElementById('f_blood') ? document.getElementById('f_blood').value : '',
+			chronic_diseases: document.getElementById('f_chronic') ? document.getElementById('f_chronic').value : '',
+			emergency_contact_name: document.getElementById('f_em_name') ? document.getElementById('f_em_name').value : '',
+			emergency_phone: document.getElementById('f_em_phone') ? document.getElementById('f_em_phone').value : '',
+			academic_degree: document.getElementById('f_degree') ? document.getElementById('f_degree').value : '',
+			company_name: document.getElementById('f_company') ? document.getElementById('f_company').value : '',
+			cv_summary: document.getElementById('f_cv') ? document.getElementById('f_cv').value : ''
 		};
+	
 		try {
-			if (id) await sbFetch(`naseem_residents?id=eq.${id}`, { method:'PATCH', body:JSON.stringify(payload) });
-			else { payload.created_by = currentUser.id; await sbFetch('naseem_residents', { method:'POST', body:JSON.stringify(payload) }); }
+			if (id) {
+				await sbFetch(`naseem_residents?id=eq.${id}`, { method:'PATCH', body:JSON.stringify(payload) });
+				alert('تم التعديل بنجاح');
+			} else { 
+				payload.created_by = currentUser.id; 
+				await sbFetch('naseem_residents', { method:'POST', body:JSON.stringify(payload) }); 
+				alert('تمت الإضافة بنجاح');
+			}
 			closeCitizenModal();
 			loadResidentsData();
-		} catch(e) { alert('فشل الحفظ: '+e.message); }
-		finally { btn.innerHTML = '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> حفظ البيانات'; btn.disabled = false; }
+		} catch(e) { 
+			alert('فشل الحفظ: '+e.message); 
+			console.error("Save Error Details:", e);
+		} finally { 
+			btn.innerHTML = '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> حفظ البيانات'; 
+			btn.disabled = false; 
+		}
 	}
 
 	// ══════════════════════════════════════════════
@@ -2894,6 +3163,245 @@
 		if(confirm('حذف هذه الخدمة؟')) {
 			try { await sbFetch(`naseem_services?id=eq.${id}`, {method:'DELETE'}); loadServices(); } catch(e) {}
 		}
+	}
+	// تحديث دالة تبديل التبويبات لتشمل العناوين الجديدة
+	const profileTitles = { ...{ profile:'الملف الشامل والهوية' } };
+	
+	// دالة لمعالجة فتح صفحة الملف الشخصي
+	const originalSwitchTabProfile = switchTab;
+	switchTab = function(tabId) {
+		originalSwitchTabProfile(tabId);
+		if(profileTitles[tabId]) document.getElementById('header-title').innerText = profileTitles[tabId];
+		
+		if(tabId === 'profile') {
+			const role = (currentUser.role || '').toLowerCase().trim();
+			// إذا كان المستخدم مواطناً، يتم عرض ملفه مباشرة وإخفاء شريط البحث
+			if(role === 'citizen') {
+				document.getElementById('profile-search-wrap').style.display = 'none';
+				// افتراضاً نبحث عن المواطن بناءً على بريده أو حساب الـ Auth (قد تحتاج لربطها برقم وطني)
+				const myRecord = allResidents.find(r => r.created_by === currentUser.id) || allResidents[0]; // تعديل حسب الـ Logic الخاص بك
+				if(myRecord) renderFullProfile(myRecord.id);
+			} else {
+				// المدير يرى شريط البحث
+				document.getElementById('profile-search-wrap').style.display = 'flex';
+				// تنظيف البيانات مبدئياً
+				renderFullProfile(null);
+			}
+		}
+	};
+	
+	// دالة بحث داخل الملف الشخصي
+	function searchForProfile() {
+		const term = document.getElementById('profile-search').value.toLowerCase().trim();
+		const box = document.getElementById('profile-search-results');
+		if (term.length < 2) { box.classList.add('hidden'); return; }
+		
+		const matches = allResidents.filter(r => 
+			(r.full_name && r.full_name.toLowerCase().includes(term)) || 
+			(r.national_id && String(r.national_id).includes(term))
+		).slice(0, 5);
+		
+		if (matches.length === 0) {
+			box.innerHTML = '<li class="autocomplete-item" style="justify-content:center;color:var(--slate-5);">لا يوجد سجل مطابق</li>';
+			box.classList.remove('hidden'); return;
+		}
+		
+		box.innerHTML = matches.map(m => {
+			const safeName = (m.full_name || '').replace(/'/g,"\\'");
+			return `<li class="autocomplete-item" onclick="selectProfileFromSearch('${m.id}', '${safeName}')">
+				<span class="ac-name">${m.full_name}</span><span class="ac-id">${m.national_id}</span>
+			</li>`;
+		}).join('');
+		box.classList.remove('hidden');
+	}
+	
+	function selectProfileFromSearch(id, name) {
+		document.getElementById('profile-search').value = name;
+		document.getElementById('profile-search-results').classList.add('hidden');
+		renderFullProfile(id);
+	}
+	
+	// إغلاق قائمة البحث عند النقر خارجها
+	document.addEventListener('click', e => {
+		const s = document.getElementById('profile-search'), r = document.getElementById('profile-search-results');
+		if (s && r && !s.contains(e.target) && !r.contains(e.target)) r.classList.add('hidden');
+	});
+	
+	// دالة عرض تفاصيل الملف
+	// 1. دالة جلب الرابط المباشر للصور (Live Preview)
+	function getLiveUrl(url) {
+		if (!url || !url.includes('drive.google.com')) return url;
+		const fileId = url.split('id=')[1] || url.split('/d/')[1]?.split('/')[0];
+		if (!fileId) return url;
+		return `https://drive.google.com/thumbnail?authuser=0&sz=w500&id=${fileId}`;
+	}
+	
+	// 2. دالة عرض تفاصيل الملف (مع تعبئة الصورة والعنوان)
+	function renderFullProfile(id) {
+		if(!id) {
+			const nameEl = document.getElementById('eid-front-name');
+			if(nameEl) nameEl.innerText = '—';
+			return;
+		}
+		const c = allResidents.find(r => r.id === id);
+		if (!c) return;
+	
+		document.getElementById('current-profile-id').value = c.id;
+	
+		// === تعبئة الوجه الأمامي ===
+		document.getElementById('eid-front-name').innerText = c.full_name || '—';
+		document.getElementById('eid-front-nid').innerText = c.national_id || '—';
+	
+		const addressAr = `النسيم ق ${c.house_number || '—'}`;
+		const addressEn = `Naseem City B.${c.house_number || '-'}`;
+		const dobEl = document.getElementById('eid-front-dob');
+		if(dobEl) {
+			dobEl.innerHTML = `${addressAr}<br><span style="font-size:10px; color:#64748b; font-family:'IBM Plex Mono',monospace;">${addressEn}</span>`;
+		}
+	
+		// معالجة الصورة (العرض الحي المباشر)
+		const photoEl = document.getElementById('eid-photo');
+		const placeholderEl = document.getElementById('eid-photo-placeholder');
+		if (c.id_image_url) {
+			photoEl.src = getLiveUrl(c.id_image_url);
+			photoEl.style.display = 'block';
+			if(placeholderEl) placeholderEl.style.display = 'none';
+		} else {
+			photoEl.style.display = 'none';
+			if(placeholderEl) placeholderEl.style.display = 'flex';
+		}
+	
+		// === تعبئة الوجه الخلفي ===
+		document.getElementById('eid-back-blood').innerText = c.blood_type || 'غير محدد';
+		const gender = c.full_name && (c.full_name.startsWith('فاطمة') || c.full_name.startsWith('مريم') || c.full_name.startsWith('زينب') || c.full_name.startsWith('عائشة') || c.full_name.startsWith('خديجة')) ? 'أنثى / F' : 'ذكر / M'; 
+		document.getElementById('eid-back-gender').innerText = gender;
+		document.getElementById('eid-back-prof').innerText = c.profession || '—';
+		
+		const issueDate = new Date(c.created_at || Date.now());
+		const expiryDate = new Date(issueDate); expiryDate.setFullYear(expiryDate.getFullYear() + 10);
+		document.getElementById('eid-back-issue').innerText = issueDate.toLocaleDateString('en-GB');
+		document.getElementById('eid-back-expiry').innerText = expiryDate.toLocaleDateString('en-GB');
+		
+		const serial = String(c.national_id || '0').substring(0,8);
+		document.getElementById('eid-serial').innerText = serial;
+		
+		const qrData = `NID:${c.national_id}|Name:${c.full_name}|Blood:${c.blood_type}`;
+		const qrEl = document.getElementById('eid-back-qr');
+		if(qrEl) qrEl.src = `https://bwipjs-api.metafloor.com/?bcid=qrcode&text=${encodeURIComponent(qrData)}&scale=3`;
+	
+		const mrzName = (c.full_name || 'SUDANESE').substring(0,25).replace(/\s/g, '<').toUpperCase();
+		const mrz1 = document.getElementById('eid-mrz-1');
+		const mrz3 = document.getElementById('eid-mrz-3');
+		if(mrz1) mrz1.innerText = `I<SDN${(String(c.national_id)||'000000000').padEnd(15,'<')}`;
+		if(mrz3) mrz3.innerText = `${mrzName}${'<'.repeat(Math.max(0, 30-mrzName.length))}`;
+	
+		// باقي بيانات الملف الشامل
+		document.getElementById('p-job').innerText = c.profession || '—';
+		document.getElementById('p-company').innerText = c.company_name || 'غير محدد';
+		document.getElementById('p-degree').innerText = c.academic_degree || 'غير محدد';
+		document.getElementById('p-cv').innerText = c.cv_summary || 'لا توجد سيرة ذاتية.';
+		document.getElementById('p-blood').innerText = c.blood_type || 'غير محدد';
+		document.getElementById('p-chronic').innerText = c.chronic_diseases || 'لا يوجد';
+		document.getElementById('p-allergies').innerText = c.allergies || 'لا يوجد';
+		document.getElementById('p-em-name').innerText = c.emergency_contact_name || 'غير محدد';
+		document.getElementById('p-em-relation').innerText = c.emergency_relation || '—';
+		document.getElementById('p-em-phone').innerText = c.emergency_phone || '—';
+	}
+	
+	// 3. دالة تنزيل بطاقة الهوية (تم إصلاحها لتدعم الوجه والظهر معاً)
+	function downloadEID() {
+		const wrapElement = document.getElementById('eid-export-wrap');
+		const nameEl = document.getElementById('eid-front-name');
+		
+		if(!wrapElement || !nameEl || nameEl.innerText === '—') {
+			return alert('الرجاء اختيار ملف مواطن أولاً من شريط البحث');
+		}
+		
+		const citizenName = nameEl.innerText;
+		
+		// تغيير شكل الزر أثناء التحميل
+		const btn = event.currentTarget || document.querySelector('button[onclick="downloadEID()"]');
+		const originalText = btn ? btn.innerHTML : '';
+		if(btn) {
+			btn.innerHTML = '<span class="loader" style="width:14px;height:14px;border-width:2px;vertical-align:middle;margin-left:6px;"></span> جاري التصدير...';
+			btn.disabled = true;
+		}
+	
+		html2canvas(wrapElement, { 
+			scale: 3, // جودة عالية جداً للطباعة
+			useCORS: true, 
+			backgroundColor: '#f8fafc'
+		}).then(canvas => {
+			const imageURL = canvas.toDataURL('image/png');
+			const link = document.createElement('a');
+			link.download = `National_ID_${citizenName.replace(/\s+/g, '_')}.png`;
+			link.href = imageURL;
+			link.click();
+		}).catch(err => {
+			alert("حدث خطأ أثناء تصدير البطاقة.");
+			console.error(err);
+		}).finally(() => { 
+			if(btn) {
+				btn.innerHTML = originalText; 
+				btn.disabled = false; 
+			}
+		});
+	}
+	
+	// 4. دالة رفع الصورة عبر GAS (مع العرض الحي الفوري Live Preview)
+async function handlePhotoUpload(event) {
+		const file = event.target.files[0];
+		if (!file) return;
+		const citizenId = document.getElementById('current-profile-id').value;
+		if (!citizenId) return alert('الرجاء اختيار ملف مواطن أولاً.');
+	
+		document.getElementById('eid-photo-loading').classList.remove('hidden');
+	
+		const reader = new FileReader();
+		reader.onload = async function(e) {
+			try {
+				// إرسال الطلب لـ Google Apps Script
+				const response = await fetch(GAS_PHOTO_URL, {
+					method: 'POST',
+					headers: {
+						// 🟢 هذا السطر السحري يحل مشكلة الـ CORS مع جوجل
+						'Content-Type': 'text/plain;charset=utf-8' 
+					},
+					body: JSON.stringify({ fileBase64: e.target.result, fileName: `citizen_${citizenId}.png` })
+				});
+				
+				const res = await response.json();
+				
+				if (res.status === 'success') {
+					// حفظ الرابط الحي في قاعدة بيانات Supabase
+					await sbFetch(`naseem_residents?id=eq.${citizenId}`, { 
+						method: 'PATCH', 
+						body: JSON.stringify({ id_image_url: res.url }) 
+					});
+					
+					// تحديث واجهة البطاقة (العرض الحي)
+					const liveUrl = getLiveUrl(res.url);
+					const photoEl = document.getElementById('eid-photo');
+					photoEl.src = liveUrl; 
+					photoEl.style.display = 'block';
+					document.getElementById('eid-photo-placeholder').style.display = 'none';
+					
+					// تحديث البيانات المؤقتة لكي لا تختفي عند البحث
+					const index = allResidents.findIndex(r => r.id === citizenId);
+					if(index !== -1) allResidents[index].id_image_url = res.url;
+					
+				} else {
+					throw new Error(res.message);
+				}
+			} catch (err) {
+				alert('فشل الرفع. الرجاء التأكد من تشغيل النظام عبر Live Server أو استضافة فعلية، وليس كملف محلي (file://).');
+				console.error("Upload Error Details:", err);
+			} finally {
+				document.getElementById('eid-photo-loading').classList.add('hidden');
+				document.getElementById('photo-upload').value = ''; // تنظيف الحقل
+			}
+		};
+		reader.readAsDataURL(file);
 	}
 </script>
 </body>
