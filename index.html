@@ -2069,7 +2069,23 @@
 		return res.json();
 	}
 
-	function getDeviceId() { let id = localStorage.getItem('ns_dev'); if (!id) { id = crypto.randomUUID(); localStorage.setItem('ns_dev', id); } return id; }
+	function getDeviceId() { 
+    let id = localStorage.getItem('ns_dev'); 
+    if (!id) { 
+        // إذا كان السيرفر محمي (HTTPS)
+        if (window.crypto && window.crypto.randomUUID) {
+            id = window.crypto.randomUUID(); 
+        } else {
+            // بديل يعمل في حال كان السيرفر غير محمي (HTTP)
+            id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+        localStorage.setItem('ns_dev', id); 
+    } 
+    return id; 
+}
 	function captureGPSLocation() { if ("geolocation" in navigator) navigator.geolocation.getCurrentPosition(p => localStorage.setItem('ns_gps', `${p.coords.latitude},${p.coords.longitude}`), ()=>{}); }
 
 	async function getDeviceFingerprint() {
