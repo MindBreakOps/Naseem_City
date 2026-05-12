@@ -760,11 +760,14 @@
 		@media (max-width: 380px) {
 			.stats-grid { grid-template-columns: 1fr; }
 		}
-		@media print {
-			.no-print { display: none !important; }
-			body { overflow: visible; }
-			main { height: auto; overflow: visible; }
-			.cert-preview { box-shadow: none !important; border: 2px solid #1E293B !important; }
+		
+		.cert-preview-container {
+			width: 100%;
+			overflow: auto;
+			background: var(--bg-alt);
+			padding: 20px;
+			display: flex;
+			justify-content: center;
 		}
 	</style>
 </head>
@@ -1261,6 +1264,7 @@
 		<!-- ── CERTIFICATES ── -->
 		<div id="view-certificates" class="app-view hidden">
 			<div class="cert-layout">
+				
 				<div class="cert-panel">
 					<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
 						<div style="width:34px;height:34px;background:#FFFBEB;border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--amber);flex-shrink:0;border:1px solid #FDE68A;">
@@ -1269,14 +1273,25 @@
 						<h3 style="font-size:15px;font-weight:800;color:var(--text-1);">إصدار الشهادات الرسمية</h3>
 					</div>
 					<p style="font-size:12px;color:var(--text-4);margin-bottom:20px;line-height:1.7;">اختر نوع الشهادة وابحث عن المواطن لتوليد وثيقة رسمية معتمدة من لجنة الحي.</p>
-					<div class="field-group">
-						<label class="field-label">نوع الشهادة</label>
-						<select id="cert-type" class="form-input" onchange="updateCertPreviewType()">
-							<option value="residence">شهادة سكن</option>
-							<option value="recommendation">شهادة تزكية</option>
-							<option value="death">شهادة إثبات وفاة</option>
-						</select>
+					
+					<div class="form-grid" style="margin-bottom: 14px;">
+						<div class="form-field">
+							<label class="form-label">نوع الشهادة</label>
+							<select id="cert-type" class="form-input" onchange="updateCertPreviewType()">
+								<option value="residence">شهادة سكن</option>
+								<option value="recommendation">شهادة تزكية</option>
+								<option value="death">شهادة إثبات وفاة</option>
+							</select>
+						</div>
+						<div class="form-field">
+							<label class="form-label">شكل القالب</label>
+							<select id="cert-design" class="form-input" onchange="updateCertPreviewType()">
+								<option value="new">القالب الرسمي (أبيض وأسود)</option>
+								<option value="old">القالب الكلاسيكي (الملون)</option>
+							</select>
+						</div>
 					</div>
+		
 					<div style="position:relative;margin-bottom:14px;">
 						<label class="form-label" style="margin-bottom:6px;display:block;">ابحث عن المواطن</label>
 						<input type="text" id="cert-citizen-search" class="form-input" placeholder="ابدأ الكتابة بالاسم أو الرقم..." autocomplete="off" onkeyup="searchCitizenForCert()">
@@ -1285,88 +1300,131 @@
 					<input type="hidden" id="cert-selected-id">
 					<button onclick="printCertificate()" class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;font-size:13px;margin-top:6px;">
 						<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-						اعتماد وطباعة الوثيقة الرسمية
+						اعتماد وطباعة الوثيقة
 					</button>
 				</div>
-				<!-- Official cert preview -->
-				<div>
-					<div style="font-size:10px;font-weight:800;color:var(--text-4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;font-family:'IBM Plex Mono',monospace;">معاينة الوثيقة الرسمية</div>
-					<div class="cert-preview" id="cert-printable">
-						<div class="cert-doc-header">
-							<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" alt="">
-							<div class="cert-doc-header-text">
-								<div class="cert-doc-issuer">جمهورية السودان — ولاية الخرطوم — شرق النيل</div>
-								<div class="cert-doc-type" id="preview-cert-title">شهادة سكن</div>
-								<div class="cert-doc-ref">REF: <span id="preview-ref">ANRC-YYYY-MMDD-XXX</span></div>
+		
+				<div style="width: 100%; overflow: auto; background: var(--bg-alt); padding: 20px; display: flex; flex-direction: column; align-items: center; border-radius: var(--radius-md);">
+					<div style="font-size:10px;font-weight:800;color:var(--text-4);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:15px;font-family:'IBM Plex Mono',monospace;">معاينة الورقة (مقاس A4)</div>
+					
+					<div id="cert-printable" style="background: white; position: relative; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 210mm; height: 297mm; overflow: hidden;">
+						
+						<div id="template-old" style="display: none; width: 100%; height: 100%; padding: 0; box-sizing: border-box;">
+							<div class="cert-doc-header">
+								<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" alt="">
+								<div class="cert-doc-header-text">
+									<div class="cert-doc-issuer">جمهورية السودان — ولاية الخرطوم — شرق النيل</div>
+									<div class="cert-doc-type" id="preview-cert-title">شهادة سكن</div>
+									<div class="cert-doc-ref">REF: <span id="preview-ref">ANRC-YYYY-MMDD-XXX</span></div>
+								</div>
+								<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/sudan.svg.png" alt="" style="width:48px;height:48px;object-fit:contain;opacity:0.85;">
 							</div>
-							<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/sudan.svg.png" alt="" style="width:48px;height:48px;object-fit:contain;opacity:0.85;">
+							<div class="cert-red-bar"></div>
+							<div class="cert-doc-body">
+								<div class="cert-opening">
+									بسم الله الرحمن الرحيم<br>
+									نشهد نحن لجنة حي مدينة النسيم السكنية، <strong id="cert-body-text">بأن حامل هذه الوثيقة</strong>، مقيم بصفة رسمية وموثقة في سجلات الحي.
+								</div>
+								<div class="cert-row"><span class="cert-key">الاسم الرباعي</span><span class="cert-val" id="preview-name">—</span></div>
+								<div class="cert-row"><span class="cert-key">الرقم الوطني</span><span class="cert-val mono" id="preview-nid" style="font-family:'IBM Plex Mono',monospace;">—</span></div>
+								<div class="cert-row"><span class="cert-key">الموقع والقطعة</span><span class="cert-val" id="preview-location">—</span></div>
+								<div class="cert-row"><span class="cert-key">تاريخ الإصدار</span><span class="cert-val" id="preview-date">—</span></div>
+								<div class="cert-doc-footer">
+									<div>
+										<div class="cert-sig-line">رئيس لجنة الحي</div>
+										<div style="margin-top:10px;" class="cert-sig-line">السكرتير</div>
+									</div>
+									<div class="cert-stamp">
+										<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+									</div>
+									<div>
+										<div style="font-size:10px;color:#94A3B8;font-family:'IBM Plex Mono',monospace;">هذه الوثيقة معتمدة رسمياً</div>
+										<div style="font-size:10px;color:#94A3B8;font-family:'IBM Plex Mono',monospace;margin-top:4px;">This document is officially endorsed</div>
+									</div>
+								</div>
+							</div>
 						</div>
-						<div class="cert-red-bar"></div>
-						<div class="cert-doc-body">
-							<div class="cert-opening">
-								بسم الله الرحمن الرحيم<br>
-								نشهد نحن لجنة حي مدينة النسيم السكنية، <strong id="cert-body-text">بأن حامل هذه الوثيقة</strong>، مقيم بصفة رسمية وموثقة في سجلات الحي.
+		
+						<div id="template-new" style="display: block; color: black; font-family: 'Almarai', sans-serif; padding: 15mm; width: 100%; height: 100%; box-sizing: border-box; background: white;">
+							
+							<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px;">
+								<div style="width: 25%; text-align: right;">
+									<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/sudan.svg.png" style="height: 85px; filter: grayscale(100%);">
+								</div>
+						
+								<div style="width: 50%; text-align: center;">
+									<div style="font-weight: 800; font-size: 17px; margin-bottom: 2px;">جمهورية السودان</div>
+									<div style="font-weight: 700; font-size: 15px; margin-bottom: 2px;">ولاية الخرطوم</div>
+									<div style="font-weight: 700; font-size: 15px; margin-bottom: 2px;">محلية شرق النيل - الحاج يوسف</div>
+									<div style="font-weight: 800; font-size: 16px;">لجنة خدمات مدينة النسيم السكنية</div>
+								</div>
+						
+								<div style="width: 25%; text-align: left;">
+									<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" style="height: 75px;">
+								</div>
 							</div>
-							<div class="cert-row"><span class="cert-key">الاسم الرباعي</span><span class="cert-val" id="preview-name">—</span></div>
-							<div class="cert-row"><span class="cert-key">الرقم الوطني</span><span class="cert-val mono" id="preview-nid" style="font-family:'IBM Plex Mono',monospace;">—</span></div>
-							<div class="cert-row"><span class="cert-key">الموقع والقطعة</span><span class="cert-val" id="preview-location">—</span></div>
-							<div class="cert-row"><span class="cert-key">تاريخ الإصدار</span><span class="cert-val" id="preview-date">—</span></div>
-							<div class="cert-doc-footer">
-								<div>
-									<div class="cert-sig-line">رئيس لجنة الحي</div>
-									<div style="margin-top:10px;" class="cert-sig-line">السكرتير</div>
-								</div>
-								<div class="cert-stamp">
-									<svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
-								</div>
-								<div>
-									<div style="font-size:10px;color:#94A3B8;font-family:'IBM Plex Mono',monospace;">هذه الوثيقة معتمدة رسمياً</div>
-									<div style="font-size:10px;color:#94A3B8;font-family:'IBM Plex Mono',monospace;margin-top:4px;">This document is officially endorsed</div>
+						
+							<div style="text-align: center; margin-bottom: 20px;">
+								<h1 id="new-cert-title-ar" style="font-size: 26px; font-weight: 900; text-decoration: underline; margin: 0;">شهادة سكن</h1>
+								<p id="new-cert-title-en" style="font-size: 14px; font-weight: 800; letter-spacing: 1px; margin: 5px 0 0;">RESIDENCE CERTIFICATE</p>
+							</div>
+						
+							<div style="padding: 0 10px;">
+								<p id="dynamic-cert-content" style="font-size: 17px; line-height: 2; text-align: justify; font-weight: 700; margin-bottom: 30px; min-height: 80px;">
+									تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.
+								</p>
+						
+								<table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 16px; font-weight: 700;" border="1">
+									<tr>
+										<td style="padding: 10px; background: #f8fafc; width: 35%;">الاسم الرباعي:</td>
+										<td style="padding: 10px;" id="new-cert-name">—</td>
+									</tr>
+									<tr>
+										<td style="padding: 10px; background: #f8fafc;">الرقم الوطني:</td>
+										<td style="padding: 10px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 2px;" id="new-cert-nid">—</td>
+									</tr>
+									<tr>
+										<td style="padding: 10px; background: #f8fafc;">المنطقة السكنية:</td>
+										<td style="padding: 10px;" id="new-cert-loc">—</td>
+									</tr>
+									<tr>
+										<td style="padding: 10px; background: #f8fafc;">رقم المنزل / القطعة:</td>
+										<td style="padding: 10px; font-family: 'IBM Plex Mono', monospace;" id="new-cert-house">—</td>
+									</tr>
+									<tr>
+										<td style="padding: 10px; background: #f8fafc;">تاريخ الإصدار:</td>
+										<td style="padding: 10px; text-align: right;" id="new-cert-date">—</td>
+									</tr>
+									<tr>
+										<td style="padding: 10px; background: #f8fafc;">Ref No:</td>
+										<td style="padding: 10px; font-family: 'IBM Plex Mono', monospace; text-align: right;" id="new-cert-ref">—</td>
+									</tr>
+								</table>
+		
+								<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 50px;">
+									<div style="text-align: center; width: 30%;">
+										<div style="margin-bottom: 35px; font-weight: 800; font-size: 14px;">توقيع مسئول الإحصاء</div>
+										<div style="border-top: 1px solid #000; margin: 0 10px;"></div>
+									</div>
+									<div style="text-align: center; width: 40%; display: flex; flex-direction: column; align-items: center;">
+										<img id="new-cert-barcode" src="" style="height: 40px; margin-bottom: 5px;" alt="Barcode">
+										<div style="font-size: 12px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 2px;" id="new-cert-barcode-text">—</div>
+									</div>
+									<div style="text-align: center; width: 30%;">
+										<div style="margin-bottom: 35px; font-weight: 800; font-size: 14px;">توقيع رئيس اللجنة</div>
+										<div style="border-top: 1px solid #000; margin: 0 10px;"></div>
+									</div>
 								</div>
 							</div>
 						</div>
+						
 					</div>
 				</div>
 			</div>
 		</div>
-
-		<!-- ── SETTINGS ── -->
-		<div id="view-settings" class="app-view hidden">
-			<div class="settings-grid">
-				<div class="settings-card">
-					<div class="settings-card-head"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>حسابات النظام</div>
-					<div style="max-height:220px;overflow-y:auto;"><ul id="users-list"></ul></div>
-				</div>
-				<div class="settings-card">
-					<div class="settings-card-head"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>إضافة مستخدم جديد</div>
-					<div class="settings-card-body">
-						<div class="form-grid">
-							<div class="form-field"><label class="form-label required">الاسم</label><input type="text" id="u_name" class="form-input"></div>
-							<div class="form-field"><label class="form-label required">الصلاحية</label><select id="u_role" class="form-input"><option value="admin">إدمن</option><option value="manager">مدير</option><option value="citizen">مواطن</option></select></div>
-							<div class="form-field"><label class="form-label required">البريد</label><input type="email" id="u_email" class="form-input mono" style="direction:ltr;text-align:left;"></div>
-							<div class="form-field"><label class="form-label required">كلمة المرور</label><input type="password" id="u_pass" class="form-input mono" style="direction:ltr;text-align:left;"></div>
-						</div>
-						<button onclick="saveUser()" id="btn-save-user" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px;">إنشاء الحساب</button>
-					</div>
-				</div>
-				<div class="settings-card full">
-					<div class="settings-card-head" style="justify-content:space-between;">
-						<div style="display:flex;align-items:center;gap:8px;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>الأجهزة الموثوقة</div>
-						<button onclick="loadDevicesList()" class="btn btn-ghost" style="padding:3px 9px;font-size:11px;">تحديث</button>
-					</div>
-					<div class="table-scroll"><table class="data-table" dir="rtl" style="min-width:500px;"><thead><tr><th>المستخدم</th><th>النظام / المتصفح</th><th style="text-align:left;">الموقع (IP)</th><th style="text-align:center;">الإجراء</th></tr></thead><tbody id="devices-table-body"><tr><td colspan="4"><div class="empty-state"><p>جاري التحميل...</p></div></td></tr></tbody></table></div>
-				</div>
-				<div class="settings-card full">
-					<div class="settings-card-head" style="justify-content:space-between;">
-						<div style="display:flex;align-items:center;gap:8px;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>سجل الجلسات (Activity Log)</div>
-						<button onclick="loadSessionsLog()" class="btn btn-ghost" style="padding:3px 9px;font-size:11px;">تحديث</button>
-					</div>
-					<div style="max-height:260px;overflow-y:auto;padding:4px 16px;"><div id="sessions-log-list"></div></div>
-				</div>
-			</div>
 		</div>
-
-	</div>
+			
+	
 </main>
 
 <!-- ══ VIEW MODAL ══ -->
@@ -1516,6 +1574,7 @@
 if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
 	location.replace(`https:${location.href.substring(location.protocol.length)}`);
 }
+
 // ══════════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════════
@@ -2116,27 +2175,363 @@ function searchCitizenForCert() {
 	list.classList.remove('hidden');
 }
 function selectCitizenForCert(id) {
-	const c=allResidents.find(r=>r.id===id); if(!c) return;
-	document.getElementById('cert-selected-id').value=id;
-	document.getElementById('cert-citizen-search').value=c.full_name;
+	const c = allResidents.find(r => r.id === id); 
+	if(!c) return;
+	
+	document.getElementById('cert-selected-id').value = id;
+	document.getElementById('cert-citizen-search').value = c.full_name;
 	document.getElementById('cert-search-results').classList.add('hidden');
-	document.getElementById('preview-name').innerText=c.full_name;
-	document.getElementById('preview-nid').innerText=c.national_id;
-	document.getElementById('preview-location').innerText=`${c.location} · قطعة ${c.house_number||'—'}`;
-	const bodyText=document.getElementById('cert-body-text');
-	if(bodyText) bodyText.innerText=`بأن المواطن ${c.full_name}`;
-	document.getElementById('preview-date').innerText=new Date().toLocaleDateString('ar-SD');
+	
+	// تعبئة بيانات القالب الجديد
+	document.getElementById('new-cert-name').innerText = c.full_name;
+	document.getElementById('new-cert-nid').innerText = c.national_id;
+	document.getElementById('new-cert-loc').innerText = `النسيم - ${c.location}`;
+	document.getElementById('new-cert-house').innerText = c.house_number || '—';
+	
+	// إعداد التواريخ بالصيغة المزدوجة (إنجليزي / عربي)
+	const d = new Date();
+	const monthsAr = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+	const monthsEn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+	const day = d.getDate();
+	const year = d.getFullYear();
+	const monthIdx = d.getMonth();
+	
+	const dateStr = `${day} ${monthsEn[monthIdx]} ${year} / ${year} ${monthsAr[monthIdx]}${day}`;
+	document.getElementById('new-cert-date').innerText = dateStr;
+	
+	// إعداد المرجع الفريد (Ref No)
+	const ds = String(monthIdx+1).padStart(2,'0') + String(day).padStart(2,'0');
+	const refNo = `ANRC-${year}-${ds}-${Math.floor(100+Math.random()*900)}`;
+	document.getElementById('new-cert-ref').innerText = refNo;
+	
+	// إنشاء باركود Code 128 للرقم الوطني
+	const nidStr = String(c.national_id || '0000000000');
+	document.getElementById('new-cert-barcode').src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(nidStr)}&scale=3&height=10`;
+	document.getElementById('new-cert-barcode-text').innerText = nidStr;
 }
 function updateCertPreviewType() {
-	const t=document.getElementById('cert-type').value;
-	const titles={residence:'شهادة سكن',recommendation:'شهادة تزكية',death:'شهادة إثبات وفاة'};
-	document.getElementById('preview-cert-title').innerText=titles[t]||'شهادة';
+	const type = document.getElementById('cert-type').value;
+	const design = document.getElementById('cert-design').value;
+	
+	// 1. التبديل بين القوالب في شاشة المعاينة
+	const oldTemplate = document.getElementById('template-old');
+	const newTemplate = document.getElementById('template-new');
+	
+	if (design === 'new') {
+		if(oldTemplate) oldTemplate.style.display = 'none';
+		if(newTemplate) newTemplate.style.display = 'block';
+	} else {
+		if(newTemplate) newTemplate.style.display = 'none';
+		if(oldTemplate) oldTemplate.style.display = 'block';
+	}
+
+	// 2. إعداد النصوص المخصصة لكل شهادة بناءً على كودك
+	let certTitleAr = 'شهادة سكن';
+	let certTitleEn = 'RESIDENCE CERTIFICATE';
+	let certStatement = 'تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.';
+
+	if (type === 'death') {
+		certTitleAr = 'إثبات وفــاة';
+		certTitleEn = 'DEATH CERTIFICATE';
+		certStatement = 'تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، كان من سكان المدينة الفعليين المقيدين بسجلاتنا، وقد توفي إلى رحمة مولاه. أُعطيت هذه الشهادة بناءً على طلب ذويه لتقديمها للجهات الرسمية لمن يهمه الأمر.';
+	} else if (type === 'recommendation') {
+		certTitleAr = 'شهـادة تزكيـة';
+		certTitleEn = 'RECOMMENDATION CERTIFICATE';
+		certStatement = 'تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطن/ة المذكور بياناته أدناه، من سكان المدينة الفعليين، ويُشهد له بحسن السيرة والسلوك والتعاون التام مع أهالي الحي ولجانه. أُعطيت له هذه الشهادة بناءً على طلبه لتقديمها لمن يهمه الأمر.';
+	}
+
+	// 3. تطبيق النصوص على القالب الجديد (المطابق للمرفق)
+	const newTitleAr = document.getElementById('new-cert-title-ar');
+	if (newTitleAr) newTitleAr.innerText = certTitleAr;
+	
+	const newTitleEn = document.getElementById('new-cert-title-en');
+	if (newTitleEn) newTitleEn.innerText = certTitleEn;
+	
+	const dynamicContent = document.getElementById('dynamic-cert-content');
+	if (dynamicContent) dynamicContent.innerText = certStatement;
+
+	// 4. تطبيق النصوص على القالب القديم الكلاسيكي
+	const oldTitle = document.getElementById('preview-cert-title');
+	if (oldTitle) oldTitle.innerText = certTitleAr;
 }
-function printCertificate() {
-	const id=document.getElementById('cert-selected-id').value;
-	if(!id) return alert('يرجى اختيار مواطن أولاً');
-	window.print();
+
+async function printCertificate() {
+	const id = document.getElementById('cert-selected-id').value;
+	if (!id) return alert('الرجاء اختيار مواطن من القائمة أولاً');
+	
+	const citizen = allResidents.find(r => r.id === id);
+	if (!citizen) return;
+
+	const certType = document.getElementById('cert-type').value;
+	const certDesign = document.getElementById('cert-design').value; 
+	
+	const d = new Date(); 
+	const ds = String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+	
+	// إعداد البادئة
+	let typePrefix = 'ANRC'; 
+	if (certType === 'death') typePrefix = 'ANDC'; 
+	if (certType === 'recommendation') typePrefix = 'ANGC'; 
+	
+	const certRef = `${typePrefix}-${d.getFullYear()}-${ds}-${Math.floor(100 + Math.random() * 900)}`;
+	
+	// حفظ الشهادة في النظام
+	try { await sbFetch('naseem_certificates', { method: 'POST', body: JSON.stringify({ resident_id: citizen.id, ref_number: certRef, created_by: currentUser.id }) }); } catch (e) {}
+	
+	const cName = citizen.full_name || '—';
+	const cNid = citizen.national_id || '—';
+	const cLoc = `النسيم - ${citizen.location || '—'}`;
+	const cHouse = citizen.house_number || '—';
+
+	const arMonths = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+	const enMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+	const arDate = `${d.getDate()} ${arMonths[d.getMonth()]} ${d.getFullYear()}`;
+	const enDate = `${d.getDate()} ${enMonths[d.getMonth()]} ${d.getFullYear()}`;
+	
+	const barcodeUrl = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(cNid)}&scale=3&includetext=false`;
+	
+	let certTitleAr = 'شهادة سكن';
+	let certTitleEn = 'RESIDENCE CERTIFICATE';
+	let certStatement = 'تشهد لجنة خدمات مدينة النسيم السكنية، بأن المواطنة المذكور بياناته أدناه، هو من سكان المدينة الفعليين ومقيد في السجل المدني والإحصائي للجنة.';
+
+	if (certType === 'death') {
+		certTitleAr = 'شهادة إثبات وفاة';
+		certTitleEn = 'DEATH NOTIFICATION';
+		certStatement = 'بناءً على السجلات الرسمية، تؤكد لجنة خدمات مدينة النسيم السكنية وفاة المغفور له بإذن الله المواطن المذكور بياناته أدناه، والذي كان أحد سكان المدينة.';
+	} else if (certType === 'recommendation') {
+		certTitleAr = 'شهادة تزكية';
+		certTitleEn = 'RECOMMENDATION CERTIFICATE';
+		certStatement = 'تزكي لجنة خدمات مدينة النسيم السكنية المواطن المذكور بياناته أدناه، لما عُرف عنه من حسن سير وسلوك خلال فترة إقامته بالمدينة، وهذه الشهادة بناءً على طلبه.';
+	}
+
+	let printHTML = '';
+
+	if (certDesign === 'new') {
+		printHTML = `
+		<html dir="rtl" lang="ar">
+		<head>
+			<title>${certTitleAr} - ${cName}</title>
+			<style>
+				@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800;900&family=IBM+Plex+Mono:wght@400;600&display=swap');
+				@page { size: A4 portrait; margin: 0; }
+				body { font-family: 'Almarai', sans-serif; margin: 0; padding: 0; background: white; color: #000; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+				.cert-container { width: 210mm; height: 297mm; padding: 15mm; box-sizing: border-box; margin: 0 auto; background: #fff; overflow: hidden; }
+				.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px; }
+				.header-side { width: 25%; }
+				.header-center { width: 50%; text-align: center; }
+				.header-text { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+				.title-section { text-align: center; margin-bottom: 20px; }
+				.statement { font-size: 17px; line-height: 2; text-align: justify; font-weight: 700; margin-bottom: 30px; min-height: 80px; }
+				table { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 16px; font-weight: 700; border: 1px solid #000; }
+				th, td { border: 1px solid #000; padding: 12px; }
+				.bg-light { background-color: #f8fafc !important; width: 35%; -webkit-print-color-adjust: exact; }
+				.mono { font-family: 'IBM Plex Mono', monospace; }
+				.footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 50px; }
+				.signature-box { text-align: center; width: 30%; font-weight: 800; font-size: 14px; }
+				.signature-line { border-top: 1px solid #000; margin-top: 35px; margin-left: 10px; margin-right: 10px; }
+				.barcode-section { text-align: center; width: 40%; display: flex; flex-direction: column; align-items: center; }
+			</style>
+		</head>
+		<body>
+			<div class="cert-container">
+				<div class="header">
+					<div class="header-side" style="text-align: right;">
+						<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/sudan.svg.png" style="height: 85px; filter: grayscale(100%);">
+					</div>
+					<div class="header-center">
+						<div class="header-text" style="font-weight: 800; font-size: 17px;">جمهورية السودان</div>
+						<div class="header-text">ولاية الخرطوم</div>
+						<div class="header-text">محلية شرق النيل - الحاج يوسف</div>
+						<div class="header-text" style="font-weight: 800; font-size: 16px;">لجنة خدمات مدينة النسيم السكنية</div>
+					</div>
+					<div class="header-side" style="text-align: left;">
+						<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" style="height: 75px;">
+					</div>
+				</div>
+
+				<div class="title-section">
+					<h1 style="font-size: 26px; font-weight: 900; text-decoration: underline; margin: 0;">${certTitleAr}</h1>
+					<p style="font-size: 14px; font-weight: 800; letter-spacing: 1px; margin: 5px 0 0;">${certTitleEn}</p>
+				</div>
+
+				<div class="statement">${certStatement}</div>
+
+				<table>
+					<tr><td class="bg-light">الاسم الرباعي:</td><td>${cName}</td></tr>
+					<tr><td class="bg-light">الرقم الوطني:</td><td class="mono" style="letter-spacing: 2px;">${cNid}</td></tr>
+					<tr><td class="bg-light">المنطقة السكنية:</td><td>${cLoc}</td></tr>
+					<tr><td class="bg-light">رقم المنزل / القطعة:</td><td class="mono">${cHouse}</td></tr>
+					<tr><td class="bg-light">تاريخ الإصدار:</td><td style="text-align: right;"><bdi dir="ltr">${enDate}</bdi> / <bdi dir="rtl">${arDate}</bdi></td></tr>
+					<tr><td class="bg-light">Ref No:</td><td class="mono" style="text-align: right;">${certRef}</td></tr>
+				</table>
+
+				<div class="footer">
+					<div class="signature-box">توقيع مسئول الإحصاء<div class="signature-line"></div></div>
+					<div class="barcode-section">
+						<img src="${barcodeUrl}" style="height: 40px; margin-bottom: 5px;" alt="Barcode">
+						<div class="mono" style="font-size: 12px; letter-spacing: 2px;">${cNid}</div>
+					</div>
+					<div class="signature-box">توقيع رئيس اللجنة<div class="signature-line"></div></div>
+				</div>
+			</div>
+		</body>
+		</html>
+		`;
+	} else {
+		printHTML = `
+		<html dir="rtl" lang="ar">
+		<head>
+			<title>${certTitleAr} - ${cName}</title>
+			<style>
+				@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@600;800&display=swap'); 
+				@page { size: A4 portrait; margin: 0; } 
+				body { font-family: 'Cairo', sans-serif; margin: 0; padding: 0; background: #fff; color: #1a202c; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; } 
+				.cert-container { width: 210mm; height: 297mm; padding: 20mm; box-sizing: border-box; position: relative; background: #fff; margin: 0 auto; overflow: hidden; } 
+				.border-outer { position: absolute; top: 12mm; left: 12mm; right: 12mm; bottom: 12mm; border: 4px solid #b08d55; border-radius: 4px; pointer-events: none;} 
+				.border-inner { position: absolute; top: 14mm; left: 14mm; right: 14mm; bottom: 14mm; border: 1.5px solid #1c3c66; border-radius: 2px; pointer-events: none;} 
+				.content-wrapper { position: relative; z-index: 10; display: flex; flex-direction: column; height: 100%; } 
+				.header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #b08d55; padding-bottom: 15px; margin-bottom: 30px; } 
+				.header-right { display: flex; align-items: center; gap: 15px; } 
+				.header-text { line-height: 1.6; font-size: 16px; font-weight: 800; text-align: right; } 
+				.logo-container img { width: 120px; height: 120px; object-fit: contain; } 
+				.title-section { text-align: center; margin-bottom: 30px; } 
+				.title-ar { font-family: 'Amiri', serif; font-size: 48px; font-weight: 700; margin: 0; color: #0f172a; } 
+				.title-en { font-size: 18px; letter-spacing: 2px; color: #475569; margin-top: -10px; font-family: sans-serif; } 
+				.statement { font-size: 20px; line-height: 2.2; text-align: justify; margin-bottom: 40px; font-weight: 600; color: #1e293b; } 
+				table { width: 100%; border-collapse: collapse; margin-bottom: 40px; border: 2px solid #1c3c66; border-radius: 8px; overflow: hidden; } 
+				tr:not(:last-child) { border-bottom: 1px solid #1c3c66; } 
+				td { padding: 16px; font-size: 18px; border-left: 1px solid #1c3c66; } 
+				td:last-child { border-left: none; } 
+				.bg-gray { background-color: #f1f5f9 !important; font-weight: 800; width: 25%; color: #0f172a; white-space: nowrap; } 
+				.val-cell { font-weight: 700; color: #1e293b; } 
+				.flex-row { display: flex; justify-content: space-between; align-items: center; } 
+				.en-text { font-family: sans-serif; font-size: 15px; color: #0f172a; font-weight: bold; } 
+				.footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto; padding-top: 20px; } 
+				.signature-box { text-align: center; font-weight: 800; font-size: 18px; width: 200px; } 
+				.signature-line { border-top: 2px dotted #475569; margin-top: 50px; width: 100%; } 
+				.barcode-section { text-align: center; display: flex; flex-direction: column; align-items: center; } 
+				.barcode-text { font-family: sans-serif; font-size: 12px; margin-bottom: 8px; color: #475569; font-weight: bold;} 
+				.barcode-img { height: 50px; max-width: 220px; } 
+				.barcode-val { font-family: sans-serif; font-size: 15px; font-weight: bold; letter-spacing: 2px; margin-top: 5px; } 
+				.date-box { display: flex; align-items: center; gap: 10px; }
+			</style>
+		</head>
+		<body>
+			<div class="cert-container">
+				<div class="border-outer"></div>
+				<div class="border-inner"></div>
+				<div class="content-wrapper">
+					<div class="header">
+						<div class="header-right">
+							<img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/nas.png" style="width: 80px; height: 80px; object-fit: contain;">
+							<div class="header-text">جمهورية السودان<br>ولاية الخرطوم<br>محلية شرق النيل - الحاج يوسف<br>لجنة خدمات مدينة النسيم السكنية</div>
+						</div>
+						<div class="logo-container"><img src="https://raw.githubusercontent.com/MindBreakOps/LX-Permits/main/sudan.svg.png" alt="Logo"></div>
+					</div>
+					<div class="title-section">
+						<h1 class="title-ar">${certTitleAr}</h1>
+						<div class="title-en">${certTitleEn}</div>
+					</div>
+					<div class="statement">${certStatement}</div>
+					<table>
+						<tr><td class="bg-gray">الاسم الرباعي:</td><td class="val-cell">${cName}</td></tr>
+						<tr><td class="bg-gray">الرقم الوطني:</td><td class="val-cell en-text" style="letter-spacing:2px;">${cNid}</td></tr>
+						<tr><td class="bg-gray">المنطقة السكنية:</td><td class="val-cell">${cLoc}</td></tr>
+						<tr><td class="bg-gray">رقم المنزل / القطعة:</td><td class="val-cell flex-row"><span>${cHouse}</span><span class="en-text" dir="ltr">Ref No: ${certRef}</span></td></tr>
+						<tr><td class="bg-gray">تاريخ الإصدار:</td><td class="val-cell flex-row"><div class="date-box"><span dir="rtl">${arDate}</span><span>/</span><span dir="ltr">${enDate}</span></div><span class="en-text" dir="ltr">Date of Issue:</span></td></tr>
+					</table>
+					<div class="footer">
+						<div class="signature-box">توقيع مسئول الإحصاء<div class="signature-line"></div></div>
+						<div class="barcode-section">
+							<div class="barcode-text">Code 128 barcode linked to National ID</div>
+							<img src="${barcodeUrl}" class="barcode-img" alt="Barcode">
+							<div class="barcode-val">${cNid}</div>
+						</div>
+						<div class="signature-box">توقيع رئيس اللجنة<div class="signature-line"></div></div>
+					</div>
+				</div>
+			</div>
+		</body>
+		</html>
+		`;
+	}
+
+	const iframe = document.createElement('iframe'); 
+	iframe.style.cssText = 'position:fixed;right:-9999px;bottom:-9999px;width:0;height:0;border:none;'; 
+	document.body.appendChild(iframe);
+	
+	const doc = iframe.contentWindow.document; 
+	doc.open(); 
+	doc.write('<!DOCTYPE html>' + printHTML); 
+	doc.close();
+	
+	setTimeout(() => { 
+		iframe.contentWindow.focus(); 
+		iframe.contentWindow.print(); 
+		setTimeout(() => document.body.removeChild(iframe), 2000); 
+	}, 1500);
 }
+
+function selectCitizenForCert(id) {
+	const c = allResidents.find(r => r.id === id); 
+	if(!c) return;
+	
+	document.getElementById('cert-selected-id').value = id;
+	document.getElementById('cert-citizen-search').value = c.full_name;
+	document.getElementById('cert-search-results').classList.add('hidden');
+	
+	// 1. تعبئة بيانات القالب القديم
+	document.getElementById('preview-name').innerText = c.full_name;
+	document.getElementById('preview-nid').innerText = c.national_id;
+	document.getElementById('preview-location').innerText = `${c.location} · قطعة ${c.house_number||'—'}`;
+	const bodyText = document.getElementById('cert-body-text');
+	if(bodyText) bodyText.innerText = `بأن المواطن ${c.full_name}`;
+	
+	// 2. تعبئة بيانات القالب الجديد
+	document.getElementById('new-cert-name').innerText = c.full_name;
+	document.getElementById('new-cert-nid').innerText = c.national_id;
+	document.getElementById('new-cert-loc').innerText = `النسيم - ${c.location}`;
+	document.getElementById('new-cert-house').innerText = c.house_number || '—';
+	
+	// 3. حل مشكلة التاريخ (عزل الاتجاهات)
+	const d = new Date();
+	const monthsAr = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+	const monthsEn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+	const day = d.getDate();
+	const year = d.getFullYear();
+	const monthIdx = d.getMonth();
+	
+	const dateEn = `${day} ${monthsEn[monthIdx]} ${year}`;
+	const dateAr = `${day} ${monthsAr[monthIdx]} ${year}`;
+	
+	// وضع القسم الإنجليزي في عنصر LTR والقسم العربي في عنصر RTL 
+	const safeDateHTML = `<div style="display: flex; justify-content: flex-end; gap: 6px;">
+							<span dir="ltr" style="font-family: 'IBM Plex Mono', monospace;">${dateEn}</span>
+							<span>/</span>
+							<span dir="rtl">${dateAr}</span>
+						  </div>`;
+						  
+	document.getElementById('preview-date').innerHTML = safeDateHTML;
+	document.getElementById('new-cert-date').innerHTML = safeDateHTML;
+	
+	// 4. المرجع الفريد
+	const ds = String(monthIdx+1).padStart(2,'0') + String(day).padStart(2,'0');
+	const refNo = `ANRC-${year}-${ds}-${Math.floor(100+Math.random()*900)}`;
+	document.getElementById('preview-ref').innerText = refNo;
+	document.getElementById('new-cert-ref').innerText = refNo;
+	
+	// 5. الباركود
+	const nidStr = String(c.national_id || '0000000000');
+	const barcodeImg = document.getElementById('new-cert-barcode');
+	if (barcodeImg) {
+		barcodeImg.src = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(nidStr)}&scale=3&height=10`;
+	}
+	const barcodeText = document.getElementById('new-cert-barcode-text');
+	if (barcodeText) {
+		barcodeText.innerText = nidStr;
+	}
+}
+
 
 // ══════════════════════════════════════════════════
 // COMMITTEE
