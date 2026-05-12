@@ -1974,17 +1974,34 @@ function updateDashboardCharts() {
 	document.getElementById('stat-own').innerText=Math.round((owns/allResidents.length)*100)+'%';
 	const totalFam=allResidents.reduce((a,c)=>a+(c.family_members_count||1),0);
 	document.getElementById('stat-family').innerText=Math.round(totalFam/allResidents.length);
-	const poors=allResidents.filter(r=>r.income_level==='احمر').length;
-	document.getElementById('stat-poor').innerText=Math.round((poors/allResidents.length)*100)+'%';
+	
 	let locs={'شمال':0,'وسط':0,'جنوب':0}, incs={'اخضر':0,'اصفر':0,'احمر':0};
-	allResidents.forEach(r=>{ if(locs[r.location]!==undefined) locs[r.location]++; if(incs[r.income_level]!==undefined) incs[r.income_level]++; });
+	let poors = 0;
+	
+	allResidents.forEach(r=>{ 
+		if(locs[r.location]!==undefined) locs[r.location]++; 
+		
+		// 🔥 DASHBOARD FIX: Catch nulls and normalize spelling
+		let inc = r.income_level || 'اخضر';
+		if(inc.includes('خضر')) inc = 'اخضر';
+		else if(inc.includes('صفر')) inc = 'اصفر';
+		else if(inc.includes('حمر')) { inc = 'احمر'; poors++; }
+		else inc = 'اخضر'; // Fallback for unknown data
+		
+		if(incs[inc]!==undefined) incs[inc]++; 
+	});
+	
+	document.getElementById('stat-poor').innerText=Math.round((poors/allResidents.length)*100)+'%';
+	
 	const isDark=document.documentElement.getAttribute('data-theme')==='dark';
 	const gridColor=isDark?'rgba(255,255,255,0.06)':'#F1F5F9';
 	const tickColor=isDark?'#64748B':'#94A3B8';
 	const barColor=isDark?['#E2E8F0','#94A3B8','#475569']:['#1E293B','#475569','#94A3B8'];
 	const chartDefaults={ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } };
+	
 	if(chartLoc) chartLoc.destroy();
 	chartLoc=new Chart(document.getElementById('locationChart').getContext('2d'),{type:'bar',data:{labels:Object.keys(locs),datasets:[{data:Object.values(locs),backgroundColor:barColor,borderRadius:6,borderSkipped:false}]},options:{...chartDefaults,scales:{x:{grid:{display:false},ticks:{font:{family:'Almarai',size:12},color:tickColor}},y:{grid:{color:gridColor},ticks:{font:{family:'IBM Plex Mono',size:10},color:tickColor}}}}});
+	
 	if(chartInc) chartInc.destroy();
 	chartInc=new Chart(document.getElementById('incomeChart').getContext('2d'),{type:'doughnut',data:{labels:['مستقر','متوسط','ضعيف'],datasets:[{data:Object.values(incs),backgroundColor:['#10B981','#F59E0B','#EF4444'],borderWidth:0,hoverOffset:6}]},options:{...chartDefaults,plugins:{legend:{display:true,position:'bottom',labels:{font:{family:'Almarai',size:12},color:isDark?'#94A3B8':'#475569',padding:14,boxWidth:9,boxHeight:9,borderRadius:4}}},cutout:'65%'}});
 }
@@ -1996,14 +2013,24 @@ async function loadResidentsData() {
 	const tbody=document.getElementById('data-table-body');
 	if(tbody) tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="loader"></div><p>جاري التحميل...</p></div></td></tr>';
 	try {
-		allResidents=await sbFetch('naseem_residents?select=*&order=created_at.desc');
-		filteredResidents=[...allResidents];
+		// 🔥 THE PROPER FIX: Use secure HTTP Headers to bust the cache instead of breaking the URL
+		allResidents = await sbFetch('naseem_residents?select=*&order=created_at.desc', {
+			headers: { 
+				'Cache-Control': 'no-cache, no-store, must-revalidate',
+				'Pragma': 'no-cache'
+			}
+		});
+		
+		filteredResidents = [...allResidents];
 		renderTable(allResidents);
+		
 		const role=(currentUser.role||'').toLowerCase().trim();
 		const isManager=role==='admin'||role==='manager';
 		if(isManager&&!document.getElementById('view-dashboard').classList.contains('hidden')) updateDashboardCharts();
 		if(!document.getElementById('view-competencies').classList.contains('hidden')) renderCompetencies();
-	} catch(e){ if(tbody) tbody.innerHTML=`<tr><td colspan="10"><div class="empty-state"><p style="color:var(--red);">فشل تحميل البيانات</p><small>${e.message}</small></div></td></tr>`; }
+	} catch(e){ 
+		if(tbody) tbody.innerHTML=`<tr><td colspan="10"><div class="empty-state"><p style="color:var(--red);">فشل تحميل البيانات</p><small>${e.message}</small></div></td></tr>`; 
+	}
 }
 
 function renderTable(data) {
@@ -2014,7 +2041,11 @@ function renderTable(data) {
 	const rows=data.map(row=>{
 		const hBadge=row.housing_type==='مالك'?'badge-emerald':row.housing_type==='مستأجر'?'badge-blue':'badge-amber';
 		const statusBadge=row.status==='approved'?'<span class="badge badge-emerald">معتمد ✔</span>':'<span class="badge badge-slate">قيد المراجعة</span>';
-		const incDot=row.income_level==='اخضر'?'income-green':row.income_level==='اصفر'?'income-amber':'income-red';
+		
+		// 🔥 TABLE FIX: Flexible string matching
+		let currentIncome = row.income_level || 'اخضر';
+		const incDot = currentIncome.includes('خضر') ? 'income-green' : currentIncome.includes('صفر') ? 'income-amber' : 'income-red';
+		
 		const imgCell=row.id_image_url?`<a href="${row.id_image_url}" target="_blank" class="img-link"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>عرض</a>`:'<span style="color:var(--text-5);font-size:11px;">—</span>';
 		return `<tr>
 			<td class="name-cell">${row.full_name}</td>
@@ -2120,23 +2151,73 @@ function closeCitizenModal() { document.getElementById('add-modal').classList.ad
 function editCitizen(id) {
 	const c=allResidents.find(r=>r.id===id); if(!c) return;
 	const fields={f_id:'id',f_name:'full_name',f_nid:'national_id',f_phone:'phone_number',f_loc:'location',f_house_num:'house_number',f_prof:'profession',f_status:'status',f_marital:'marital_status',f_house:'housing_type',f_fam:'family_members_count',f_income:'income_level',f_notes:'special_issues',f_owned_props:'owned_properties_count',f_blood:'blood_type',f_chronic:'chronic_diseases',f_allergies:'allergies',f_em_name:'emergency_contact_name',f_em_phone:'emergency_phone',f_degree:'academic_degree',f_company:'company_name',f_cv:'cv_summary'};
-	Object.entries(fields).forEach(([elId,key])=>{ const el=document.getElementById(elId); if(el) el.value=c[key]||''; });
+	
+	Object.entries(fields).forEach(([elId,key])=>{ 
+		const el=document.getElementById(elId); 
+		if(el) {
+			let val = c[key] || '';
+			
+			// 🔥 MODAL FIX: Forces correct dropdown selection
+			if (elId === 'f_income') {
+				val = val || 'اخضر'; 
+				if (val.includes('خضر')) val = 'اخضر';
+				else if (val.includes('صفر')) val = 'اصفر';
+				else if (val.includes('حمر')) val = 'احمر';
+			}
+			
+			el.value = val; 
+		}
+	});
+	
 	document.getElementById('modal-title').innerHTML='<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:16px;height:16px;color:var(--red);"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg> تعديل السجل';
 	document.getElementById('add-modal').classList.remove('hidden');
 }
 
 async function saveCitizen() {
 	if(!document.getElementById('citizen-form').checkValidity()) return document.getElementById('citizen-form').reportValidity();
+	
 	const btn=document.getElementById('btn-save');
-	btn.innerHTML='<span class="loader" style="width:13px;height:13px;"></span> جاري...'; btn.disabled=true;
+	btn.innerHTML='<span class="loader" style="width:13px;height:13px;"></span> جاري الحفظ...'; 
+	btn.disabled=true;
+	
 	const id=document.getElementById('f_id').value;
 	const g=elId=>document.getElementById(elId)?.value||'';
+	
 	const payload={full_name:g('f_name'),national_id:g('f_nid'),phone_number:g('f_phone'),location:g('f_loc'),house_number:g('f_house_num'),profession:g('f_prof'),status:g('f_status'),marital_status:g('f_marital'),housing_type:g('f_house'),family_members_count:parseInt(g('f_fam'))||1,owned_properties_count:parseInt(g('f_owned_props'))||0,income_level:g('f_income'),special_issues:g('f_notes'),blood_type:g('f_blood'),chronic_diseases:g('f_chronic'),allergies:g('f_allergies'),emergency_contact_name:g('f_em_name'),emergency_phone:g('f_em_phone'),academic_degree:g('f_degree'),company_name:g('f_company'),cv_summary:g('f_cv')};
+	
 	try {
-		if(id) await sbFetch(`naseem_residents?id=eq.${id}`,{method:'PATCH',body:JSON.stringify(payload)});
-		else { payload.created_by=currentUser.id; await sbFetch('naseem_residents',{method:'POST',body:JSON.stringify(payload)}); }
-		closeCitizenModal(); loadResidentsData();
-	} catch(e){ alert('فشل الحفظ: '+e.message); } finally { btn.innerHTML='<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> حفظ البيانات'; btn.disabled=false; }
+		if(id) {
+			// 1. Force Supabase to return the data it modified
+			const res = await sbFetch(`naseem_residents?id=eq.${id}`, {
+				method: 'PATCH',
+				body: JSON.stringify(payload),
+				headers: { 'Prefer': 'return=representation' } 
+			});
+
+			// 2. Catch the Silent Failure! If the array is empty, RLS blocked us.
+			if (Array.isArray(res) && res.length === 0) {
+				throw new Error("تم رفض التعديل من قبل قاعدة البيانات! (تم تحديث 0 سجلات).\n\nالسبب: سياسة الأمان (RLS) في Supabase تمنعك من تعديل بيانات لم تقم بإنشائها بنفسك.");
+			}
+
+			// 3. If successful, update the local data instantly for a smooth UI
+			const idx = allResidents.findIndex(r => r.id === id);
+			if (idx !== -1) allResidents[idx] = { ...allResidents[idx], ...payload };
+		}
+		else { 
+			payload.created_by=currentUser.id; 
+			await sbFetch('naseem_residents',{method:'POST',body:JSON.stringify(payload)}); 
+		}
+		
+		alert("✅ تم حفظ وتحديث البيانات بنجاح!");
+		closeCitizenModal(); 
+		loadResidentsData();
+		
+	} catch(e) { 
+		alert('❌ فشل الحفظ:\n' + e.message); 
+	} finally { 
+		btn.innerHTML='<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:13px;height:13px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> حفظ البيانات'; 
+		btn.disabled=false; 
+	}
 }
 
 // ═══════════════════════════════════════════════════
