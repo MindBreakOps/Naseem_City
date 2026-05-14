@@ -321,8 +321,16 @@
 		.dash-title { font-size: 20px; font-weight: 800; color: var(--text-1); }
 		.dash-subtitle { font-size: 12px; color: var(--text-4); margin-top: 2px; }
 		.dash-meta {
-			text-align: left; font-family: 'IBM Plex Mono', monospace;
-			font-size: 11px; color: var(--text-5);
+			text-align: center; 
+			font-family: 'IBM Plex Mono', monospace;
+			font-size: 11px; 
+			color: var(--text-1); /* تم تغيير اللون ليكون واضحاً جداً */
+			background: var(--card); /* لون خلفية الصندوق */
+			border: 1px solid var(--border); /* إطار خفيف للصندوق */
+			border-radius: var(--radius-md); /* حواف دائرية */
+			padding: 8px 14px; /* مسافة داخلية لترتيب النص */
+			box-shadow: var(--shadow-sm); /* ظل خفيف */
+			line-height: 1.6;
 		}
 		.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
 		.stat-card {
@@ -751,7 +759,6 @@
 			.topbar { padding: 0 12px; }
 			.content-area { padding: 12px; }
 			.data-table { min-width: 600px; }
-			.sensitive-col, .admin-col { display: none; }
 			.gis-layout { flex-direction: column; }
 			.gis-sidebar { width: 100%; min-width: unset; border-left: none; max-height: 260px; }
 			.form-grid { grid-template-columns: 1fr; }
@@ -1411,21 +1418,54 @@
 										<div style="font-size: 12px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 2px;" id="new-cert-barcode-text">—</div>
 									</div>
 									<div style="text-align: center; width: 30%;">
-										<div style="margin-bottom: 35px; font-weight: 800; font-size: 14px;">توقيع رئيس اللجنة</div>
-										<div style="border-top: 1px solid #000; margin: 0 10px;"></div>
+																<div style="margin-bottom: 35px; font-weight: 800; font-size: 14px;">توقيع رئيس اللجنة</div>
+																<div style="border-top: 1px solid #000; margin: 0 10px;"></div>
+															</div>
+														</div>
+													</div>
+												</div>
+												
+											</div>
+										</div>
 									</div>
-								</div>
-							</div>
-						</div>
-						
-					</div>
-				</div>
-			</div>
-		</div>
-		</div>
-			
-	
-</main>
+		                        </div>
+								<div id="view-settings" class="app-view hidden">
+											<div class="settings-grid">
+												<div class="settings-card">
+													<div class="settings-card-head"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>حسابات النظام</div>
+													<div style="max-height:220px;overflow-y:auto;"><ul id="users-list"></ul></div>
+												</div>
+												<div class="settings-card">
+													<div class="settings-card-head"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>إضافة مستخدم جديد</div>
+													<div class="settings-card-body">
+														<div class="form-grid">
+															<div class="form-field"><label class="form-label required">الاسم</label><input type="text" id="u_name" class="form-input"></div>
+															<div class="form-field"><label class="form-label required">الصلاحية</label><select id="u_role" class="form-input"><option value="admin">إدمن</option><option value="manager">مدير</option><option value="citizen">مواطن</option></select></div>
+															<div class="form-field"><label class="form-label required">البريد</label><input type="email" id="u_email" class="form-input mono" style="direction:ltr;text-align:left;"></div>
+															<div class="form-field"><label class="form-label required">كلمة المرور</label><input type="password" id="u_pass" class="form-input mono" style="direction:ltr;text-align:left;"></div>
+														</div>
+														<button onclick="saveUser()" id="btn-save-user" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:12px;">إنشاء الحساب</button>
+													</div>
+												</div>
+												<div class="settings-card full">
+													<div class="settings-card-head" style="justify-content:space-between;">
+														<div style="display:flex;align-items:center;gap:8px;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>الأجهزة الموثوقة</div>
+														<button onclick="loadDevicesList()" class="btn btn-ghost" style="padding:3px 9px;font-size:11px;">تحديث</button>
+													</div>
+													<div class="table-scroll"><table class="data-table" dir="rtl" style="min-width:500px;"><thead><tr><th>المستخدم</th><th>النظام / المتصفح</th><th style="text-align:left;">الموقع (IP)</th><th style="text-align:center;">الإجراء</th></tr></thead><tbody id="devices-table-body"><tr><td colspan="4"><div class="empty-state"><p>جاري التحميل...</p></div></td></tr></tbody></table></div>
+												</div>
+												<div class="settings-card full">
+													<div class="settings-card-head" style="justify-content:space-between;">
+														<div style="display:flex;align-items:center;gap:8px;"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="width:14px;height:14px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>سجل الجلسات (Activity Log)</div>
+														<button onclick="loadSessionsLog()" class="btn btn-ghost" style="padding:3px 9px;font-size:11px;">تحديث</button>
+													</div>
+													<div style="max-height:260px;overflow-y:auto;padding:4px 16px;"><div id="sessions-log-list"></div></div>
+												</div>
+											</div>
+										</div>
+								
+									</div>
+								</main>
 
 <!-- ══ VIEW MODAL ══ -->
 <div id="view-modal" class="modal-overlay hidden no-print" style="z-index:80;">
@@ -1574,7 +1614,6 @@
 if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
 	location.replace(`https:${location.href.substring(location.protocol.length)}`);
 }
-
 // ══════════════════════════════════════════════════
 // CONFIG
 // ══════════════════════════════════════════════════
